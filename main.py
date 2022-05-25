@@ -1,6 +1,8 @@
 import os
 from ext.models import CodingBot
 
+if not os.path.exists('./database'):
+    os.mkdir('./database')
 
 bot = CodingBot()
 

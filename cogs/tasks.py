@@ -4,12 +4,12 @@ import discord
 from discord.ext import commands, tasks
 
 class TaskCog(commands.Cog):
+
+    hidden = True
     def __init__(self, bot):
         self.bot = bot
-        self.task.start()
 
     async def cog_load(self) -> None:
-        await self.bot.wait_until_ready()
         self.status_change.start()
 
     @tasks.loop(minutes=2)
@@ -35,3 +35,11 @@ class TaskCog(commands.Cog):
             type=discord.ActivityType.watching,
             name=random.choice(
                 statuses) + ' | ' + self.bot.default_prefixes[0] + 'help'))
+
+    @status_change.before_loop
+    async def before_status_change(self):
+        await self.bot.wait_until_ready()
+
+
+async def setup(bot):
+    await bot.add_cog(TaskCog(bot))

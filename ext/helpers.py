@@ -1,13 +1,14 @@
 import asyncio
 import datetime as dt
 import functools
-from io import BytesIO
 import sys
 import traceback
+from io import BytesIO
 
 import discord
 import humanize
-from PIL import Image, ImageDraw, ImageFont, ImageFilter
+from PIL import Image, ImageDraw, ImageFilter, ImageFont
+
 
 async def log_error(bot, event_method, *args, **kwargs):
     channel = bot.get_channel(826861610173333595)
@@ -35,8 +36,11 @@ def executor():
 class WeclomeBanner:
     def __init__(self, bot) -> None:
         self.bot = bot
-        self.font = ImageFont.truetype("./storage/fonts/Poppins/Poppins-Bold.ttf", size=0)
-
+        self.font = {
+            12: ImageFont.truetype("./storage/fonts/Poppins/Poppins-Bold.ttf", size=12),
+            15: ImageFont.truetype("./storage/fonts/Poppins/Poppins-Bold.ttf", size=15),
+            25: ImageFont.truetype("./storage/fonts/Poppins/Poppins-Bold.ttf", size=25),
+        }
     @executor()
     def generate_image(self, **kwargs) -> discord.File:
         inviter = kwargs.get('inviter')
@@ -53,34 +57,31 @@ class WeclomeBanner:
         draw = ImageDraw.Draw(txt)
         fill = (255, 255, 255, 255)
         text = "Welcome to The Coding Realm"
-        self.font.size = 25
-        text_width, text_height = draw.textsize(text, self.font)
+        text_width, text_height = draw.textsize(text, self.font.get(25))
         width_height = ((txt.size[0] - text_width) // 2, (txt.size[1] // 31) * 1)
-        draw.txt(width_height, text, font=self.font, fill=fill, align='center')
+        draw.text(width_height, text, font=self.font.get(25), fill=fill, align='center')
         text = str(member)
-        self.font.size = 15
         calculation = ((txt.size[0] // 8) * 3, (txt.size[1] // 16) * 4)
-        draw.text(calculation, text, font=self.font, fill=fill, align='center')
-        self.font.size = 12
+        draw.text(calculation, text, font=self.font.get(15), fill=fill, align='center')
         text = f"ID: {member.id}"
         calculation = ((txt.size[0] // 8) * 3, (txt.size[1] // 16) * 6)
-        draw.text(calculation, text, font=self.font, fill=fill, align='center')
+        draw.text(calculation, text, font=self.font.get(12), fill=fill, align='center')
         if inviter:
             text = f'• Invited by: {inviter}'
-            draw.text(((txt.size[0] // 8) * 3, (txt.size[1] // 16) * 9), text, font=self.font, fill=fill, align='center')
+            draw.text(((txt.size[0] // 8) * 3, (txt.size[1] // 16) * 9), text, font=self.font.get(12), fill=fill, align='center')
             text = f'• ID: {inviter.id}, Invites: {inv}'
-            draw.text(((txt.size[0] // 8) * 3, (txt.size[1] // 16) * 11), text, font=self.font, fill=fill, align='center')
+            draw.text(((txt.size[0] // 8) * 3, (txt.size[1] // 16) * 11), text, font=self.font.get(12), fill=fill, align='center')
             text = f'• Account created: {humanize.naturaldelta(ago)} ago'
-            draw.text(((txt.size[0] // 8) * 3, (txt.size[1] // 16) * 13), text, font=self.font, fill=fill, align='center')
+            draw.text(((txt.size[0] // 8) * 3, (txt.size[1] // 16) * 13), text, font=self.font.get(12), fill=fill, align='center')
         else:
             if vanity:
                 invite = vanity
                 text = f'• Joined using vanity invite: {invite.code} ({invite.uses} uses)'
             else:
                 text = 'I couldn\'t find who invited them'
-            draw.text(((txt.size[0] // 8) * 3, (txt.size[1] // 16) * 9), text, font=self.font, fill=fill, align='center')
+            draw.text(((txt.size[0] // 8) * 3, (txt.size[1] // 16) * 9), text, font=self.font.get(12), fill=fill, align='center')
             text = f'• Account created: {humanize.naturaldelta(ago)} ago'
-            draw.text(((txt.size[0] // 8) * 3, (txt.size[1] // 16) * 11), text, font=self.font, fill=fill, align='center')
+            draw.text(((txt.size[0] // 8) * 3, (txt.size[1] // 16) * 11), text, font=self.font.get(12), fill=fill, align='center')
         blur_radius = 1
         offset = 0
         offset = blur_radius * 2 + offset
@@ -100,6 +101,7 @@ class WeclomeBanner:
         member = kwargs.pop('member')
         inviter = await self.bot.tracker.fetch_inviter(member)
         inv = None
+        vanity = None
         if inviter:
             inv = sum(i.uses for i in (await member.guild.invites()) if i.inviter
                     and i.inviter.id == inviter.id)
@@ -107,7 +109,7 @@ class WeclomeBanner:
             try:
                 vanity = await member.guild.vanity_invite()
             except:
-                vanity = None
+                pass
         ago = dt.datetime.now(dt.timezone.utc) - member.created_at
         img = BytesIO(await member.avatar.with_format("png").with_size(128).read())
         try:

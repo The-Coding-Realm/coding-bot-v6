@@ -5,7 +5,9 @@ import ext.helpers as helpers
 from discord.ext import commands
 
 
-class Developer(commands.Cog):
+class Developer(commands.Cog, command_attrs=dict(hidden=True)):
+
+    hidden = True
     def __init__(self, bot):
         self.bot = bot
 

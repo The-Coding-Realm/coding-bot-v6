@@ -11,4 +11,5 @@ INTENTS = discord.Intents(
     webhooks=True,
     voice_states=True,
     reactions=True,
+    message_content=True
 )

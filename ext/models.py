@@ -24,7 +24,7 @@ class Cache:
         The ID of the channel
     """
     prefixes: list
-    commands: dict = field(default_factory=dict)
+    commands: set = field(default_factory=set)
 
 class Database:
     """
@@ -74,6 +74,9 @@ class Database:
     def cursor(self, conn: str) -> aiosqlite.Cursor:
         if hasattr(self, conn):
             return getattr(self, conn).cursor()
+    
+    def __repr__(self) -> str:
+        return f"<Database: {self.conn}>"
 
     @property
     def closed(self):
@@ -91,7 +94,7 @@ class Database:
 class CodingBot(commands.Bot):
     def __init__(self) -> None:
         super().__init__(
-            command_prefix='!',
+            command_prefix=[','],
             intents=INTENTS,
             case_insensitive=True
         )
@@ -102,24 +105,25 @@ class CodingBot(commands.Bot):
         self.processing_commands = 0
 
     async def setup_hook(self) -> None:
-        for filename in os.listdir('cogs'):
+        for filename in os.listdir('./cogs'):
             if filename.endswith('.py'):
                 await self.load_extension(f'cogs.{filename[:-3]}')
 
-
     async def start(self, token: str, reconnect: bool = True):
         async with Database() as self.conn:
-            await super().start(token, reconnect=reconnect)
+            return await super().start(token, reconnect=reconnect)
+
+    async def startup_task(self):
+        await self.wait_until_ready()
+        channel = self.get_channel(self.restart_channel)
+        self.restart_channel = None
+        embed = discord.Embed(title="I'm back online!")
+        await channel.send(embed=embed)
 
     async def on_ready(self) -> None:
         await self.wait_until_ready()
         await self.tracker.cache_invites()
         print('Ready')
-        if self.restart_channel:
-            channel = self.get_channel(self.restart_channel)
-            self.restart_channel = None
-            embed = discord.Embed(title="I'm back online!")
-            await channel.send(embed=embed)
 
     async def on_invite_create(self, invite: discord.Invite) -> None:
         await self.tracker.update_invite_cache(invite)
@@ -134,7 +138,11 @@ class CodingBot(commands.Bot):
         await self.tracker.remove_guild_cache(guild)
 
     async def on_member_join(self, member: discord.Member) -> None:
-        rules = member.guild.rules_channel.mention
+        rules = member.guild.rules_channel
+        if rules:
+            rules = rules.mention
+        else:
+            rules = "No official rule channel set yet."
         embed = discord.Embed(
             title=f'Welcome to {member.guild.name}!',
             description=(
@@ -145,7 +153,7 @@ class CodingBot(commands.Bot):
                 '<#799527165863395338> and <#754712400757784709>'),
             timestamp=dt.datetime.now(dt.timezone.utc)
         )
-        file = await self.welcome.construct_image(member=member)
+        file = await self.welcomer.construct_image(member=member)
         channel = member.guild.get_channel(743817386792058971)
         await channel.send(content=member.mention, file=file)
         verify_here = member.guild.get_channel(759220767711297566)
