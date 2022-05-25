@@ -23,7 +23,7 @@ class TaskCog(commands.Cog):
                     'the beginning of WWIII', 'verified bot tags with envy',
                     'Server Boosters (boost to get your name on here)', 'OG members', "dalek rising from the ashes",
                     'spongebob', 'turtles', 'SQUIRREL!!!', 'people get banned', 'por...k chops', 'my poggers discriminator',
-                    'tux', 'linux overcome windows', 'bob get a gf', 'a documentary']
+                    'tux', 'linux overcome windows', 'bob get a gf', 'a documentary', 'Lexionas74 die inside']
         tcr = self.bot.get_guild(681882711945641997)
         if tcr:
             if tcr.get_role(795145820210462771):
