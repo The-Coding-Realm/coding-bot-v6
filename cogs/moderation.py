@@ -125,7 +125,7 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
 
     @commands.hybrid_command(name="purge")
     @commands.has_permissions(manage_messages=True)
-    async def purge(self, ctx: commands.Contxt, amount: int = 1):
+    async def purge(self, ctx: commands.Context, amount: int = 1):
         await ctx.channel.purge(limit=amount+1)
 
 async def setup(bot):
