@@ -1,12 +1,14 @@
 import datetime as dt
 from dataclasses import dataclass, field
 import os
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
+import aiohttp
 import aiosqlite
 import discord
 from discord.ext import commands
 from DiscordUtils import InviteTracker
+from pytimeparse import parse
 
 from .consts import INTENTS
 from .helpers import WelcomeBanner, log_error
@@ -109,9 +111,10 @@ class CodingBot(commands.Bot):
             if filename.endswith('.py'):
                 await self.load_extension(f'cogs.{filename[:-3]}')
 
-    async def start(self, token: str, reconnect: bool = True):
+    async def start(self, token: str, *, reconnect: bool = True):
         async with Database() as self.conn:
-            return await super().start(token, reconnect=reconnect)
+            async with aiohttp.ClientSession() as self.session:
+                return await super().start(token, reconnect=reconnect)
 
     async def startup_task(self):
         await self.wait_until_ready()
@@ -164,3 +167,31 @@ class CodingBot(commands.Bot):
 
     async def on_error(self, event_method, *args, **kwargs):
         await log_error(self, event_method, *args, **kwargs)
+
+class TimeConverter(commands.Converter):
+    async def convert(self, ctx: commands.Context, argument: str) -> Optional[dt.timedelta]:
+        """
+        Parses a string into a timedelta object
+
+        Parameters
+        ----------
+        ctx : commands.Context
+            The context of the command
+        argument : str 
+            The string argument of time to parse
+        
+        Returns
+        -------
+        Optional[dt.timedelta]
+            The parsed timedelta object
+        
+        Raises
+        ------
+        commands.BadArgument
+            If the argument is not a valid time
+        """
+        time_in_secs = parse(argument)
+        if time_in_secs is None:
+            raise commands.BadArgument(f'{argument} is not a valid time.')
+        return dt.timedelta(seconds=time_in_secs)
+        
