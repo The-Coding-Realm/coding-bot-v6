@@ -1,8 +1,6 @@
 import asyncio
-import collections
 import datetime
 from io import BytesIO
-from optparse import Option
 from typing import Any, Dict, Optional, Union
 
 import discord
@@ -145,7 +143,7 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
         logs = self.bot.get_channel(816512034228666419) # 816512034228666419
         await logs.send(embed=embed, file=file)        
 
-    @commands.command(name="kick")
+    @commands.hybrid_command(name="kick")
     @commands.has_permissions(kick_members=True)
     async def kick(self, ctx: commands.Context, member: discord.Member, *, reason: str = None):
         check_made = self.check_member_permission(ctx, member)
@@ -162,7 +160,7 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
             evidence = await self.capture_evidence(ctx)
             await self.log(action='kick', moderator=ctx.author, member=member, reason=reason, evidence=evidence)
 
-    @commands.command(name="ban")
+    @commands.hybrid_command(name="ban")
     @commands.has_permissions(ban_members=True)
     async def ban(self, ctx: commands.Context, member: discord.Member, *, reason: str = None):
         check_made = self.check_member_permission(ctx, member)
@@ -179,7 +177,7 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
             await ctx.send(f'Banned {member.mention}')
             await self.log(action='ban', moderator=ctx.author, member=member, undo=False, reason=reason, duration=None, evidence=evidence)
 
-    @commands.command(name="unban")
+    @commands.hybrid_command(name="unban")
     @commands.has_permissions(ban_members=True)
     async def unban(self, ctx: commands.Context, user: discord.User, *, reason: str = None):
         try:
@@ -258,6 +256,10 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
                                 VALUES (%s, %s, %s, %s)''', (ctx.guild.id, member.id, ctx.author.id, reason))
         await ctx.send(f'Warned {member.mention}')
 
+    @commands.hybrid_command(name="purge")
+    @commands.has_permissions(manage_messages=True)
+    async def purge(self, ctx: commands.Context, amount: int = 1):
+        await ctx.channel.purge(limit=amount+1)
 
 async def setup(bot):
     await bot.add_cog(Moderation(bot))

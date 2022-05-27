@@ -1,3 +1,4 @@
+import aiohttp
 import datetime as dt
 from dataclasses import dataclass, field
 import os
