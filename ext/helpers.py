@@ -33,7 +33,7 @@ def executor():
         return inner
     return outer
 
-class WeclomeBanner:
+class WelcomeBanner:
     def __init__(self, bot) -> None:
         self.bot = bot
         self.font = {

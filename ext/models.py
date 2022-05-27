@@ -101,7 +101,7 @@ class CodingBot(commands.Bot):
         self.conn: Database = None
         self.tracker = InviteTracker(self)
         self.default_prefixes = [',']
-        self.welcomer = WeclomeBanner(self)
+        self.welcomer = WelcomeBanner(self)
         self.processing_commands = 0
 
     async def setup_hook(self) -> None:
