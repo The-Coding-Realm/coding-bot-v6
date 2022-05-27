@@ -80,7 +80,7 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
         elif member == ctx.guild.owner:
             return f"You can't {ctx.command.name} the server owner."
 
-    @commands.command(name="kick")
+    @commands.hybrid_command(name="kick")
     @commands.has_permissions(kick_members=True)
     async def kick(self, ctx: commands.Context, member: discord.Member, *, reason: str = None):
         check_made = self.check_member_permission(ctx, member)
@@ -96,7 +96,7 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
             await ctx.send(f'Banned {member.mention}')
             await self.log(action='ban', moderator=ctx.author, member=member, undo=False, reason=reason, duration=None)
 
-    @commands.command(name="ban")
+    @commands.hybrid_command(name="ban")
     @commands.has_permissions(ban_members=True)
     async def ban(self, ctx: commands.Context, member: discord.Member, *, reason: str = None):
         check_made = self.check_member_permission(ctx, member)
@@ -112,7 +112,7 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
             await ctx.send(f'Banned {member.mention}')
             await self.log(action='ban', moderator=ctx.author, member=member, undo=False, reason=reason, duration=None)
 
-    @commands.command(name="unban")
+    @commands.hybrid_command(name="unban")
     @commands.has_permissions(ban_members=True)
     async def unban(self, ctx: commands.Context, user: discord.User, *, reason: str = None):
         try:
@@ -122,6 +122,11 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
         else:
             await ctx.send(f'Unbanned {user.mention}')
             await self.log(action='ban', moderator=ctx.author, member=user, undo=True, reason=reason, duration=None)
+
+    @commands.hybrid_command(name="purge")
+    @commands.has_permissions(manage_messages=True)
+    async def purge(self, ctx: commands.Contxt, amount: int = 1):
+        await ctx.channel.purge(limit=amount+1)
 
 async def setup(bot):
     await bot.add_cog(Moderation(bot))

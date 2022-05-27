@@ -1,3 +1,4 @@
+import aiohttp
 import datetime as dt
 from dataclasses import dataclass, field
 import os
@@ -109,9 +110,10 @@ class CodingBot(commands.Bot):
             if filename.endswith('.py'):
                 await self.load_extension(f'cogs.{filename[:-3]}')
 
-    async def start(self, token: str, reconnect: bool = True):
+    async def start(self, token: str, *, reconnect: bool = True):
         async with Database() as self.conn:
-            return await super().start(token, reconnect=reconnect)
+            async with aiohttp.ClientSession() as self.session:
+                return await super().start(token, reconnect=reconnect)
 
     async def startup_task(self):
         await self.wait_until_ready()
