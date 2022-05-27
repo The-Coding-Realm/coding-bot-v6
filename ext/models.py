@@ -9,7 +9,7 @@ from discord.ext import commands
 from DiscordUtils import InviteTracker
 
 from .consts import INTENTS
-from .helpers import WeclomeBanner, log_error
+from .helpers import WelcomeBanner, log_error
 
 @dataclass(slots=True, kw_only=True, repr=True)
 class Cache:
