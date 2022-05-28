@@ -25,7 +25,7 @@ class Fun(commands.Cog, command_attrs=dict(hidden=False)):
         await ctx.send(embed=embed)
 
     @commands.hybrid_command(name="8ball")
-    async def eightball(self, ctx: commands.Context, question: str):
+    async def eightball(self, ctx: commands.Context, *, question: str):
         # LONGEST LIST OF RESPONSES, FEEL FREE TO ADD/REMOVE OR OPTIMISE
         responses = ["As I see it, yes.", "Ask again later.", "Better not tell you now.", "Cannot predict now.", "Concentrate and ask again.",
                     "Do not count on it.", "It is certain.", "It is decidedly so.", "Most likely.", "My reply is no.", "My sources say no.",
