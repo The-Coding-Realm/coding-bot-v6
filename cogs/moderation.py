@@ -188,7 +188,7 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
             await ctx.send(f'Unbanned {user.mention}')
             await self.log(action='ban', moderator=ctx.author, member=user, undo=True, reason=reason, duration=None)
 
-    @commands.command(name="mute", aliases=['timeout'])
+    @commands.hybrid_command(name="mute", aliases=['timeout'])
     @commands.has_permissions(manage_roles=True)
     async def mute(self, ctx: commands.Context, member: discord.Member, duration: TimeConverter, *, reason: str = None):
         check_made = self.check_member_permission(ctx, member)
@@ -206,7 +206,7 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
             await ctx.send(f'Muted {member.mention}')
             await self.log(action='mute', moderator=ctx.author, member=member, undo=False, reason=reason, duration=duration, evidence=evidence)
 
-    @commands.command(name="unmute")
+    @commands.hybrid_command(name="unmute")
     @commands.has_permissions(manage_roles=True)
     async def unmute(self, ctx: commands.Context, member: discord.Member, *, reason: str = None):
         check_made = self.check_member_permission(ctx, member)
@@ -246,7 +246,7 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
         embed.description = description
         await ctx.send(embed=embed)
     
-    @commands.command()
+    @commands.hybrid_command()
     @trainee_check
     async def warn(self, ctx: commands.Context, member: discord.Member, *, reason: str = None):
         if not reason:
