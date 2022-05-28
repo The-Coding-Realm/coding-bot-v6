@@ -1,6 +1,7 @@
 import asyncio
 import datetime
 from io import BytesIO
+from re import I, purge
 from typing import Any, Dict, Optional, Union
 
 import discord
@@ -17,11 +18,8 @@ def trainee_check():
         if trainee_role:
             if ctx.author.top_role.position >= trainee_role.position:
                 return True
-            else:
-                raise InsufficientPrivilegeError("{}, you don't have the permission to use this command.".format(ctx.author.mention))
-    return wrapper
-
-
+        raise InsufficientPrivilegeError("{}, you don't have the permission to use this command.".format(ctx.author.mention))
+    return commands.check(wrapper)
 
 class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
 
@@ -188,13 +186,13 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
             await ctx.send(f'Unbanned {user.mention}')
             await self.log(action='ban', moderator=ctx.author, member=user, undo=True, reason=reason, duration=None)
 
-    @commands.command(name="mute", aliases=['timeout'])
+    @commands.hybrid_command(name="mute", aliases=['timeout'])
     @commands.has_permissions(manage_roles=True)
     async def mute(self, ctx: commands.Context, member: discord.Member, duration: TimeConverter, *, reason: str = None):
         check_made = self.check_member_permission(ctx, member)
         if check_made:
             return await ctx.send(check_made)
-        evidence = await self.capture_evidence(ctx)
+        
         try:
             await member.send('You have been :mute: **Muted** :hammer: from '
                                f'**{ctx.guild.name}**. \nReason: {reason}')
@@ -204,9 +202,10 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
             until = discord.utils.utcnow() + duration
             await member.timeout(until)
             await ctx.send(f'Muted {member.mention}')
+            evidence = await self.capture_evidence(ctx)
             await self.log(action='mute', moderator=ctx.author, member=member, undo=False, reason=reason, duration=duration, evidence=evidence)
 
-    @commands.command(name="unmute")
+    @commands.hybrid_command(name="unmute")
     @commands.has_permissions(manage_roles=True)
     async def unmute(self, ctx: commands.Context, member: discord.Member, *, reason: str = None):
         check_made = self.check_member_permission(ctx, member)
@@ -220,7 +219,7 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
             await ctx.send(f'Unmuted {member.mention}')
             await self.log(action='mute', moderator=ctx.author, member=member, undo=True, reason=reason)
 
-    @commands.command()
+    @commands.hybrid_command()
     async def massban(self, ctx: commands.Context, users: commands.Greedy[Union[discord.Member, discord.User]]):
         if not users:
             return await ctx.send('Please provide at least one user to ban.')
@@ -246,20 +245,68 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
         embed.description = description
         await ctx.send(embed=embed)
     
-    @commands.command()
-    @trainee_check
+    @trainee_check()
+    @commands.hybrid_command()
     async def warn(self, ctx: commands.Context, member: discord.Member, *, reason: str = None):
         if not reason:
             return await ctx.send("Please provide a reason for the warning.")
         async with self.bot.conn.cursor('warnings') as cur:
-            await cur.execute('''INSERT INTO warnings (guild_id, member_id, moderator_id, reason)
-                                VALUES (%s, %s, %s, %s)''', (ctx.guild.id, member.id, ctx.author.id, reason))
+            await cur.execute('''INSERT INTO warnings 
+            (guild_id, user_id, moderator_id, reason, date) VALUES (?, ?, ?, ?, ?)
+            ''', (ctx.guild.id, member.id, ctx.author.id, reason, int(ctx.message.created_at.timestamp())))
+        await self.bot.conn.warnings.commit()
         await ctx.send(f'Warned {member.mention}')
 
+    @trainee_check()
     @commands.hybrid_command(name="purge")
     @commands.has_permissions(manage_messages=True)
     async def purge(self, ctx: commands.Context, amount: int = 1):
-        await ctx.channel.purge(limit=amount+1)
+        purged_amt = len(await ctx.channel.purge(limit=amount+1))
+        await ctx.send(f'Purged {purged_amt} messages in {ctx.channel.mention}')
+
+
+    @trainee_check()
+    @commands.command(name="warnings")
+    async def warnings(self, ctx: commands.Context, member: discord.Member = None):
+        member = member or ctx.author
+        async with self.bot.conn.cursor('warnings') as cur:
+            await cur.execute('''SELECT moderator_id, reason, date FROM warnings WHERE guild_id = ? AND user_id = ? ORDER BY date DESC''', (ctx.guild.id, member.id))
+            embed = discord.Embed(title=f"{member} Warnings List", color=discord.Color.red())
+
+            i = 1
+            async for warning in cur:
+                moderator_id, reason, date = warning
+                moderator = ctx.guild.get_member(moderator_id)
+                if moderator:
+                    moderator = moderator.mention
+                else:
+                    moderator = 'Unknown'
+                
+                embed.add_field(name="`{}.` Reason: {}".format(i, reason), value=f"Issued by: {moderator} - <t:{date}:f>", inline=False)
+                i += 1
+            if not embed.fields:
+                return await ctx.send(f'{member.mention} has no warnings.')
+            await ctx.send(embed=embed)
+
+    @trainee_check()
+    @commands.hybrid_command(name="clearwarning")
+    @commands.has_permissions(manage_messages=True)
+    async def clearwarning(self, ctx: commands.Context, member: discord.Member = None, index: int = None):
+        member = member or ctx.author
+        async with self.bot.conn.cursor('warnings') as cur:
+            if index is None:
+                await cur.execute('''DELETE FROM warnings WHERE guild_id = ? AND user_id = ?''', (ctx.guild.id, member.id))
+            else:
+                await cur.execute('''SELECT date FROM warnings WHERE guild_id = ? AND user_id = ? ORDER BY date DESC''', (ctx.guild.id, member.id))
+                i = 0
+                async for row in cur:
+                    if i == index - 1:
+                        await cur.execute('''DELETE FROM warnings WHERE guild_id = ? AND user_id = ? AND date = ?''', (ctx.guild.id, member.id, row[0]))
+                        break
+                    i += 1
+        await self.bot.conn.warnings.commit()
+        await ctx.send(f'{member.mention}\'s warning was cleared.')
+
 
 async def setup(bot):
     await bot.add_cog(Moderation(bot))

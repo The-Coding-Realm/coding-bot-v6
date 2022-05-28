@@ -51,6 +51,7 @@ class Database:
 
     async def __aenter__(self) -> "Database":
         self.conn["config"] = await aiosqlite.connect('./database/config.db')
+        self.conn["warnings"] = await aiosqlite.connect('./database/warnings.db')
         await self.init_dbs()
         return self
 
@@ -62,13 +63,27 @@ class Database:
                         """
         COMMANDS_CONFIG_SCHEMA = """CREATE TABLE IF NOT EXISTS commandconf (
                             id BIGINT,
-                            command TEXT UNIQUE
+                            command TEXT
                         );
                         """
+        WARNINGS_CONFIG_SCHEMA = """CREATE TABLE IF NOT EXISTS warnings (
+                            user_id BIGINT,
+                            guild_id BIGINT,
+                            moderator_id BIGINT,
+                            reason TEXT,
+                            date BIGINT
+                        );
+                        """ 
         async with self.cursor('config') as cursor:
             await cursor.execute(PREFIX_CONFIG_SCHEMA)
             await cursor.execute(COMMANDS_CONFIG_SCHEMA)
-            await self.config.commit()
+
+        async with self.cursor('warnings') as cursor:
+            await cursor.execute(WARNINGS_CONFIG_SCHEMA)
+
+        await self.config.commit()
+        await self.warnings.commit()
+            
 
     async def __aexit__(self, *args: Any) -> None:
         await self.commit()

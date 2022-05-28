@@ -11,6 +11,14 @@ class Developer(commands.Cog, command_attrs=dict(hidden=True)):
     def __init__(self, bot):
         self.bot = bot
 
+    @commands.command(name="sync")
+    async def sync(self, ctx):
+        """
+        Sync the database
+        """
+        await self.bot.tree.sync()
+        await ctx.send("Finished syncing commands globally")
+
     @commands.command(name='load', aliases=['l'])
     @commands.is_owner()
     async def _load(self, ctx, cog_, save: bool = False):
