@@ -37,7 +37,17 @@ class Fun(commands.Cog, command_attrs=dict(hidden=False)):
         embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url) # Support for nitro users
         await ctx.send(embed=embed)
 
-    # NEXT : Lyrics command
+    @commands.hybrid_command(name="token")
+    async def token(self, ctx: commands.Context):
+        response = await self.bot.session.get("https://some-random-api.ml/bottoken") # If you like, you can use sr_api
+        json = await response.json()
+
+        bottoken = json['token']
+
+        embed = discord.Embed(title="Ha ha ha, I grabbed your bot token.", description=bottoken)
+        embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url)
+        await ctx.send(embed=embed)
+
     # DO YOUR COMMANDS HERE I HAVE NOT ENOUGH CREATIVITY TO THINK ABOUT THEM KEKW
 
 async def setup(bot):
