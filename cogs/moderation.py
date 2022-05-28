@@ -188,7 +188,7 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
             await ctx.send(f'Unbanned {user.mention}')
             await self.log(action='ban', moderator=ctx.author, member=user, undo=True, reason=reason, duration=None)
 
-    @commands.command(name="mute", aliases=['timeout'])
+    @commands.hybrid_command(name="mute", aliases=['timeout'])
     @commands.has_permissions(manage_roles=True)
     async def mute(self, ctx: commands.Context, member: discord.Member, duration: TimeConverter, *, reason: str = None):
         check_made = self.check_member_permission(ctx, member)
@@ -206,7 +206,7 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
             await ctx.send(f'Muted {member.mention}')
             await self.log(action='mute', moderator=ctx.author, member=member, undo=False, reason=reason, duration=duration, evidence=evidence)
 
-    @commands.command(name="unmute")
+    @commands.hybrid_command(name="unmute")
     @commands.has_permissions(manage_roles=True)
     async def unmute(self, ctx: commands.Context, member: discord.Member, *, reason: str = None):
         check_made = self.check_member_permission(ctx, member)
@@ -246,7 +246,7 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
         embed.description = description
         await ctx.send(embed=embed)
     
-    @commands.command()
+    @commands.hybrid_command()
     @trainee_check
     async def warn(self, ctx: commands.Context, member: discord.Member, *, reason: str = None):
         if not reason:
@@ -260,6 +260,20 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
     @commands.has_permissions(manage_messages=True)
     async def purge(self, ctx: commands.Context, amount: int = 1):
         await ctx.channel.purge(limit=amount+1)
+
+    # FEEL FREE TO MOVE THIS TO ANY COGS (IF YOU ADD ONE)
+    @commands.hybrid_command(name="whois")
+    async def whois(self, ctx: commands.Context, member: discord.Member = None):
+        if member is None:
+            member = ctx.author
+        embed = discord.Embed(title=f"Showing user info : {member}")
+        embed.set_thumbnail(url=member.display_avatar.url)
+        embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url) # Support for nitro users
+        embed.add_field(name="Discord User ID", value=member.id, inline=False)
+        embed.add_field(name="Account Created at", value=member.created_at, inline=False)
+        embed.add_field(name="Discord Joined at", value=member.joined_at, inline=False)
+
+        await ctx.send(embed=embed)
 
 async def setup(bot):
     await bot.add_cog(Moderation(bot))
