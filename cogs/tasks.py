@@ -20,10 +20,9 @@ class TaskCog(commands.Cog):
                     'mass murders', 'karen be an idiot', 'a video', 'watches', 'bob', 'fight club', 'youtube',
                     'https://devbio.me/u/CodingBot', 'potatoes', 'simps', 'people', 'my server', 'humans destroy the world',
                     'AI take over the world', 'female bots 😳', 'dinosaurs', 'https://youtu.be/dQw4w9WgXcQ', 'idiots',
-                    'the beginning of WWIII', 'verified bot tags with envy',
-                    'Server Boosters (boost to get your name on here)', 'OG members', "dalek rising from the ashes",
-                    'spongebob', 'turtles', 'SQUIRREL!!!', 'people get banned', 'por...k chops', 'my poggers discriminator',
-                    'tux', 'linux overcome windows', 'bob get a gf', 'a documentary']
+                    'the beginning of WWIII', 'verified bot tags with envy', 'Server Boosters (boost to get your name on here)', 
+                    'OG members', "dalek rising from the ashes", 'spongebob', 'turtles', 'SQUIRREL!!!', 'people get banned', 
+                    'por...k chops', 'my poggers discriminator', 'tux', 'linux overcome windows', 'bob get a gf', 'a documentary']
         tcr = self.bot.get_guild(681882711945641997)
         if tcr:
             if tcr.get_role(795145820210462771):

@@ -308,5 +308,19 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
         await ctx.send(f'{member.mention}\'s warning was cleared.')
 
 
+    # FEEL FREE TO MOVE THIS TO ANY COGS (IF YOU ADD ONE)
+    @commands.hybrid_command(name="whois")
+    async def whois(self, ctx: commands.Context, member: discord.Member = None):
+        if member is None:
+            member = ctx.author
+        embed = discord.Embed(title=f"Showing user info : {member}")
+        embed.set_thumbnail(url=member.display_avatar.url)
+        embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url) # Support for nitro users
+        embed.add_field(name="Discord User ID", value=member.id, inline=False)
+        embed.add_field(name="Account Created at", value=member.created_at, inline=False)
+        embed.add_field(name="Discord Joined at", value=member.joined_at, inline=False)
+
+        await ctx.send(embed=embed)
+
 async def setup(bot):
     await bot.add_cog(Moderation(bot))
