@@ -64,7 +64,6 @@ class Afk(commands.Cog):
         if msg.guild is None:
             return
         elif msg.guild.id==681882711945641997:
-            db=await aiosqlite.connect("database/afk.db")
             cur=await self.db.execute("SELECT memname FROM afk WHERE memid=?",(msg.author.id,))
             name=await cur.fetchone()
             if name:
