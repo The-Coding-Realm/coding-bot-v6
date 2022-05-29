@@ -19,6 +19,18 @@ class Automod(commands.Cog):
             if word in message.content.lower():
                 await message.delete()
 
+    @commands.hybrid_command(name="banword")
+    async def banword(self, ctx: commands.Context, *, word: str):
+        self.bannedwords.append(word)
+        await ctx.send(f"Successfully added {word} to the banned word list")
+
+    @commands.hybrid_command(name="unbanword")
+    async def unbanword(self, ctx: commands.Context, *, word: str):
+        self.bannedwords.remove(word)
+        await ctx.send(f"Successfully removed {word} to the banned word list")
+
+    # TO DO : Make a command that will show banned word list
+
 async def setup(bot):
     await bot.add_cog(Automod(bot))
     
