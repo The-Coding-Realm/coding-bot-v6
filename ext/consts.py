@@ -39,4 +39,11 @@ WARNINGS_CONFIG_SCHEMA = """CREATE TABLE IF NOT EXISTS warnings (
                             reason TEXT,
                             date BIGINT
                         );
-                        """ 
+                        """
+
+AFK_CONFIG_SCHEMA = """CREATE TABLE IF NOT EXISTS afk (
+                            userd_id BIGINT,
+                            reason TEXT,
+                            afk_time BIGINT
+                        );
+                        """
