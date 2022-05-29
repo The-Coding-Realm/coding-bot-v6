@@ -88,6 +88,7 @@ class Database:
     async def __aenter__(self) -> "Database":
         self.conn["config"] = await aiosqlite.connect('./database/config.db')
         self.conn["warnings"] = await aiosqlite.connect('./database/warnings.db')
+        self.conn["afk"] = await aiosqlite.connect('./database/afk.db')
         await self.init_dbs()
         return self
 
@@ -98,9 +99,11 @@ class Database:
 
         async with self.cursor('warnings') as cursor:
             await cursor.execute(WARNINGS_CONFIG_SCHEMA)
+        
+        async with self.cursor('afk') as cursor:
+            await cursor.execute(AFK_CONFIG_SCHEMA)
 
-        await self.config.commit()
-        await self.warnings.commit()
+        await self.commit()
 
     async def __aexit__(self, *args: Any) -> None:
         await self.commit()
@@ -121,14 +124,16 @@ class Database:
                             table: str,
                             where: List[str] = None,
                             values: Optional[tuple] = None,
-                            extras: List[str]
-                            ) -> Optional[Record]:
+                            extras: Optional[List[str]] = None,
+                        ) -> Optional[Record]:
         SELECT_STATEMENT = """SELECT {} FROM {}""".format(
-            ", ".join(arguments), table)
+            ", ".join(arguments), table
+        )
         if where is not None:
             assign_question = map(lambda x: f"{x} = ?", where)
             SELECT_STATEMENT += " WHERE {}".format(
-                " AND ".join(assign_question))
+                " AND ".join(assign_question)
+            )
         if extras:
             for stuff in extras:
                 SELECT_STATEMENT += f" {stuff}"

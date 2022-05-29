@@ -4,7 +4,8 @@ __all__ = (
     'INTENTS',
     'PREFIX_CONFIG_SCHEMA',
     'COMMANDS_CONFIG_SCHEMA',
-    'WARNINGS_CONFIG_SCHEMA'
+    'WARNINGS_CONFIG_SCHEMA',
+    'AFK_CONFIG_SCHEMA'
 )
 
 INTENTS = discord.Intents(
@@ -38,5 +39,12 @@ WARNINGS_CONFIG_SCHEMA = """CREATE TABLE IF NOT EXISTS warnings (
                             moderator_id BIGINT,
                             reason TEXT,
                             date BIGINT
+                        );
+                        """
+
+AFK_CONFIG_SCHEMA = """CREATE TABLE IF NOT EXISTS afk (
+                            user_id BIGINT,
+                            reason TEXT,
+                            afk_time BIGINT
                         );
                         """
