@@ -55,9 +55,7 @@ class ListenerCog(commands.Cog, command_attrs=dict(hidden=True)):
         print(record)
         if record:
             record = record[0]
-            print(record)
             time_spent = datetime.utcnow() - datetime.utcfromtimestamp(record.afk_time)
-            print(time_spent)
             if time_spent.total_seconds() < 30:
                 pass
             else:
@@ -67,7 +65,6 @@ class ListenerCog(commands.Cog, command_attrs=dict(hidden=True)):
                     where=['user_id'],
                     values=[message.author.id]
                 )
-                print(record)
                 try:
                     name = message.author.display_name.split(' ')[1:]
                     await message.author.edit(nick=" ".join(name))
@@ -79,8 +76,8 @@ class ListenerCog(commands.Cog, command_attrs=dict(hidden=True)):
                     on_pat_staff = message.guild.get_role(726441123966484600)
                     try:
                         await message.author.add_roles(on_pat_staff)
-                    except Exception as e:
-                        print(e)
+                    except (discord.Forbidden, discord.HTTPException):
+                        pass
                 emoji = random.choice(('⚪', '🔴', '🟤', '🟣', '🟢', '🟡', '🟠', '🔵'))
                 em = discord.Embed(
                     description=f"{emoji} Welcome back, I removed your AFK!",
