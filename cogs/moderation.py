@@ -1,3 +1,4 @@
+from ast import arguments
 import asyncio
 import datetime
 from io import BytesIO
@@ -138,7 +139,7 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
             embed.description += "\n**No evidence was provided.**"
         embed.set_author(name=f'{moderator} (ID: {moderator.id})', icon_url=moderator.display_avatar.url)
         embed.set_thumbnail(url=member.display_avatar.url)
-        logs = self.bot.get_channel(816512034228666419) # 816512034228666419
+        logs = self.bot.get_channel(964165082437263361) # 816512034228666419
         await logs.send(embed=embed, file=file)        
 
     @commands.hybrid_command(name="kick")
@@ -245,67 +246,87 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
         embed.description = description
         await ctx.send(embed=embed)
     
-    @trainee_check()
+#    @trainee_check()
     @commands.hybrid_command()
     async def warn(self, ctx: commands.Context, member: discord.Member, *, reason: str = None):
         if not reason:
             return await ctx.send("Please provide a reason for the warning.")
-        async with self.bot.conn.cursor('warnings') as cur:
-            await cur.execute('''INSERT INTO warnings 
-            (guild_id, user_id, moderator_id, reason, date) VALUES (?, ?, ?, ?, ?)
-            ''', (ctx.guild.id, member.id, ctx.author.id, reason, int(ctx.message.created_at.timestamp())))
-        await self.bot.conn.warnings.commit()
+        await self.bot.conn.insert_record(
+            'warnings',
+            table='warnings',
+            columns=['guild_id', 'user_id', 'moderator_id', 'reason', 'date'],
+            values=[ctx.guild.id, member.id, ctx.author.id, reason, ctx.message.created_at.timestamp()]
+        )
         await ctx.send(f'Warned {member.mention}')
+        evidence = await self.capture_evidence(ctx)
+        await self.log(action='warn', moderator=ctx.author, member=member, reason=reason, evidence=evidence)
 
-    @trainee_check()
+#    @trainee_check()
     @commands.hybrid_command(name="purge")
     @commands.has_permissions(manage_messages=True)
     async def purge(self, ctx: commands.Context, amount: int = 1):
         purged_amt = len(await ctx.channel.purge(limit=amount+1))
         await ctx.send(f'Purged {purged_amt} messages in {ctx.channel.mention}')
 
-
-    @trainee_check()
+#    @trainee_check()
     @commands.command(name="warnings")
-    async def warnings(self, ctx: commands.Context, member: discord.Member = None):
-        member = member or ctx.author
-        async with self.bot.conn.cursor('warnings') as cur:
-            await cur.execute('''SELECT moderator_id, reason, date FROM warnings WHERE guild_id = ? AND user_id = ? ORDER BY date DESC''', (ctx.guild.id, member.id))
-            embed = discord.Embed(title=f"{member} Warnings List", color=discord.Color.red())
+    async def warnings(self, ctx: commands.Context, member: discord.Member):
+        embed = discord.Embed(title=f"{member} Warnings List", color=discord.Color.red())
+        records = await self.bot.conn.select_record('warnings',
+                                               arguments=['reason', 'moderator_id', 'date'],
+                                               table='warnings',
+                                               where=['guild_id', 'user_id'],
+                                               values=(ctx.guild.id, member.id),
+                                               extras=['ORDER BY date DESC']
+                                            )
+        if not records:
+            return await ctx.send(f'{member.mention} has no warnings.')
 
-            i = 1
-            async for warning in cur:
-                moderator_id, reason, date = warning
-                moderator = ctx.guild.get_member(moderator_id)
-                if moderator:
-                    moderator = moderator.mention
-                else:
-                    moderator = 'Unknown'
-                
-                embed.add_field(name="`{}.` Reason: {}".format(i, reason), value=f"Issued by: {moderator} - <t:{date}:f>", inline=False)
-                i += 1
-            if not embed.fields:
-                return await ctx.send(f'{member.mention} has no warnings.')
-            await ctx.send(embed=embed)
+        for i, warning in enumerate(records, 1):
+            moderator = ctx.guild.get_member(warning.moderator_id)
+            if moderator:
+                moderator = moderator.mention
+            else:
+                moderator = 'Unknown'
+            embed.add_field(name="`{}.` Reason: {}".format(i, warning.reason), value=f"Issued by: {moderator} - <t:{int(warning.date)}:f>", inline=False)
 
-    @trainee_check()
+        
+        await ctx.send(embed=embed)
+
+#    @trainee_check()
     @commands.hybrid_command(name="clearwarning")
     @commands.has_permissions(manage_messages=True)
     async def clearwarning(self, ctx: commands.Context, member: discord.Member = None, index: int = None):
         member = member or ctx.author
-        async with self.bot.conn.cursor('warnings') as cur:
-            if index is None:
-                await cur.execute('''DELETE FROM warnings WHERE guild_id = ? AND user_id = ?''', (ctx.guild.id, member.id))
-            else:
-                await cur.execute('''SELECT date FROM warnings WHERE guild_id = ? AND user_id = ? ORDER BY date DESC''', (ctx.guild.id, member.id))
-                i = 0
-                async for row in cur:
-                    if i == index - 1:
-                        await cur.execute('''DELETE FROM warnings WHERE guild_id = ? AND user_id = ? AND date = ?''', (ctx.guild.id, member.id, row[0]))
-                        break
-                    i += 1
-        await self.bot.conn.warnings.commit()
-        await ctx.send(f'{member.mention}\'s warning was cleared.')
+        if index is None:
+            await self.bot.conn.delete_record('warnings', 
+                                              table='warnings',
+                                              where=['guild_id', 'user_id'],
+                                              values=(ctx.guild.id, member.id)
+                                            )
+        else:
+            records = await self.bot.conn.select_record('warnings',
+                                               arguments=['date'],
+                                               table='warnings',
+                                               where=['guild_id', 'user_id'],
+                                               values=(ctx.guild.id, member.id),
+                                               extras=['ORDER BY date DESC']
+                                            )
+
+            if not records:
+                return await ctx.send(f'{member.mention} has no warnings.')
+
+            for i, sublist in enumerate(records, 1):
+                if index == i:
+                    await self.bot.conn.delete_record('warnings', 
+                                                      table='warnings',
+                                                      where=['guild_id', 'user_id', 'date'],
+                                                      values=(ctx.guild.id, member.id, sublist.date)
+                                                    )
+                    break
+
+        await ctx.reply(f'{member.mention}\'s warning was cleared.', allowed_mentions=discord.AllowedMentions(users=False))
+        await self.log(action='warn', moderator=ctx.author, member=member, undo=True)
 
 
     # FEEL FREE TO MOVE THIS TO ANY COGS (IF YOU ADD ONE)
