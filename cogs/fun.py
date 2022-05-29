@@ -50,11 +50,11 @@ class Fun(commands.Cog, command_attrs=dict(hidden=False)):
     @commands.hybrid_command(name="animal")
     async def animal(self, ctx: commands.Context, animal: str = None):
         options = ("dog", "cat", "panda", "fox", "red_panda", "koala", "bird", "raccoon", "kangaroo")
-        if animal is None:
+        if (not animal) or (animal and animal not in options):
             animal = random.choice(options)
 
         response = await self.bot.session.get(f"https://some-random-api.ml/animal/{animal}")
-        if 300 > response.status_code >= 200:
+        if response.status in range(200,300):
             json = await response.json()
 
             image = json["image"]
@@ -64,7 +64,7 @@ class Fun(commands.Cog, command_attrs=dict(hidden=False)):
             embed.set_image(url=image)
             embed.set_footer(text=fact)
         else:
-            embed = discord.Embed(title="ERROR!",  description=f"Received a bad status code of {response.status_code}")
+            embed = discord.Embed(title="ERROR!",  description=f"Received a bad status code of {response.status}")
         
         await ctx.send(embed=embed)
 
