@@ -83,19 +83,24 @@ class Database:
     async def __aenter__(self) -> "Database":
         self.conn["config"] = await aiosqlite.connect('./database/config.db')
         self.conn["warnings"] = await aiosqlite.connect('./database/warnings.db')
+        self.conn["afk"] = await aiosqlite.connect('./database/afk.db')
         await self.init_dbs()
         return self
 
-    async def init_dbs(self):        
+    async def init_dbs(self):
         async with self.cursor('config') as cursor:
             await cursor.execute(PREFIX_CONFIG_SCHEMA)
             await cursor.execute(COMMANDS_CONFIG_SCHEMA)
 
         async with self.cursor('warnings') as cursor:
             await cursor.execute(WARNINGS_CONFIG_SCHEMA)
+        
+        async with self.cursor('afk') as cursor:
+            await cursor.execute(AFK_CONFIG_SCHEMA)
 
         await self.config.commit()
         await self.warnings.commit()
+        await self.afk.commit()
             
 
     async def __aexit__(self, *args: Any) -> None:
