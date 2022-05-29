@@ -26,7 +26,6 @@ class Fun(commands.Cog, command_attrs=dict(hidden=False)):
 
     @commands.hybrid_command(name="8ball")
     async def eightball(self, ctx: commands.Context, *, question: str):
-        # LONGEST LIST OF RESPONSES, FEEL FREE TO ADD/REMOVE OR OPTIMISE
         responses = ["As I see it, yes.", "Ask again later.", "Better not tell you now.", "Cannot predict now.", "Concentrate and ask again.",
                     "Do not count on it.", "It is certain.", "It is decidedly so.", "Most likely.", "My reply is no.", "My sources say no.",
                     "Outlook not so good.", "Outlook good.", "Reply hazy, try again.", "Signs point to yes.", "Very doubtful.", "Without a doubt.",
@@ -46,6 +45,27 @@ class Fun(commands.Cog, command_attrs=dict(hidden=False)):
 
         embed = discord.Embed(title="Ha ha ha, I grabbed your bot token.", description=bottoken)
         embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url)
+        await ctx.send(embed=embed)
+
+    @commands.hybrid_command(name="animal")
+    async def animal(self, ctx: commands.Context, animal: str = None):
+        options = ("dog", "cat", "panda", "fox", "red_panda", "koala", "bird", "raccoon", "kangaroo")
+        if animal is None:
+            animal = random.choice(options)
+
+        response = await self.bot.session.get(f"https://some-random-api.ml/animal/{animal}")
+        if 300 > response.status_code >= 200:
+            json = await response.json()
+
+            image = json["image"]
+            fact = json["fact"]
+
+            embed = discord.Embed(title="Here's the animal image you asked.")
+            embed.set_image(url=image)
+            embed.set_footer(text=fact)
+        else:
+            embed = discord.Embed(title="ERROR!",  description=f"Received a bad status code of {response.status_code}")
+        
         await ctx.send(embed=embed)
 
     # DO YOUR COMMANDS HERE I HAVE NOT ENOUGH CREATIVITY TO THINK ABOUT THEM KEKW
