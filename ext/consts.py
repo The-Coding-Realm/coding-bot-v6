@@ -1,9 +1,9 @@
 import discord
 
 __all__ = (
-    'INTENTS', 
-    'PREFIX_CONFIG_SCHEMA', 
-    'COMMANDS_CONFIG_SCHEMA', 
+    'INTENTS',
+    'PREFIX_CONFIG_SCHEMA',
+    'COMMANDS_CONFIG_SCHEMA',
     'WARNINGS_CONFIG_SCHEMA'
 )
 
@@ -39,4 +39,4 @@ WARNINGS_CONFIG_SCHEMA = """CREATE TABLE IF NOT EXISTS warnings (
                             reason TEXT,
                             date BIGINT
                         );
-                        """ 
+                        """

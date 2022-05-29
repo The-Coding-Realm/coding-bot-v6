@@ -8,6 +8,7 @@ from discord.ext import commands
 class Developer(commands.Cog, command_attrs=dict(hidden=True)):
 
     hidden = True
+
     def __init__(self, bot):
         self.bot = bot
 
@@ -112,6 +113,7 @@ class Developer(commands.Cog, command_attrs=dict(hidden=True)):
             + f' `{cog_}`' for cog_ in processing
         ]))
         await ctx.send(embed=embed)
+
 
 async def setup(bot):
     await bot.add_cog(Developer(bot))

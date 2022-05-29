@@ -1,17 +1,15 @@
-from ast import arguments
 import asyncio
 import datetime
 from io import BytesIO
-from re import I, purge
 from typing import Any, Dict, Optional, Union
 
 import discord
 import humanize
 from discord.ext import commands
+from ext.errors import InsufficientPrivilegeError
 from ext.models import TimeConverter
 from ext.ui.view import ConfirmButton
 
-from ext.errors import InsufficientPrivilegeError
 
 def trainee_check():
     def wrapper(ctx: commands.Context):
@@ -19,12 +17,15 @@ def trainee_check():
         if trainee_role:
             if ctx.author.top_role.position >= trainee_role.position:
                 return True
-        raise InsufficientPrivilegeError("{}, you don't have the permission to use this command.".format(ctx.author.mention))
+        raise InsufficientPrivilegeError(
+            "{}, you don't have the permission to use this command.".format(ctx.author.mention))
     return commands.check(wrapper)
+
 
 class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
 
     hidden = False
+
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
@@ -66,7 +67,7 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
                   reason: str = 'No reason was provided',
                   duration: Optional[datetime.timedelta] = None,
                   **kwargs: Dict[str, Any]
-    ) -> None:
+                  ) -> None:
         """
         A function that logs all moderation commands executed
 
@@ -87,31 +88,31 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
         """
         definition = {
             'ban': {
-                    'action': 'banned',
-                    'undo_action': 'unbanned',
-                    'color': discord.Color.red(),
-                    'icon': ':hammer:',
-                    'undo_icon': ':unlock:'
-                   },
+                'action': 'banned',
+                'undo_action': 'unbanned',
+                'color': discord.Color.red(),
+                'icon': ':hammer:',
+                'undo_icon': ':unlock:'
+            },
             'kick': {
-                     'action': 'kicked',
-                     'undo_action': ValueError("Cannot un-kick"),
-                     'color': discord.Color.orange(),
-                     'icon': ':boot:',
-                     'undo_icon': ':boot:'
-                    },
+                'action': 'kicked',
+                'undo_action': ValueError("Cannot un-kick"),
+                'color': discord.Color.orange(),
+                'icon': ':boot:',
+                'undo_icon': ':boot:'
+            },
             'mute': {
-                     'action': 'muted',
-                     'undo_action': 'unmuted',
-                     'color': discord.Color.light_grey(),
-                     'icon': ':mute:',
-                     'undo_icon': ':loud_sound:'                    },
+                'action': 'muted',
+                'undo_action': 'unmuted',
+                'color': discord.Color.light_grey(),
+                'icon': ':mute:',
+                'undo_icon': ':loud_sound:'},
             'warn': {
-                     'action': 'warned',
-                     'undo_action': f"removed warning ({kwargs.get('warn')}) from" if kwargs.get('warn') else "removed all warnings from", 
-                     'icon': ':warning:',
-                     'undo_icon': ':flag_white:',
-                     'color': discord.Color.yellow()
+                'action': 'warned',
+                'undo_action': f"removed warning ({kwargs.get('warn')}) from" if kwargs.get('warn') else "removed all warnings from",
+                'icon': ':warning:',
+                'undo_icon': ':flag_white:',
+                'color': discord.Color.yellow()
             }
         }
         if action not in definition:
@@ -120,14 +121,18 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
         if undo and isinstance(action_info.get('undo_action'), ValueError):
             raise action_info.get('undo_action')
 
-        action_string = action_info.get('action') if not undo else action_info.get('undo_action')
-        icon = action_info.get('icon') if not undo else action_info.get('undo_icon')
+        action_string = action_info.get(
+            'action') if not undo else action_info.get('undo_action')
+        icon = action_info.get(
+            'icon') if not undo else action_info.get('undo_icon')
         color = discord.Color.green() if undo else action_info.get('color')
 
         embed = discord.Embed(color=color, timestamp=discord.utils.utcnow())
-        embed.description = "{} **Action:** {}\n**Reason:** {}\n".format(icon, action_string.title(), reason)
+        embed.description = "{} **Action:** {}\n**Reason:** {}\n".format(
+            icon, action_string.title(), reason)
         if duration:
-            embed.description += "**Duration:** {}\n".format(humanize.naturaldelta(duration, minimum_unit='seconds'))
+            embed.description += "**Duration:** {}\n".format(
+                humanize.naturaldelta(duration, minimum_unit='seconds'))
         file = None
         if evidence := kwargs.get('evidence'):
             embed.description += "\n**Evidence provided below:**"
@@ -137,10 +142,11 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
             embed.set_image(url=f"attachment://evidence_{member.id}.png")
         else:
             embed.description += "\n**No evidence was provided.**"
-        embed.set_author(name=f'{moderator} (ID: {moderator.id})', icon_url=moderator.display_avatar.url)
+        embed.set_author(
+            name=f'{moderator} (ID: {moderator.id})', icon_url=moderator.display_avatar.url)
         embed.set_thumbnail(url=member.display_avatar.url)
-        logs = self.bot.get_channel(964165082437263361) # 816512034228666419
-        await logs.send(embed=embed, file=file)        
+        logs = self.bot.get_channel(964165082437263361)  # 816512034228666419
+        await logs.send(embed=embed, file=file)
 
     @commands.hybrid_command(name="kick")
     @commands.has_permissions(kick_members=True)
@@ -150,7 +156,7 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
             return await ctx.send(check_made)
         try:
             await member.send('You have been :boot: **Kicked** :boot: from '
-                               f'**{ctx.guild.name}**. \nReason: {reason}')
+                              f'**{ctx.guild.name}**. \nReason: {reason}')
         except discord.Forbidden:
             pass
         else:
@@ -168,7 +174,7 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
         evidence = await self.get_evidence(ctx)
         try:
             await member.send('You have been :hammer: **Banned** :hammer: from '
-                               f'**{ctx.guild.name}**. \nReason: {reason}')
+                              f'**{ctx.guild.name}**. \nReason: {reason}')
         except discord.Forbidden:
             pass
         else:
@@ -193,10 +199,10 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
         check_made = self.check_member_permission(ctx, member)
         if check_made:
             return await ctx.send(check_made)
-        
+
         try:
             await member.send('You have been :mute: **Muted** :hammer: from '
-                               f'**{ctx.guild.name}**. \nReason: {reason}')
+                              f'**{ctx.guild.name}**. \nReason: {reason}')
         except discord.Forbidden:
             pass
         else:
@@ -239,13 +245,14 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
             await ctx.guild.ban(user)
             counter_dict['banned'].append(user)
         embed = discord.Embed(color=discord.Color.red())
-        description = "Following members were banned:\n{}".format(', '.join(f'{user.mention}' for user in counter_dict['banned']))
+        description = "Following members were banned:\n{}".format(
+            ', '.join(f'{user.mention}' for user in counter_dict['banned']))
         if counter_dict['not_banned']:
             embed.color = discord.Color.yellow()
             description += f"\n\nFollowing members were not banned:\n{', '.join(f'{user.mention}' for user in counter_dict['not_banned'])}"
         embed.description = description
         await ctx.send(embed=embed)
-    
+
 #    @trainee_check()
     @commands.hybrid_command()
     async def warn(self, ctx: commands.Context, member: discord.Member, *, reason: str = None):
@@ -255,7 +262,8 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
             'warnings',
             table='warnings',
             columns=['guild_id', 'user_id', 'moderator_id', 'reason', 'date'],
-            values=[ctx.guild.id, member.id, ctx.author.id, reason, ctx.message.created_at.timestamp()]
+            values=[ctx.guild.id, member.id, ctx.author.id,
+                    reason, ctx.message.created_at.timestamp()]
         )
         await ctx.send(f'Warned {member.mention}')
         evidence = await self.capture_evidence(ctx)
@@ -271,14 +279,19 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
 #    @trainee_check()
     @commands.command(name="warnings")
     async def warnings(self, ctx: commands.Context, member: discord.Member):
-        embed = discord.Embed(title=f"{member} Warnings List", color=discord.Color.red())
+        embed = discord.Embed(
+            title=f"{member} Warnings List", color=discord.Color.red())
         records = await self.bot.conn.select_record('warnings',
-                                               arguments=['reason', 'moderator_id', 'date'],
-                                               table='warnings',
-                                               where=['guild_id', 'user_id'],
-                                               values=(ctx.guild.id, member.id),
-                                               extras=['ORDER BY date DESC']
-                                            )
+                                                    arguments=[
+                                                        'reason', 'moderator_id', 'date'],
+                                                    table='warnings',
+                                                    where=[
+                                                        'guild_id', 'user_id'],
+                                                    values=(
+                                                        ctx.guild.id, member.id),
+                                                    extras=[
+                                                        'ORDER BY date DESC']
+                                                    )
         if not records:
             return await ctx.send(f'{member.mention} has no warnings.')
 
@@ -288,9 +301,9 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
                 moderator = moderator.mention
             else:
                 moderator = 'Unknown'
-            embed.add_field(name="`{}.` Reason: {}".format(i, warning.reason), value=f"Issued by: {moderator} - <t:{int(warning.date)}:f>", inline=False)
+            embed.add_field(name="`{}.` Reason: {}".format(
+                i, warning.reason), value=f"Issued by: {moderator} - <t:{int(warning.date)}:f>", inline=False)
 
-        
         await ctx.send(embed=embed)
 
 #    @trainee_check()
@@ -299,49 +312,59 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
     async def clearwarning(self, ctx: commands.Context, member: discord.Member = None, index: int = None):
         member = member or ctx.author
         if index is None:
-            await self.bot.conn.delete_record('warnings', 
+            await self.bot.conn.delete_record('warnings',
                                               table='warnings',
                                               where=['guild_id', 'user_id'],
                                               values=(ctx.guild.id, member.id)
-                                            )
+                                              )
         else:
             records = await self.bot.conn.select_record('warnings',
-                                               arguments=['date'],
-                                               table='warnings',
-                                               where=['guild_id', 'user_id'],
-                                               values=(ctx.guild.id, member.id),
-                                               extras=['ORDER BY date DESC']
-                                            )
+                                                        arguments=['date'],
+                                                        table='warnings',
+                                                        where=[
+                                                            'guild_id', 'user_id'],
+                                                        values=(
+                                                            ctx.guild.id, member.id),
+                                                        extras=[
+                                                            'ORDER BY date DESC']
+                                                        )
 
             if not records:
                 return await ctx.send(f'{member.mention} has no warnings.')
 
             for i, sublist in enumerate(records, 1):
                 if index == i:
-                    await self.bot.conn.delete_record('warnings', 
+                    await self.bot.conn.delete_record('warnings',
                                                       table='warnings',
-                                                      where=['guild_id', 'user_id', 'date'],
-                                                      values=(ctx.guild.id, member.id, sublist.date)
-                                                    )
+                                                      where=[
+                                                          'guild_id', 'user_id', 'date'],
+                                                      values=(
+                                                          ctx.guild.id, member.id, sublist.date)
+                                                      )
                     break
 
         await ctx.reply(f'{member.mention}\'s warning was cleared.', allowed_mentions=discord.AllowedMentions(users=False))
         await self.log(action='warn', moderator=ctx.author, member=member, undo=True)
 
-
     # FEEL FREE TO MOVE THIS TO ANY COGS (IF YOU ADD ONE)
+
     @commands.hybrid_command(name="whois")
     async def whois(self, ctx: commands.Context, member: discord.Member = None):
         if member is None:
             member = ctx.author
         embed = discord.Embed(title=f"Showing user info : {member}")
         embed.set_thumbnail(url=member.display_avatar.url)
-        embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url) # Support for nitro users
+        # Support for nitro users
+        embed.set_footer(
+            text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url)
         embed.add_field(name="Discord User ID", value=member.id, inline=False)
-        embed.add_field(name="Account Created at", value=member.created_at, inline=False)
-        embed.add_field(name="Discord Joined at", value=member.joined_at, inline=False)
+        embed.add_field(name="Account Created at",
+                        value=member.created_at, inline=False)
+        embed.add_field(name="Discord Joined at",
+                        value=member.joined_at, inline=False)
 
         await ctx.send(embed=embed)
+
 
 async def setup(bot):
     await bot.add_cog(Moderation(bot))
