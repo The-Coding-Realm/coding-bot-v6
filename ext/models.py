@@ -2,7 +2,7 @@ import aiohttp
 import datetime as dt
 from dataclasses import dataclass, field
 import os
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional, Union
 
 import aiohttp
 import aiosqlite
@@ -11,8 +11,39 @@ from discord.ext import commands
 from DiscordUtils import InviteTracker
 from pytimeparse import parse
 
-from .consts import INTENTS
+from .consts import *
 from .helpers import WelcomeBanner, log_error
+
+
+class Record:
+    __slots__ = ('arguments',)
+ 
+    def __init__(self, arguments: dict):
+        self.arguments = arguments
+
+    def __getitem__(self, __item: Union[str, int]):
+        if isinstance(__item, str):
+            if __item in self.arguments:
+               return self.arguments[__item]
+            raise AttributeError(f'Dynamic object has no attribute \'{__item}\'')
+        elif isinstance(__item, int):
+           return tuple(self.arguments.values())[__item]
+
+    def __getattr__(self, __item: str):
+        if __item in self.arguments:
+               return self.arguments[__item]
+        raise AttributeError(f'Dynamic object has no attribute \'{__item}\'')
+
+    def __len__(self):
+        return len(self.arguments.keys())
+
+    def __repr__(self) -> str:
+        argument = ', '.join(f'{key}={value}' for key, value in self.arguments.items())
+        return f'<Record: {argument}>'
+
+    @classmethod
+    def from_tuple(cls, arguments: tuple, tuple_: tuple) -> 'Record':
+        return cls(dict(zip(arguments, tuple_)))
 
 @dataclass(slots=True, kw_only=True, repr=True)
 class Cache:
@@ -57,31 +88,6 @@ class Database:
         return self
 
     async def init_dbs(self):
-        PREFIX_CONFIG_SCHEMA = """CREATE TABLE IF NOT EXISTS prefixconf (
-                           id BIGINT,
-                           prefix TEXT
-                        );
-                        """
-        COMMANDS_CONFIG_SCHEMA = """CREATE TABLE IF NOT EXISTS commandconf (
-                            id BIGINT,
-                            command TEXT
-                        );
-                        """
-        WARNINGS_CONFIG_SCHEMA = """CREATE TABLE IF NOT EXISTS warnings (
-                            user_id BIGINT,
-                            guild_id BIGINT,
-                            moderator_id BIGINT,
-                            reason TEXT,
-                            date BIGINT
-                        );
-                        """ 
-        AFK_CONFIG_SCHEMA = """CREATE TABLE IF NOT EXISTS afk (
-                            userd_id BIGINT,
-                            member_name TEXT,
-                            reason TEXT,
-                            afk_time INTEGER
-                        );
-                        """
         async with self.cursor('config') as cursor:
             await cursor.execute(PREFIX_CONFIG_SCHEMA)
             await cursor.execute(COMMANDS_CONFIG_SCHEMA)
@@ -107,6 +113,47 @@ class Database:
     
     def __repr__(self) -> str:
         return f"<Database: {self.conn}>"
+
+    async def select_record(self, 
+                            connection: str,
+                            /,
+                            *, 
+                            arguments: List[str], 
+                            table: str, 
+                            where: List[str] = None, 
+                            values: Optional[tuple] = None,
+                            extras: List[str] 
+                    ) -> Optional[Record]:
+        SELECT_STATEMENT = """SELECT {} FROM {}""".format(", ".join(arguments), table)
+        if where is not None:
+            assign_question = map(lambda x:f"{x} = ?", where)
+            SELECT_STATEMENT += " WHERE {}".format(" AND ".join(assign_question))
+        if extras:
+            for stuff in extras:
+                SELECT_STATEMENT += f" {stuff}"
+        async with self.cursor(connection) as cursor:
+            await cursor.execute(SELECT_STATEMENT, values)
+            rows = [i async for i in cursor]
+            if rows:
+                return [Record.from_tuple(arguments, row) for row in rows]
+
+    async def delete_record(self, connection: str, /, *, table: str, where: List[str], values: Optional[tuple] = None) -> None:
+        DELETE_STATEMENT = f"DELETE FROM {table}"
+        if where is not None:
+            assign_question = map(lambda x:f"{x} = ?", where)
+            DELETE_STATEMENT += " WHERE {}".format(" AND ".join(assign_question))
+        async with self.cursor(connection) as cursor:
+            await cursor.execute(DELETE_STATEMENT, values)
+            await getattr(self, connection).commit()
+
+    async def insert_record(self, connection: str, /, *, table: str, values: tuple, columns: List[str]) -> None:
+        INSERT_STATEMENT = """
+                           INSERT INTO {}({}) VALUES ({})
+                           """.format(table, ', '.join(columns), ', '.join(['?'] * len(values)))
+        async with self.cursor(connection) as cursor:
+            await cursor.execute(INSERT_STATEMENT, values)
+            await getattr(self, connection).commit()
+
 
     @property
     def closed(self):
