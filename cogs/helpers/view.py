@@ -86,7 +86,7 @@ class code_output(discord.ui.View):
             self.timer.cancel()
             return
         await self.msg.edit(
-            embed=await self.cog.client.embed(
+            embed=await self.cog.bot.embed(
                 title="compiling **[** {} **]**".format(
                     int(time.time()) - self.timestamp
                 )
@@ -100,7 +100,7 @@ class code_output(discord.ui.View):
         self.timer.cancel()
         if "message" in self.res:
             return await self.msg.edit(
-                embed=await self.cog.client.embed(
+                embed=await self.cog.bot.embed(
                     title=" ",
                     description="```ansi\n[1;31m{}\n```".format(
                         self.res["message"]
@@ -132,7 +132,7 @@ class code_output(discord.ui.View):
                     child.style = discord.ButtonStyle.red
                     child.label = f"failed to run '{self.lang}' code  |  {int(time.time()) - self.timestamp}s"
         await self.msg.edit(
-            embed=await self.cog.client.embed(
+            embed=await self.cog.bot.embed(
                 title=" ", description=f"```{self.lang}\n{output[0]}\n```"
             ),
             view=self,
@@ -148,7 +148,7 @@ class code_output(discord.ui.View):
             if child.custom_id == "next":
                 child.disabled = False
         return await interaction.response.edit_message(
-            embed=await self.cog.client.embed(
+            embed=await self.cog.bot.embed(
                 title=" ",
                 description=f"```{self.lang}\n{self.output[self.page]}\n```",
             ),
@@ -176,7 +176,7 @@ class code_output(discord.ui.View):
             if child.custom_id == "prev":
                 child.disabled = False
         await interaction.response.edit_message(
-            embed=await self.cog.client.embed(
+            embed=await self.cog.bot.embed(
                 title=" ",
                 description=f"```{self.lang}\n{self.output[self.page]}\n```",
             ),
