@@ -1,4 +1,6 @@
 import random
+from urllib import parse
+from textwrap import wrap
 
 import discord
 from discord.ext import commands
@@ -106,6 +108,33 @@ class Fun(commands.Cog, command_attrs=dict(hidden=False)):
             embed = discord.Embed(title="ERROR!",  description=f"Received a bad status code of {response.status}")
             embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url)
             
+        await ctx.send(embed=embed)
+
+    @binary.hybrid_command(name="lyrics")
+    async def lyrics(self, ctx, *, query: str = None):
+        if not query:
+            embed = discord.Embed(title = "No search argument!", description=f"You must provide a search argument or I couldn't find the lyrics")
+            embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url)
+        song = parse.quote(query)
+
+        response = await self.bot.session.get(f"https://some-random-api.ml/lyrics?title={song}")
+        if response.status in range(200, 300):
+            json = await response.json()
+            
+            lyrics = json['lyrics']
+            artist = json['author']
+            title = json['title']
+            thumbnail = json['thumbnail']['genius']
+
+            for chunk in wrap(lyrics, 4096, replace_whitespace = False):
+                embed = discord.Embed(title = f"{artist} - {title}", description = chunk)
+                embed.set_thumbnail(url=thumbnail)
+                embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url)
+
+        else:
+            embed = discord.Embed(title="ERROR!",  description=f"Received a bad status code of {response.status}")
+            embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url)
+
         await ctx.send(embed=embed)
 
     # DO YOUR COMMANDS HERE I HAVE NOT ENOUGH CREATIVITY TO THINK ABOUT THEM KEKW
