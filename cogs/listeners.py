@@ -116,9 +116,9 @@ class ListenerCog(commands.Cog, command_attrs=dict(hidden=True)):
     async def on_message_edit(self, message_before, msg):
         if msg.author.bot:
             return
-        if len(self.client.message_cache) > 200:
-            self.client.message_cache.clear()
-        await self.client.process_edit(message_before, msg)
+        if len(self.bot.message_cache) > 200:
+            self.bot.message_cache.clear()
+        await self.bot.process_edit(message_before, msg)
 
 
 async def setup(bot):

@@ -8,9 +8,9 @@ from .helpers.view import code_output, rocks
 
 
 class api(commands.Cog):
-    def __init__(self, client):
+    def __init__(self, bot):
         self.session = http()
-        self.client = client
+        self.bot = bot
         self.regex = {
             "codeblock": re.compile(r"(\w*)\s*(?:```)(\w*)?([\s\S]*)(?:```$)")
         }
@@ -21,18 +21,18 @@ class api(commands.Cog):
         lang = matches[0][0] or matches[0][1]
         if not matches:
             return await msg.edit(
-                await self.client.embed(
+                await self.bot.embed(
                     title="```ansi\n[1;31mInvalid codeblock\n```"
                 )
             )
         if not lang:
             return await msg.edit(
-                await self.client.embed(
+                await self.bot.embed(
                     title="```ansi\n[1;31mno language specified\n```"
                 )
             )
         code = matches[0][2]
-        msg = await self.client.reply(ctx, "...")
+        msg = await self.bot.reply(ctx, "...")
         await msg.edit(
             view=code_output(
                 self,
@@ -50,7 +50,7 @@ class api(commands.Cog):
             desc = rock["desc"]
             image = rock["image"]
             rating = rock["rating"]
-            embed = await self.client.embed(
+            embed = await self.bot.embed(
                 title=f"🪨   {name}",
                 url=image or "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
                 description=f"```yaml\n{desc}```",
@@ -61,7 +61,7 @@ class api(commands.Cog):
             return (embed, rating)
 
         rock_info = await get_rock(self)
-        return await self.client.reply(
+        return await self.bot.reply(
             ctx,
             embed=rock_info[0],
             view=rocks(
@@ -79,13 +79,13 @@ class api(commands.Cog):
             if (number is None)
             else self.session.getNumber(number)
         )
-        embed = await self.client.embed(
+        embed = await self.bot.embed(
             title=f"**{number}**",
             description=" ",
             url="https://www.youtube.com/watch?v=dQw4w9WgXcQ",
         )
-        return await self.client.reply(ctx, embed=embed)
+        return await self.bot.reply(ctx, embed=embed)
 
 
-async def setup(client):
-    await client.add_cog(api(client))
+async def setup(bot):
+    await bot.add_cog(api(bot))
