@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import os
 
 from discord.ext import commands
@@ -11,12 +13,12 @@ bot = CodingBot()
 
 
 @bot.before_invoke
-async def before_invoke(ctx: commands.Context):
+async def before_invoke(ctx: commands.Context[CodingBot]):
     bot.processing_commands += 1
 
 
 @bot.after_invoke
-async def after_invoke(ctx: commands.Context):
+async def after_invoke(ctx: commands.Context[CodingBot]):
     bot.processing_commands -= 1
 
 

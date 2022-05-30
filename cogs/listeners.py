@@ -1,23 +1,28 @@
-from datetime import datetime
+from __future__ import annotations
+
+import random
 import sys
 import traceback
-import time
-import random
+from datetime import datetime
 
 import discord
 from discord.ext import commands
 from ext.errors import InsufficientPrivilegeError
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from ext.models import CodingBot
 
 
 class ListenerCog(commands.Cog, command_attrs=dict(hidden=True)):
 
     hidden = True
 
-    def __init__(self, bot) -> None:
+    def __init__(self, bot: CodingBot) -> None:
         self.bot = bot
 
     @commands.Cog.listener()
-    async def on_command_error(self, ctx: commands.Context, error):
+    async def on_command_error(self, ctx: commands.Context[CodingBot], error: Exception):
         if isinstance(error, commands.CommandNotFound):
             return
 
@@ -51,7 +56,6 @@ class ListenerCog(commands.Cog, command_attrs=dict(hidden=True)):
             where=["user_id"],
             values=[message.author.id],
         )
-        print(record)
         if record:
             record = record[0]
             time_spent = datetime.utcnow() - datetime.utcfromtimestamp(
@@ -61,19 +65,19 @@ class ListenerCog(commands.Cog, command_attrs=dict(hidden=True)):
                 pass
             else:
                 await self.bot.conn.delete_record(
-                    "afk",
-                    table="afk",
-                    where=["user_id"],
-                    values=[message.author.id],
+                    'afk',
+                    table='afk',
+                    where=('user_id',),
+                    values=(message.author.id,),
                 )
                 try:
-                    name = message.author.display_name.split(" ")[1:]
-                    await message.author.edit(nick=" ".join(name))
+                    name = message.author.display_name.split(' ')[1:]
+                    await message.author.edit(nick=" ".join(name))  # type: ignore
                 except (discord.HTTPException, discord.Forbidden):
                     pass
 
                 staff_role = message.guild.get_role(795145820210462771)
-                if staff_role and staff_role in message.author.roles:
+                if staff_role and staff_role in message.author.roles:  # type: ignore
                     on_pat_staff = message.guild.get_role(726441123966484600)
                     try:
                         await message.author.add_roles(on_pat_staff)
@@ -121,5 +125,5 @@ class ListenerCog(commands.Cog, command_attrs=dict(hidden=True)):
         await self.bot.process_edit(message_before, msg)
 
 
-async def setup(bot):
+async def setup(bot: CodingBot):
     await bot.add_cog(ListenerCog(bot))
