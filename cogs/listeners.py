@@ -4,11 +4,12 @@ import random
 import sys
 import traceback
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 import discord
 from discord.ext import commands
+
 from ext.errors import InsufficientPrivilegeError
-from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from ext.models import CodingBot
@@ -72,7 +73,8 @@ class ListenerCog(commands.Cog, command_attrs=dict(hidden=True)):
                 )
                 try:
                     name = message.author.display_name.split(' ')[1:]
-                    await message.author.edit(nick=" ".join(name))  # type: ignore
+                    # type: ignore
+                    await message.author.edit(nick=" ".join(name))
                 except (discord.HTTPException, discord.Forbidden):
                     pass
 

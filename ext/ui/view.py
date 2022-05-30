@@ -1,7 +1,8 @@
 
-from typing import TYPE_CHECKING, Optional
-import time
 from __future__ import annotations
+
+import time
+from typing import TYPE_CHECKING, Optional
 
 import discord
 from discord import ui
@@ -189,8 +190,9 @@ class Piston(discord.ui.View):
 
 
 if TYPE_CHECKING:
-    from ext.models import CodingBot
     from typing_extensions import Self
+
+    from ext.models import CodingBot
 
 
 class ConfirmButton(ui.View):
