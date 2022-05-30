@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import random
-from urllib import parse
 from textwrap import wrap
 
 import discord
@@ -124,9 +123,8 @@ class Fun(commands.Cog, command_attrs=dict(hidden=False)):
         if not query:
             embed = discord.Embed(title = "No search argument!", description=f"You must provide a search argument or I couldn't find the lyrics")
             embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url)
-        song = parse.quote(query)
 
-        response = await self.bot.session.get(f"https://some-random-api.ml/lyrics?title={song}")
+        response = await self.bot.session.get(f"https://some-random-api.ml/lyrics?title={query}")
         if response.status in range(200, 300):
             json = await response.json()
             
