@@ -5,10 +5,12 @@ from textwrap import wrap
 import discord
 from discord.ext import commands
 
+from ext.models import CodingBot
+
 class Fun(commands.Cog, command_attrs=dict(hidden=False)):
 
-    hidden = False
-    def __init__(self, bot):
+    hidden = False    
+    def __init__(self, bot: CodingBot) -> None:
         self.bot = bot
 
     @commands.hybrid_command(name="meme")

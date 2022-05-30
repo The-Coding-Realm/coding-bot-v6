@@ -2,13 +2,14 @@ import random
 
 import discord
 from discord.ext import commands, tasks
+from ext.models import CodingBot
 
 
-class TaskCog(commands.Cog):
+class TaskCog(commands.Cog, command_attrs=dict(hidden=True)):
 
     hidden = True
 
-    def __init__(self, bot):
+    def __init__(self, bot: CodingBot) -> None:
         self.bot = bot
 
     async def cog_load(self) -> None:

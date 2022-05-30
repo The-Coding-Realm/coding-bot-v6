@@ -7,7 +7,7 @@ import discord
 import humanize
 from discord.ext import commands
 from ext.errors import InsufficientPrivilegeError
-from ext.models import TimeConverter
+from ext.models import CodingBot, TimeConverter
 from ext.ui.view import ConfirmButton
 
 
@@ -26,7 +26,7 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
 
     hidden = False
 
-    def __init__(self, bot: commands.Bot):
+    def __init__(self, bot: CodingBot):
         self.bot = bot
 
     def check_member_permission(self, ctx, member):
@@ -38,6 +38,8 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
             return f"You can't {ctx.command.name} yourself."
         elif member == ctx.guild.owner:
             return f"You can't {ctx.command.name} the server owner."
+        elif ctx.guild.me.top_role.position <= member.top_role.position:
+            return f"I can't {ctx.command.name} this member. They have a higher or equal role than me."
 
     async def capture_evidence(self, ctx) -> Optional[discord.Attachment]:
         view = ConfirmButton(ctx)
@@ -64,7 +66,7 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
                   undo: bool = False,
                   member: discord.Member,
                   moderator: discord.Member,
-                  reason: str = 'No reason was provided',
+                  reason: Optional[str] = None,
                   duration: Optional[datetime.timedelta] = None,
                   **kwargs: Dict[str, Any]
                   ) -> None:
@@ -115,19 +117,22 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
                 'color': discord.Color.yellow()
             }
         }
-        if action not in definition:
-            raise ValueError(f"Invalid action {action}")
-        action_info = definition.get(action)
-        if undo and isinstance(action_info.get('undo_action'), ValueError):
-            raise action_info.get('undo_action')
+        action_info = definition.get(
+            action, ValueError(f"Invalid action: {action}"))
+        if isinstance(action_info, ValueError):
+            raise action_info
 
-        action_string = action_info.get(
-            'action') if not undo else action_info.get('undo_action')
-        icon = action_info.get(
-            'icon') if not undo else action_info.get('undo_icon')
+        undo_action = action_info.get('undo_action')
+
+        if undo and isinstance(undo_action, ValueError):
+            raise undo_action
+
+        action_string = action_info['action'] if not undo else action_info['undo_action']
+        icon = action_info['icon'] if not undo else action_info['undo_icon']
         color = discord.Color.green() if undo else action_info.get('color')
 
         embed = discord.Embed(color=color, timestamp=discord.utils.utcnow())
+
         embed.description = "{} **Action:** {}\n**Reason:** {}\n".format(
             icon, action_string.title(), reason)
         if duration:
@@ -148,6 +153,7 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
         logs = self.bot.get_channel(964165082437263361)  # 816512034228666419
         await logs.send(embed=embed, file=file)
 
+    @trainee_check()
     @commands.hybrid_command(name="kick")
     @commands.has_permissions(kick_members=True)
     async def kick(self, ctx: commands.Context, member: discord.Member, *, reason: str = None):
@@ -165,23 +171,25 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
             evidence = await self.capture_evidence(ctx)
             await self.log(action='kick', moderator=ctx.author, member=member, reason=reason, evidence=evidence)
 
+#    @trainee_check()
     @commands.hybrid_command(name="ban")
     @commands.has_permissions(ban_members=True)
-    async def ban(self, ctx: commands.Context, member: discord.Member, *, reason: str = None):
+    async def ban(self, ctx: commands.Context, member: Union[discord.Member, discord.User], *, reason: str = None):
         check_made = self.check_member_permission(ctx, member)
         if check_made:
             return await ctx.send(check_made)
-        evidence = await self.get_evidence(ctx)
-        try:
-            await member.send('You have been :hammer: **Banned** :hammer: from '
-                              f'**{ctx.guild.name}**. \nReason: {reason}')
-        except discord.Forbidden:
-            pass
         else:
-            await member.ban(reason=reason, delete_message_days=7)
+            try:
+                await member.send('You have been :hammer: **Banned** :hammer: from '
+                                  f'**{ctx.guild.name}**. \nReason: {reason}')
+            except (discord.Forbidden, discord.HTTPException):
+                pass
+            await ctx.guild.ban(member, reason=reason, delete_message_days=7)
             await ctx.send(f'Banned {member.mention}')
+            evidence = await self.capture_evidence(ctx)
             await self.log(action='ban', moderator=ctx.author, member=member, undo=False, reason=reason, duration=None, evidence=evidence)
 
+    @trainee_check()
     @commands.hybrid_command(name="unban")
     @commands.has_permissions(ban_members=True)
     async def unban(self, ctx: commands.Context, user: discord.User, *, reason: str = None):
@@ -193,6 +201,7 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
             await ctx.send(f'Unbanned {user.mention}')
             await self.log(action='ban', moderator=ctx.author, member=user, undo=True, reason=reason, duration=None)
 
+    @trainee_check()
     @commands.hybrid_command(name="mute", aliases=['timeout'])
     @commands.has_permissions(manage_roles=True)
     async def mute(self, ctx: commands.Context, member: discord.Member, duration: TimeConverter, *, reason: str = None):
@@ -253,7 +262,7 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
         embed.description = description
         await ctx.send(embed=embed)
 
-#    @trainee_check()
+    @trainee_check()
     @commands.hybrid_command()
     async def warn(self, ctx: commands.Context, member: discord.Member, *, reason: str = None):
         if not reason:
@@ -269,14 +278,14 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
         evidence = await self.capture_evidence(ctx)
         await self.log(action='warn', moderator=ctx.author, member=member, reason=reason, evidence=evidence)
 
-#    @trainee_check()
+    @trainee_check()
     @commands.hybrid_command(name="purge")
     @commands.has_permissions(manage_messages=True)
     async def purge(self, ctx: commands.Context, amount: int = 1):
         purged_amt = len(await ctx.channel.purge(limit=amount+1))
         await ctx.send(f'Purged {purged_amt} messages in {ctx.channel.mention}')
 
-#    @trainee_check()
+    @trainee_check()
     @commands.command(name="warnings")
     async def warnings(self, ctx: commands.Context, member: discord.Member):
         embed = discord.Embed(
@@ -306,7 +315,7 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
 
         await ctx.send(embed=embed)
 
-#    @trainee_check()
+    @trainee_check()
     @commands.hybrid_command(name="clearwarning")
     @commands.has_permissions(manage_messages=True)
     async def clearwarning(self, ctx: commands.Context, member: discord.Member = None, index: int = None):

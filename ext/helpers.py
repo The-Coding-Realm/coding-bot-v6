@@ -1,9 +1,11 @@
+from ast import Bytes
 import asyncio
 import datetime as dt
 import functools
 import sys
 import traceback
 from io import BytesIO
+from typing import Union
 
 import discord
 import humanize
@@ -12,16 +14,17 @@ from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
 async def log_error(bot, event_method, *args, **kwargs):
     channel = bot.get_channel(826861610173333595)
-    try:
-        title = 'Ignoring exception in {}'.format(event_method)
-        err = ''.join(traceback.format_exc())
-        embed = discord.Embed(title=title, description=f'```py\n{err}```',
-                              timestamp=dt.datetime.now(dt.timezone.utc),
-                              color=discord.Color.red())
-        await channel.send(embed=embed)
-    except discord.errors.Forbidden:
-        print('Ignoring exception in {}'.format(event_method), file=sys.stderr)
-        traceback.print_exc()
+    if channel:
+        try:
+            title = 'Ignoring exception in {}'.format(event_method)
+            err = ''.join(traceback.format_exc())
+            embed = discord.Embed(title=title, description=f'```py\n{err}```',
+                                timestamp=discord.utils.utcnow(),
+                                color=discord.Color.red())
+            await channel.send(embed=embed)
+        except discord.Forbidden:
+            print('Ignoring exception in {}'.format(event_method), file=sys.stderr)
+            traceback.print_exc()
 
 
 def executor():
@@ -45,11 +48,10 @@ class WelcomeBanner:
         }
 
     @executor()
-    def generate_image(self, **kwargs) -> discord.File:
+    def generate_image(self, member: discord.Member, **kwargs) -> discord.File:
         inviter = kwargs.get('inviter')
         vanity = kwargs.get('vanity')
         inv = kwargs.get('inv')
-        member = kwargs.get('member')
         profile_picture = kwargs.pop('pfp')
         banner = kwargs.pop('banner')
         ago = kwargs.pop('ago')
@@ -126,14 +128,14 @@ class WelcomeBanner:
         img = BytesIO(await member.avatar.with_format("png").with_size(128).read())
         try:
             banner = BytesIO(await member.guild.banner.with_format("png").with_size(512).read())
-        except:
+        except AttributeError:
             banner = './storage/banner.png'
 
         file = await self.generate_image(
+            member,
             inviter=inviter,
             vanity=vanity,
             inv=inv,
-            member=member,
             pfp=img,
             banner=banner,
             ago=ago
