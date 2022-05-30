@@ -1,19 +1,19 @@
-from datetime import datetime
+import random
 import sys
 import traceback
-import time
-import random
+from datetime import datetime
 
 import discord
 from discord.ext import commands
 from ext.errors import InsufficientPrivilegeError
+from ext.models import CodingBot
 
 
 class ListenerCog(commands.Cog, command_attrs=dict(hidden=True)):
 
     hidden = True
-
-    def __init__(self, bot) -> None:
+    
+    def __init__(self, bot: CodingBot) -> None:
         self.bot = bot
 
     @commands.Cog.listener()
@@ -52,7 +52,6 @@ class ListenerCog(commands.Cog, command_attrs=dict(hidden=True)):
             where=['user_id'],
             values=[message.author.id]
         )
-        print(record)
         if record:
             record = record[0]
             time_spent = datetime.utcnow() - datetime.utcfromtimestamp(record.afk_time)
@@ -74,10 +73,11 @@ class ListenerCog(commands.Cog, command_attrs=dict(hidden=True)):
                 staff_role = message.guild.get_role(795145820210462771)
                 if staff_role and staff_role in message.author.roles:
                     on_pat_staff = message.guild.get_role(726441123966484600)
-                    try:
-                        await message.author.add_roles(on_pat_staff)
-                    except (discord.Forbidden, discord.HTTPException):
-                        pass
+                    if on_pat_staff:
+                        try:
+                            await message.author.add_roles(on_pat_staff)
+                        except (discord.Forbidden, discord.HTTPException):
+                            pass
                 emoji = random.choice(('⚪', '🔴', '🟤', '🟣', '🟢', '🟡', '🟠', '🔵'))
                 em = discord.Embed(
                     description=f"{emoji} Welcome back, I removed your AFK!",

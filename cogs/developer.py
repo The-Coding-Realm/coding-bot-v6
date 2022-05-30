@@ -1,18 +1,21 @@
 import os
+import traceback
 
 import discord
 import ext.helpers as helpers
 from discord.ext import commands
+from ext.models import CodingBot
 
 
 class Developer(commands.Cog, command_attrs=dict(hidden=True)):
 
     hidden = True
 
-    def __init__(self, bot):
+    def __init__(self, bot: CodingBot) -> None:
         self.bot = bot
 
     @commands.command(name="sync")
+    @commands.is_owner()
     async def sync(self, ctx):
         """
         Sync the database
@@ -22,33 +25,53 @@ class Developer(commands.Cog, command_attrs=dict(hidden=True)):
 
     @commands.command(name='load', aliases=['l'])
     @commands.is_owner()
-    async def _load(self, ctx, cog_, save: bool = False):
-        if save:
-            helpers.storage(self.bot, key='cogs', value=cog_, method='append')
-        await self.bot.load_extension(cog_)
-        embed = discord.Embed(
-            title='Success', description='Saved Preference' if save else None,
-            color=discord.Color.green()
-        )
+    async def _load(self, ctx, cog_):
+        try:
+            await self.bot.load_extension(cog_)
+            embed = discord.Embed(
+                title=f'Successfully loaded extension: `{cog_}`',
+                color=discord.Color.green()
+            )
+        except Exception as e:
+            embed = discord.Embed(
+                title=f'Failed to load extension: `{cog_}`',
+                color=discord.Color.red()
+            )
+            embed.description = f'```py\n{traceback.format_exc()}\n```'
         await ctx.send(embed=embed)
 
     @commands.command(name='unload', aliases=['u'])
     @commands.is_owner()
     async def _unload(self, ctx, cog_, save: bool = False):
-        if save:
-            helpers.storage(self.bot, key='cogs', value=cog_, method='remove')
-        await self.bot.unload_extension(cog_)
-        embed = discord.Embed(
-            title='Success', description='Saved Preference' if save else None,
-            color=discord.Color.green()
-        )
+        try:
+            await self.bot.unload_extension(cog_)
+            embed = discord.Embed(
+                title=f'Successfully unloaded extension: `{cog_}`',
+                color=discord.Color.green()
+            )
+        except Exception as e:
+            embed = discord.Embed(
+                title=f'Failed to unload extension: `{cog_}`',
+                color=discord.Color.red()
+            )
+            embed.description = f'```py\n{traceback.format_exc()}\n```'
         await ctx.send(embed=embed)
 
     @commands.command(name='reload', aliases=['r'])
     @commands.is_owner()
     async def _reload(self, ctx, cog_):
-        self.bot.reload_extension(cog_)
-        embed = discord.Embed(title='Success', color=discord.Color.green())
+        try:
+            self.bot.reload_extension(cog_)
+            embed = discord.Embed(
+                title=f'Successfully reloaded extension: `{cog_}`',
+                color=discord.Color.green()
+            )
+        except Exception as e:
+            embed = discord.Embed(
+                title=f'Failed to reload extension: `{cog_}`',
+                color=discord.Color.red()
+            )
+            embed.description = f'```py\n{traceback.format_exc()}\n```'
         await ctx.send(embed=embed)
 
     @commands.command(name='loadall', aliases=['la'])

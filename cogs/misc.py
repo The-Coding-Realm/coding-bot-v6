@@ -1,15 +1,18 @@
 import random
-import time
 
 import discord
 from discord.ext import commands
+from ext.models import CodingBot
 
-class Misc(commands.Cog):
-    def __init__(self, bot: commands.Bot):
+
+class Misc(commands.Cog, command_attrs=dict(hidden=False)):
+
+    hidden = False
+    
+    def __init__(self, bot: CodingBot):
         self.bot = bot
 
     @commands.hybrid_command(name="afk", aliases = ["afk-set", "set-afk"], help = "Sets your afk")
-
     @commands.cooldown(1, 10, commands.BucketType.member)
     async def afk(self, ctx: commands.Context, *, reason: str = None):
         if not reason:

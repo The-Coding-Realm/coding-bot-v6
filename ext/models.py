@@ -2,7 +2,7 @@ import aiohttp
 import datetime as dt
 from dataclasses import dataclass, field
 import os
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, Iterable, List, Optional, Union
 
 import aiohttp
 import aiosqlite
@@ -11,7 +11,13 @@ from discord.ext import commands
 from DiscordUtils import InviteTracker
 from pytimeparse import parse
 
-from .consts import *
+from .consts import (
+    INTENTS,
+    PREFIX_CONFIG_SCHEMA,
+    COMMANDS_CONFIG_SCHEMA,
+    WARNINGS_CONFIG_SCHEMA,
+    AFK_CONFIG_SCHEMA
+)
 from .helpers import WelcomeBanner, log_error
 
 
@@ -44,7 +50,7 @@ class Record:
         return f'<Record: {argument}>'
 
     @classmethod
-    def from_tuple(cls, arguments: tuple, tuple_: tuple) -> 'Record':
+    def from_tuple(cls, arguments: Iterable, tuple_: Iterable) -> 'Record':
         return cls(dict(zip(arguments, tuple_)))
 
 
@@ -110,8 +116,7 @@ class Database:
         await self.close()
 
     def cursor(self, conn: str) -> aiosqlite.Cursor:
-        if hasattr(self, conn):
-            return getattr(self, conn).cursor()
+        return getattr(self, conn).cursor()
 
     def __repr__(self) -> str:
         return f"<Database: {self.conn}>"
@@ -125,7 +130,7 @@ class Database:
                             where: List[str] = None,
                             values: Optional[tuple] = None,
                             extras: Optional[List[str]] = None,
-                        ) -> Optional[Record]:
+                        ) -> Optional[List[Record]]:
         SELECT_STATEMENT = """SELECT {} FROM {}""".format(
             ", ".join(arguments), table
         )
@@ -142,6 +147,7 @@ class Database:
             rows = [i async for i in cursor]
             if rows:
                 return [Record.from_tuple(arguments, row) for row in rows]
+            return None
 
     async def delete_record(self, connection: str, /, *, table: str, where: List[str], values: Optional[tuple] = None) -> None:
         DELETE_STATEMENT = f"DELETE FROM {table}"
@@ -182,7 +188,7 @@ class CodingBot(commands.Bot):
             intents=INTENTS,
             case_insensitive=True
         )
-        self.conn: Database = None
+        self.conn: Optional[Database] = None
         self.tracker = InviteTracker(self)
         self.default_prefixes = [',']
         self.welcomer = WelcomeBanner(self)
@@ -225,27 +231,32 @@ class CodingBot(commands.Bot):
     async def on_member_join(self, member: discord.Member) -> None:
         rules = member.guild.rules_channel
         if rules:
-            rules = rules.mention
+            rules_channel = rules.mention
         else:
-            rules = "No official rule channel set yet."
+            rules_channel = "No official rule channel set yet."
         embed = discord.Embed(
             title=f'Welcome to {member.guild.name}!',
             description=(
                 f'Welcome {member.mention}, we\'re glad you joined! Before you get'
                 ' started, here are some things to check out: \n**Read the Rules:'
-                f'** {rules} \n**Get roles:** <#726074137168183356> and '
+                f'** {rules_channel} \n**Get roles:** <#726074137168183356> and '
                 '<#806909970482069556> \n**Want help? Read here:** '
                 '<#799527165863395338> and <#754712400757784709>'),
             timestamp=dt.datetime.now(dt.timezone.utc)
         )
         file = await self.welcomer.construct_image(member=member)
         channel = member.guild.get_channel(743817386792058971)
-        await channel.send(content=member.mention, file=file)
+        
+        if isinstance(channel, discord.TextChannel):
+            await channel.send(content=member.mention, file=file)
+
         verify_here = member.guild.get_channel(759220767711297566)
-        await verify_here.send(
-            f'Welcome {member.mention}! Follow the instructions in other channels to get verified. :)',
-            embed=embed
-        )
+
+        if isinstance(verify_here, discord.TextChannel):
+            await verify_here.send(
+                f'Welcome {member.mention}! Follow the instructions in other channels to get verified. :)',
+                embed=embed
+            )
 
     async def on_error(self, event_method, *args, **kwargs):
         await log_error(self, event_method, *args, **kwargs)
