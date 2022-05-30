@@ -1,12 +1,8 @@
-import asyncio
-import threading
 import time
 
 import discord
-from discord.ext import commands, tasks
+from discord.ext import tasks
 from more_itertools import sliced
-
-from web import webpage
 
 
 class rocks(discord.ui.View):
