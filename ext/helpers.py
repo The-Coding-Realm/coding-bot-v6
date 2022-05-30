@@ -1,11 +1,13 @@
 from __future__ import annotations
 
+from ast import Bytes
 import asyncio
 import datetime as dt
 import functools
 import sys
 import traceback
 from io import BytesIO
+from typing import Union
 
 import discord
 import humanize
@@ -18,7 +20,6 @@ if TYPE_CHECKING:
 
 async def log_error(bot: CodingBot, event_method: str, *args: Any, **kwargs: Any):
     channel = bot.get_channel(826861610173333595)
-
     try:
         title = 'Ignoring exception in {}'.format(event_method)
         err = ''.join(traceback.format_exc())
@@ -54,11 +55,10 @@ class WelcomeBanner:
         }
 
     @executor()
-    def generate_image(self, **kwargs: Any) -> discord.File:
+    def generate_image(self, member: discord.Member, **kwargs: Any) -> discord.File:
         inviter = kwargs.get('inviter')
         vanity = kwargs.get('vanity')
         inv = kwargs.get('inv')
-        member = kwargs.get('member')
         profile_picture = kwargs.pop('pfp')
         banner = kwargs.pop('banner')
         ago = kwargs.pop('ago')
@@ -135,14 +135,14 @@ class WelcomeBanner:
         img = BytesIO(await member.avatar.with_format("png").with_size(128).read())
         try:
             banner = BytesIO(await member.guild.banner.with_format("png").with_size(512).read())
-        except:
+        except AttributeError:
             banner = './storage/banner.png'
 
         file = await self.generate_image(
+            member,
             inviter=inviter,
             vanity=vanity,
             inv=inv,
-            member=member,
             pfp=img,
             banner=banner,
             ago=ago

@@ -4,7 +4,7 @@ import discord
 from discord import ui
 from discord.ext import commands
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 if TYPE_CHECKING:
     from ext.models import CodingBot
@@ -17,7 +17,8 @@ class ConfirmButton(ui.View):
 
     def __init__(self, ctx: commands.Context[CodingBot]) -> None:
         super().__init__(timeout=60)
-        self.confirmed = None
+        self.confirmed: Optional[bool] = None
+        self.message: Optional[discord.Message] = None
         self.ctx = ctx
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
@@ -27,7 +28,8 @@ class ConfirmButton(ui.View):
         return True
 
     async def on_timeout(self) -> None:
-        return await self.message.delete()
+        if self.message:
+            return await self.message.delete()
 
     @ui.button(label='Yes', style=discord.ButtonStyle.green)
     async def confirm(

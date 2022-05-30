@@ -4,7 +4,7 @@ import aiohttp
 import datetime as dt
 from dataclasses import dataclass, field
 import os
-from typing import Any, Dict, List, Optional, Union, Tuple, Set
+from typing import Any, Dict, List, Optional, Union, Tuple, Set, Iterable
 
 import aiosqlite
 import discord
@@ -12,7 +12,13 @@ from discord.ext import commands
 from DiscordUtils import InviteTracker
 from pytimeparse import parse
 
-from .consts import *
+from .consts import (
+    INTENTS,
+    PREFIX_CONFIG_SCHEMA,
+    COMMANDS_CONFIG_SCHEMA,
+    WARNINGS_CONFIG_SCHEMA,
+    AFK_CONFIG_SCHEMA
+)
 from .helpers import WelcomeBanner, log_error
 
 
@@ -45,7 +51,7 @@ class Record:
         return f'<Record: {argument}>'
 
     @classmethod
-    def from_tuple(cls, arguments: Tuple[Any, ...], tuple_: Tuple[Any, ...]) -> Record:
+    def from_tuple(cls, arguments: Iterable[Any], tuple_: Iterable[Any]) -> Record:
         return cls(dict(zip(arguments, tuple_)))
 
 
@@ -111,8 +117,7 @@ class Database:
         await self.close()
 
     def cursor(self, conn: str) -> aiosqlite.Cursor:
-        if hasattr(self, conn):
-            return getattr(self, conn).cursor()
+        return getattr(self, conn).cursor()
 
     def __repr__(self) -> str:
         return f"<Database: {self.conn}>"
@@ -143,6 +148,7 @@ class Database:
             rows: List[aiosqlite.Row[Any]] = [i async for i in cursor]  # type: ignore # Type checker cries unnecessarily.
             if rows:
                 return [Record.from_tuple(arguments, row) for row in rows]
+            return None
 
     async def delete_record(self, connection: str, /, *, table: str, where: Tuple[str, ...], values: Optional[Tuple[Any, ...]] = None) -> None:
         delete_statement = f"DELETE FROM {table}"
@@ -226,15 +232,15 @@ class CodingBot(commands.Bot):
     async def on_member_join(self, member: discord.Member) -> None:
         rules = member.guild.rules_channel
         if rules:
-            rules = rules.mention
+            rules_channel = rules.mention
         else:
-            rules = "No official rule channel set yet."
+            rules_channel = "No official rule channel set yet."
         embed = discord.Embed(
             title=f'Welcome to {member.guild.name}!',
             description=(
                 f'Welcome {member.mention}, we\'re glad you joined! Before you get'
                 ' started, here are some things to check out: \n**Read the Rules:'
-                f'** {rules} \n**Get roles:** <#726074137168183356> and '
+                f'** {rules_channel} \n**Get roles:** <#726074137168183356> and '
                 '<#806909970482069556> \n**Want help? Read here:** '
                 '<#799527165863395338> and <#754712400757784709>'),
             timestamp=dt.datetime.now(dt.timezone.utc)
@@ -242,8 +248,11 @@ class CodingBot(commands.Bot):
         file = await self.welcomer.construct_image(member=member)
         channel = member.guild.get_channel(743817386792058971)
         verify_here = member.guild.get_channel(759220767711297566)
+        
+        # Assertions for narrowing types
         assert channel is not None
         assert verify_here is not None
+        
         await channel.send(content=member.mention, file=file)  # type: ignore  # Always a Messageable
         await verify_here.send(  # type: ignore  # Always a Messageable
             f'Welcome {member.mention}! Follow the instructions in other channels to get verified. :)',

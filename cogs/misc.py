@@ -10,8 +10,9 @@ if TYPE_CHECKING:
     from ext.models import CodingBot
 
 
-class Misc(commands.Cog):
-    def __init__(self, bot: CodingBot):
+
+class Misc(commands.Cog, command_attrs=dict(hidden=False)):
+    def __init__(self, bot: CodingBot) -> None:
         self.bot = bot
 
     @commands.hybrid_command(name="afk", aliases = ["afk-set", "set-afk"], help = "Sets your afk")
@@ -63,5 +64,7 @@ class Misc(commands.Cog):
             )
             await ctx.reply(embed=embed, ephemeral=True)
 
+            
 async def setup(bot: CodingBot):
     await bot.add_cog(Misc(bot))
+    

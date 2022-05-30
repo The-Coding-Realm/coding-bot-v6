@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from datetime import datetime
+import random
 import sys
 import traceback
-import random
+from datetime import datetime
 
 import discord
 from discord.ext import commands
@@ -57,7 +57,6 @@ class ListenerCog(commands.Cog, command_attrs=dict(hidden=True)):
             where=['user_id'],
             values=(message.author.id,)
         )
-        print(record)
         if record:
             record = record[0]
             time_spent = datetime.utcnow() - datetime.utcfromtimestamp(record.afk_time)
@@ -79,11 +78,13 @@ class ListenerCog(commands.Cog, command_attrs=dict(hidden=True)):
                 staff_role = message.guild.get_role(795145820210462771)
                 if staff_role and staff_role in message.author.roles:  # type: ignore
                     on_pat_staff = message.guild.get_role(726441123966484600)
-                    assert on_pat_staff is not None
-                    try:
-                        await message.author.add_roles(on_pat_staff)  # type: ignore
-                    except (discord.Forbidden, discord.HTTPException):
-                        pass
+                    
+                    if on_pat_staff:
+                        try:
+                            await message.author.add_roles(on_pat_staff)
+                        except (discord.Forbidden, discord.HTTPException):
+                            pass
+
                 emoji = random.choice(('⚪', '🔴', '🟤', '🟣', '🟢', '🟡', '🟠', '🔵'))
                 em = discord.Embed(
                     description=f"{emoji} Welcome back, I removed your AFK!",
