@@ -1,11 +1,9 @@
-import aiohttp
-import json
-import re
 from discord.ext import tasks
 
 
-class http(aiohttp.ClientSession):
-    def __init__(self):
+class Http:
+    def __init__(self, session):
+        self.session = session
         self.cache = {"piston": {}}
         self.api = {
             "rock": {
@@ -28,34 +26,31 @@ class http(aiohttp.ClientSession):
                 "execute": "https://emkc.org/api/v1/piston/execute",
             },
         }
-        print("new session")
-        super().__init__()
         self.update_data.start()
 
     @tasks.loop(minutes=5)
     async def update_data(self):
-        print("updating cache")
-        self.cache["piston"]["runtimes"] = await self.getRuntimes()
+        self.cache["piston"]["runtimes"] = await self.get_runtimes()
 
     # 🪨 api
-    async def getRandomRock(self):
+    async def get_random_rock(self):
         return await self.get(_url=self.api["rock"]["random"], _json=True)
 
-    async def getTopRock(self):
+    async def get_top_rock(self):
         return await self.get(_url=self.api["rock"]["top"], _json=True)
 
     # numbers api
-    async def getRandomNumber(self, type="trivia"):
+    async def get_random_number(self, type="trivia"):
         return await self.get(_url=self.api["numbers"]["random_" + type])
 
-    async def getNumber(self, num, type="trivia"):
+    async def get_number(self, num, type="trivia"):
         return await self.get(_url=self.api["numbers"][type](num))
 
     # piston api
-    async def getRuntimes(self):
+    async def get_runtimes(self):
         return await self.get(_url=self.api["piston"]["runtimes"], _json=True)
 
-    async def executeCode(self, language, code):
+    async def execute_code(self, language, code):
         r = await self.post(
             _url=self.api["piston"]["execute"],
             _json=True,
@@ -68,22 +63,17 @@ class http(aiohttp.ClientSession):
 
     # http
     async def get(self, _url, _json=False, **kwargs):
-        async with super().get(_url, **kwargs) as response:
+        async with self.session.get(_url, **kwargs) as response:
             return await (response.json() if _json else response.text())
 
     async def post(self, _url, _json=False, **kwargs):
-        async with super().post(_url, **kwargs) as response:
+        async with self.session.post(_url, **kwargs) as response:
             return await (response.json() if _json else response.text())
 
     async def put(self, _url, _json=False, **kwargs):
-        async with super().put(_url, **kwargs) as response:
+        async with self.session.put(_url, **kwargs) as response:
             return await (response.json() if _json else response.text())
 
     async def delete(self, _url, _json=False, **kwargs):
-        async with super().delete(_url, **kwargs) as response:
+        async with self.session.delete(_url, **kwargs) as response:
             return await (response.json() if _json else response.text())
-
-    def update_apis(self):
-        with open("./web/APIs.json", "r") as file:
-            self.api = json.load(file)
-            return self.api

@@ -2,14 +2,13 @@ import re
 
 from discord.ext import commands
 
-from web.http import http
+from ext.http import http
+from ext.ui.view import Piston, Rocks
 
-from .helpers.view import code_output, rocks
 
-
-class api(commands.Cog):
+class Api(commands.Cog):
     def __init__(self, bot):
-        self.session = http()
+        self.session = http(bot.session)
         self.bot = bot
         self.regex = {
             "codeblock": re.compile(r"(\w*)\s*(?:```)(\w*)?([\s\S]*)(?:```$)")
@@ -34,7 +33,7 @@ class api(commands.Cog):
         code = matches[0][2]
         msg = await self.bot.reply(ctx, "...")
         await msg.edit(
-            view=code_output(
+            view=Piston(
                 self,
                 code,
                 lang,
@@ -45,7 +44,7 @@ class api(commands.Cog):
     @commands.command()
     async def rock(self, ctx, *, query: str = None):
         async def get_rock(self):
-            rock = await self.session.getRandomRock()
+            rock = await self.session.get_random_rock()
             name = rock["name"]
             desc = rock["desc"]
             image = rock["image"]
@@ -64,7 +63,7 @@ class api(commands.Cog):
         return await self.bot.reply(
             ctx,
             embed=rock_info[0],
-            view=rocks(
+            view=Rocks(
                 cog=self,
                 embed_gen=get_rock,
                 stars=rock_info[1],
@@ -75,9 +74,9 @@ class api(commands.Cog):
     @commands.command()
     async def number(self, ctx, number=None):
         number = await (
-            self.session.getRandomNumber()
+            self.session.get_random_number()
             if (number is None)
-            else self.session.getNumber(number)
+            else self.session.get_number(number)
         )
         embed = await self.bot.embed(
             title=f"**{number}**",
@@ -88,4 +87,4 @@ class api(commands.Cog):
 
 
 async def setup(bot):
-    await bot.add_cog(api(bot))
+    await bot.add_cog(Api(bot))
