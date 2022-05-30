@@ -2,13 +2,13 @@ import re
 
 from discord.ext import commands
 
-from ext.http import http
+from ext.http import Http
 from ext.ui.view import Piston, Rocks
 
 
 class Api(commands.Cog):
     def __init__(self, bot):
-        self.session = http(bot.session)
+        self.session = Http(bot.session)
         self.bot = bot
         self.regex = {
             "codeblock": re.compile(r"(\w*)\s*(?:```)(\w*)?([\s\S]*)(?:```$)")
