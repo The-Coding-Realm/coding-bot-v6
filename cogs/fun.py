@@ -1,20 +1,26 @@
+from __future__ import annotations
+
 import random
 from urllib import parse
 from textwrap import wrap
 
 import discord
 from discord.ext import commands
+from typing import TYPE_CHECKING, Optional
 
-from ext.models import CodingBot
+if TYPE_CHECKING:
+    from ext.models import CodingBot
+
 
 class Fun(commands.Cog, command_attrs=dict(hidden=False)):
 
-    hidden = False    
+    hidden = False
+
     def __init__(self, bot: CodingBot) -> None:
         self.bot = bot
 
     @commands.hybrid_command(name="meme")
-    async def meme(self, ctx: commands.Context):
+    async def meme(self, ctx: commands.Context[CodingBot]):
         response = await self.bot.session.get("https://meme-api.herokuapp.com/gimme")
         meme_json = await response.json()
 
@@ -30,7 +36,7 @@ class Fun(commands.Cog, command_attrs=dict(hidden=False)):
         await ctx.send(embed=embed)
 
     @commands.hybrid_command(name="8ball")
-    async def eightball(self, ctx: commands.Context, *, question: str):
+    async def eightball(self, ctx: commands.Context[CodingBot], *, question: str):
         responses = ["As I see it, yes.", "Ask again later.", "Better not tell you now.", "Cannot predict now.", "Concentrate and ask again.",
                     "Do not count on it.", "It is certain.", "It is decidedly so.", "Most likely.", "My reply is no.", "My sources say no.",
                     "Outlook not so good.", "Outlook good.", "Reply hazy, try again.", "Signs point to yes.", "Very doubtful.", "Without a doubt.",
@@ -42,8 +48,9 @@ class Fun(commands.Cog, command_attrs=dict(hidden=False)):
         await ctx.send(embed=embed)
 
     @commands.hybrid_command(name="token")
-    async def token(self, ctx: commands.Context):
-        response = await self.bot.session.get("https://some-random-api.ml/bottoken") # If you like, you can use sr_api
+    async def token(self, ctx: commands.Context[CodingBot]):
+        # If you like, you can use sr_api
+        response = await self.bot.session.get("https://some-random-api.ml/bottoken")
         json = await response.json()
 
         bottoken = json['token']
@@ -53,7 +60,7 @@ class Fun(commands.Cog, command_attrs=dict(hidden=False)):
         await ctx.send(embed=embed)
 
     @commands.hybrid_command(name="animal")
-    async def animal(self, ctx: commands.Context, animal: str = None):
+    async def animal(self, ctx: commands.Context[CodingBot], animal: Optional[str] = None):
         options = ("dog", "cat", "panda", "fox", "red_panda", "koala", "bird", "raccoon", "kangaroo")
         if (not animal) or (animal and animal not in options):
             animal = random.choice(options)
@@ -141,6 +148,6 @@ class Fun(commands.Cog, command_attrs=dict(hidden=False)):
 
     # DO YOUR COMMANDS HERE I HAVE NOT ENOUGH CREATIVITY TO THINK ABOUT THEM KEKW
 
-async def setup(bot):
+async def setup(bot: CodingBot):
     await bot.add_cog(Fun(bot))
     

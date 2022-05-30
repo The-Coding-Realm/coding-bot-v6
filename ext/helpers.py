@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from ast import Bytes
 import asyncio
 import datetime as dt
@@ -10,27 +12,32 @@ from typing import Union
 import discord
 import humanize
 from PIL import Image, ImageDraw, ImageFilter, ImageFont
+from typing import TYPE_CHECKING, Any, Callable, Optional
+
+if TYPE_CHECKING:
+    from ext.models import CodingBot
 
 
-async def log_error(bot, event_method, *args, **kwargs):
+async def log_error(bot: CodingBot, event_method: str, *args: Any, **kwargs: Any):
     channel = bot.get_channel(826861610173333595)
-    if channel:
-        try:
-            title = 'Ignoring exception in {}'.format(event_method)
-            err = ''.join(traceback.format_exc())
-            embed = discord.Embed(title=title, description=f'```py\n{err}```',
-                                timestamp=discord.utils.utcnow(),
-                                color=discord.Color.red())
-            await channel.send(embed=embed)
-        except discord.Forbidden:
-            print('Ignoring exception in {}'.format(event_method), file=sys.stderr)
-            traceback.print_exc()
+    try:
+        title = 'Ignoring exception in {}'.format(event_method)
+        err = ''.join(traceback.format_exc())
+        embed = discord.Embed(title=title, description=f'```py\n{err}```',
+                              timestamp=dt.datetime.now(dt.timezone.utc),
+                              color=discord.Color.red())
+
+        # channel is always a Messageable
+        await channel.send(embed=embed)  # type: ignore
+    except (discord.errors.Forbidden, AttributeError):
+        print('Ignoring exception in {}'.format(event_method), file=sys.stderr)
+        traceback.print_exc()
 
 
-def executor():
-    def outer(func):
+def executor() -> Callable[[Callable[..., Any]], Any]:
+    def outer(func: Callable[..., Any]):
         @functools.wraps(func)
-        def inner(*args, **kwargs):
+        def inner(*args: Any, **kwargs: Any):
             loop = asyncio.get_event_loop()
             thing = functools.partial(func, *args, **kwargs)
             return loop.run_in_executor(None, thing)
@@ -39,7 +46,7 @@ def executor():
 
 
 class WelcomeBanner:
-    def __init__(self, bot) -> None:
+    def __init__(self, bot: CodingBot) -> None:
         self.bot = bot
         self.font = {
             12: ImageFont.truetype("./storage/fonts/Poppins/Poppins-Bold.ttf", size=12),
@@ -48,7 +55,7 @@ class WelcomeBanner:
         }
 
     @executor()
-    def generate_image(self, member: discord.Member, **kwargs) -> discord.File:
+    def generate_image(self, member: discord.Member, **kwargs: Any) -> discord.File:
         inviter = kwargs.get('inviter')
         vanity = kwargs.get('vanity')
         inv = kwargs.get('inv')
@@ -57,12 +64,12 @@ class WelcomeBanner:
         ago = kwargs.pop('ago')
         base = Image.open(profile_picture).convert("RGBA").resize((128, 128))
         txt = Image.open(banner).convert("RGBA")
-        txt = txt.point(lambda p: int(p * 0.5))
+        txt = txt.point(lambda p: int(p * 0.5))  # type: ignore
         txt = txt.resize((512, 200))
         draw = ImageDraw.Draw(txt)
         fill = (255, 255, 255, 255)
         text = "Welcome to The Coding Realm"
-        text_width, text_height = draw.textsize(text, self.font.get(25))
+        text_width, _ = draw.textsize(text, self.font.get(25))
         width_height = ((txt.size[0] - text_width) //
                         2, (txt.size[1] // 31) * 1)
         draw.text(width_height, text, font=self.font.get(
@@ -111,9 +118,9 @@ class WelcomeBanner:
         file = discord.File(buf, filename='welcome.png')
         return file
 
-    async def construct_image(self, **kwargs) -> discord.File:
+    async def construct_image(self, **kwargs: Any) -> discord.File:
         member = kwargs.pop('member')
-        inviter = await self.bot.tracker.fetch_inviter(member)
+        inviter: Optional[discord.Member] = await self.bot.tracker.fetch_inviter(member)
         inv = None
         vanity = None
         if inviter:
