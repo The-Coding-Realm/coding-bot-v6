@@ -16,7 +16,6 @@ if TYPE_CHECKING:
 class Developer(commands.Cog, command_attrs=dict(hidden=True)):
 
     hidden = True
-
     def __init__(self, bot: CodingBot) -> None:
         self.bot = bot
         
@@ -133,7 +132,6 @@ class Developer(commands.Cog, command_attrs=dict(hidden=True)):
             'not': []
         }
         processing: Mapping[str, ModuleType] = self.bot.extensions.copy()  # type: ignore
-        print(processing)
         for cog in processing:
             try:
                 await self.bot.reload_extension(cog)

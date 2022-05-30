@@ -29,7 +29,6 @@ class Rocks(discord.ui.View):
 
     @discord.ui.button(label="<", custom_id="prev", disabled=True)
     async def prev_rock(self, interaction, button):
-        print(f"{self.page}  {self.pages}")
         if self.page == 0:
             button.disabled = True
             return await interaction.response.edit_message(view=self)
@@ -54,12 +53,9 @@ class Rocks(discord.ui.View):
             button.Style = discord.ButtonStyle.green
             await self.gen()
         self.page += 1
-        print(f"{self.page}  {self.pages}")
         data = self.pages[self.page]
         self.stars = data[1]
         for child in self.children:
-            print("====")
-            print(child.custom_id)
             if child.custom_id == "stars_count":
                 child.label = "⭐" * self.stars if self.stars else "o"
             elif child.custom_id == "prev":
@@ -76,7 +72,7 @@ class Piston(discord.ui.View):
         self.lang = lang
         self.cog = cog
         self.timestamp = int(time.time())
-        self.isCompiled = False
+        self.is_compiled = False
         self.output = []
         self.msg = msg
         self.page = 0
@@ -87,7 +83,7 @@ class Piston(discord.ui.View):
 
     @tasks.loop(seconds=1, count=30)
     async def timer(self):
-        if self.isCompiled:
+        if self.is_compiled:
             self.timer.cancel()
             return
         await self.msg.edit(
@@ -100,8 +96,8 @@ class Piston(discord.ui.View):
 
     @tasks.loop(seconds=1, count=1)
     async def get_code_out(self):
-        self.res = await self.cog.session.executeCode(self.lang, self.code)
-        self.isCompiled = True
+        self.res = await self.cog.session.execute_code(self.lang, self.code)
+        self.is_compiled = True
         self.timer.cancel()
         if "message" in self.res:
             return await self.msg.edit(
@@ -127,7 +123,7 @@ class Piston(discord.ui.View):
                     output.append(line + "\n")
         self.output = output
         self.ran = self.res["ran"]
-        self.isCompiled = True
+        self.is_compiled = True
         for child in self.children:
             if child.custom_id == "info":
                 if self.ran:
@@ -143,7 +139,7 @@ class Piston(discord.ui.View):
             view=self,
         )
 
-    @discord.ui.button(label="<", custom_id="prev", disabled=True)
+    @ui.button(label="<", custom_id="prev", disabled=True)
     async def _prev(self, interaction, button):
         if self.page == 0:
             button.disabled = True
@@ -160,7 +156,7 @@ class Piston(discord.ui.View):
             view=self,
         )
 
-    @discord.ui.button(
+    @ui.button(
         label="...",
         custom_id="info",
         style=discord.ButtonStyle.gray,
@@ -169,10 +165,10 @@ class Piston(discord.ui.View):
     async def _info(self, interaction, button):
         pass
 
-    @discord.ui.button(
+    @ui.button(
         label=">", custom_id="next", style=discord.ButtonStyle.green
     )
-    async def _next(self, interaction, button):
+    async def _next(self, interaction: discord.Interaction, button: discord.Button):
         if self.page + 1 == len(self.output):
             button.disabled = True
             return await interaction.response.edit_message(view=self)
@@ -180,13 +176,17 @@ class Piston(discord.ui.View):
         for child in self.children:
             if child.custom_id == "prev":
                 child.disabled = False
-        await interaction.response.edit_message(
-            embed=await self.cog.bot.embed(
-                title=" ",
-                description=f"```{self.lang}\n{self.output[self.page]}\n```",
-            ),
-            view=self,
-        )
+        try:
+            await interaction.response.edit_message(
+                embed=await self.cog.bot.embed(
+                    title=" ",
+                    description=f"```{self.lang}\n{self.output[self.page]}\n```",
+                ),
+                view=self,
+            )
+        except IndexError:
+            self.page -= 1
+        return
 
 
 if TYPE_CHECKING:

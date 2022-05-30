@@ -32,7 +32,6 @@ def trainee_check():
 class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
 
     hidden = False
-
     def __init__(self, bot: CodingBot):
         self.bot = bot
 

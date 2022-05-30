@@ -14,7 +14,6 @@ if TYPE_CHECKING:
 class Fun(commands.Cog, command_attrs=dict(hidden=False)):
 
     hidden = False
-
     def __init__(self, bot: CodingBot) -> None:
         self.bot = bot
 

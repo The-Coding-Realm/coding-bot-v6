@@ -11,8 +11,8 @@ if TYPE_CHECKING:
 
 
 class TaskCog(commands.Cog, command_attrs=dict(hidden=True)):
+    
     hidden = True
-
     def __init__(self, bot: CodingBot) -> None:
         self.bot = bot
 

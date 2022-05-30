@@ -237,13 +237,6 @@ class CodingBot(commands.Bot):
             async with aiohttp.ClientSession() as self.session:
                 return await super().start(token, reconnect=reconnect)
 
-    async def startup_task(self) -> None:
-        await self.wait_until_ready()
-        channel = self.get_channel(self.restart_channel)
-        self.restart_channel = None
-        embed = discord.Embed(title="I'm back online!")
-        await channel.send(embed=embed)
-
     async def on_ready(self) -> None:
         await self.wait_until_ready()
         await self.tracker.cache_invites()
