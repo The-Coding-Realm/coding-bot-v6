@@ -5,7 +5,7 @@ from discord.ext import tasks
 from more_itertools import sliced
 
 
-class rocks(discord.ui.View):
+class Rocks(discord.ui.View):
     def __init__(self, *, cog, embed_gen, stars, embed):
         self.cog = cog
         self.embed_gen = embed_gen
