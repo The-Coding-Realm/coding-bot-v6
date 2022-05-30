@@ -1,9 +1,21 @@
+from __future__ import annotations
+
 import discord
 from discord import ui
 from discord.ext import commands
 
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from ext.models import CodingBot
+    from typing_extensions import Self
+
+
 class ConfirmButton(ui.View):
-    def __init__(self, ctx: commands.Context) -> None:
+    if TYPE_CHECKING:
+        message: discord.Message
+
+    def __init__(self, ctx: commands.Context[CodingBot]) -> None:
         super().__init__(timeout=60)
         self.confirmed = None
         self.ctx = ctx
@@ -19,25 +31,25 @@ class ConfirmButton(ui.View):
 
     @ui.button(label='Yes', style=discord.ButtonStyle.green)
     async def confirm(
-        self, 
-        interaction: discord.Interaction, 
-        button: discord.Button
+        self,
+        interaction: discord.Interaction,
+        button: discord.ui.Button[Self],
     ) -> None:
         self.confirmed = True
         if interaction.message:
             await interaction.message.delete()
         else:
-            interaction.delete_original_message()
+            await interaction.delete_original_message()
         self.stop()
-    
+
     @ui.button(label='No', style=discord.ButtonStyle.red)
     async def cancel(
-        self, 
-        interaction: discord.Interaction, 
-        button: discord.Button
+        self,
+        interaction: discord.Interaction,
+        button: discord.ui.Button[Self],
     ) -> None:
         if interaction.message:
             await interaction.message.delete()
         else:
-            interaction.delete_original_message()
+            await interaction.delete_original_message()
         self.stop()

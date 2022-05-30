@@ -1,19 +1,26 @@
+from __future__ import annotations
+
 import os
 
 import discord
 import ext.helpers as helpers
 from discord.ext import commands
+from typing import TYPE_CHECKING, Dict, List, Mapping
+
+if TYPE_CHECKING:
+    from ext.models import CodingBot
+    from types import ModuleType
 
 
 class Developer(commands.Cog, command_attrs=dict(hidden=True)):
 
     hidden = True
 
-    def __init__(self, bot):
+    def __init__(self, bot: CodingBot):
         self.bot = bot
 
     @commands.command(name="sync")
-    async def sync(self, ctx):
+    async def sync(self, ctx: commands.Context[CodingBot]):
         """
         Sync the database
         """
@@ -22,7 +29,7 @@ class Developer(commands.Cog, command_attrs=dict(hidden=True)):
 
     @commands.command(name='load', aliases=['l'])
     @commands.is_owner()
-    async def _load(self, ctx, cog_, save: bool = False):
+    async def _load(self, ctx: commands.Context[CodingBot], cog_: str, save: bool = False):
         if save:
             helpers.storage(self.bot, key='cogs', value=cog_, method='append')
         await self.bot.load_extension(cog_)
@@ -34,7 +41,7 @@ class Developer(commands.Cog, command_attrs=dict(hidden=True)):
 
     @commands.command(name='unload', aliases=['u'])
     @commands.is_owner()
-    async def _unload(self, ctx, cog_, save: bool = False):
+    async def _unload(self, ctx: commands.Context[CodingBot], cog_: str, save: bool = False):
         if save:
             helpers.storage(self.bot, key='cogs', value=cog_, method='remove')
         await self.bot.unload_extension(cog_)
@@ -46,16 +53,16 @@ class Developer(commands.Cog, command_attrs=dict(hidden=True)):
 
     @commands.command(name='reload', aliases=['r'])
     @commands.is_owner()
-    async def _reload(self, ctx, cog_):
-        self.bot.reload_extension(cog_)
+    async def _reload(self, ctx: commands.Context[CodingBot], cog_: str):
+        await self.bot.reload_extension(cog_)
         embed = discord.Embed(title='Success', color=discord.Color.green())
         await ctx.send(embed=embed)
 
     @commands.command(name='loadall', aliases=['la'])
     @commands.is_owner()
-    async def _loadall(self, ctx):
+    async def _loadall(self, ctx: commands.Context[CodingBot]):
         data = os.listdir('./cogs')
-        cogs = {
+        cogs: Dict[str, List[str]] = {
             'loaded': [],
             'not': []
         }
@@ -76,12 +83,12 @@ class Developer(commands.Cog, command_attrs=dict(hidden=True)):
 
     @commands.command(name='unloadall', aliases=['ua', 'uall'])
     @commands.is_owner()
-    async def _unloadall(self, ctx):
-        cogs = {
+    async def _unloadall(self, ctx: commands.Context[CodingBot]):
+        cogs: Dict[str, List[str]] = {
             'unloaded': [],
             'not': []
         }
-        processing = self.bot.extensions.copy()
+        processing: Mapping[str, ModuleType] = self.bot.extensions.copy()  # type: ignore
         for cog in processing:
             try:
                 await self.bot.unload_extension(cog)
@@ -95,12 +102,12 @@ class Developer(commands.Cog, command_attrs=dict(hidden=True)):
 
     @commands.command(name='reloadall', aliases=['ra', 'rall'])
     @commands.is_owner()
-    async def _reloadall(self, ctx):
-        cogs = {
+    async def _reloadall(self, ctx: commands.Context[CodingBot]):
+        cogs: Dict[str, List[str]] = {
             'reloaded': [],
             'not': []
         }
-        processing = self.bot.extensions.copy()
+        processing: Mapping[str, ModuleType] = self.bot.extensions.copy()  # type: ignore
         print(processing)
         for cog in processing:
             try:
@@ -115,5 +122,5 @@ class Developer(commands.Cog, command_attrs=dict(hidden=True)):
         await ctx.send(embed=embed)
 
 
-async def setup(bot):
+async def setup(bot: CodingBot):
     await bot.add_cog(Developer(bot))
