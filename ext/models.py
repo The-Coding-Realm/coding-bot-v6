@@ -4,7 +4,7 @@ import aiohttp
 import datetime as dt
 from dataclasses import dataclass, field
 import os
-from typing import Any, Dict, List, Optional, Union, Tuple, Set, Iterable
+from typing import Any, Dict, List, Mapping, Optional, Union, Tuple, Set, Iterable
 
 import aiosqlite
 import discord
@@ -131,7 +131,7 @@ class Database:
                             where: Optional[Tuple[str, ...]] = None,
                             values: Optional[Tuple[Any, ...]] = None,
                             extras: Optional[List[str]] = None,
-                        ) -> Optional[List[Record]]:
+                            ) -> Optional[List[Record]]:
         statement = """SELECT {} FROM {}""".format(
             ", ".join(arguments), table
         )
@@ -145,7 +145,8 @@ class Database:
                 statement += f" {stuff}"
         async with self.cursor(connection) as cursor:
             await cursor.execute(statement, values or ())
-            rows: List[aiosqlite.Row[Any]] = [i async for i in cursor]  # type: ignore # Type checker cries unnecessarily.
+            # type: ignore # Type checker cries unnecessarily.
+            rows: List[aiosqlite.Row[Any]] = [i async for i in cursor]
             if rows:
                 return [Record.from_tuple(arguments, row) for row in rows]
             return None
@@ -182,12 +183,38 @@ class Database:
             await conn.close()
 
 
+class CodingHelp(commands.HelpCommand):
+    def __init__(self, *args: Any, **kwargs: Any):
+        super().__init__(*args, **kwargs)
+
+    async def send_bot_help(
+            self,
+            mapping: Mapping[Optional[commands.Cog],
+                             List[commands.Command]],
+            /) -> None:
+        embed = discord.Embed(title="Bot Commands",
+                              description="Coding Bot V6")
+        for cog, commands in mapping.items():
+            if cog and not cog.hidden:
+                embed.add_field(name=cog.qualified_name, value=" ".join(
+                    f"`{command.name}`" for command in commands))
+        destination = self.get_destination()
+        await destination.send(embed=embed)
+
+
 class CodingBot(commands.Bot):
     def __init__(self) -> None:
+        help_command = CodingHelp(
+            command_attrs={'cooldown': commands.CooldownMapping.from_cooldown(
+                3, 5, commands.BucketType.user
+            )
+            }
+        )
         super().__init__(
             command_prefix=[','],
             intents=INTENTS,
-            case_insensitive=True
+            case_insensitive=True,
+            help_command=help_command
         )
         self.conn: Database = discord.utils.MISSING
         self.tracker = InviteTracker(self)
@@ -248,12 +275,13 @@ class CodingBot(commands.Bot):
         file = await self.welcomer.construct_image(member=member)
         channel = member.guild.get_channel(743817386792058971)
         verify_here = member.guild.get_channel(759220767711297566)
-        
+
         # Assertions for narrowing types
         assert channel is not None
         assert verify_here is not None
-        
-        await channel.send(content=member.mention, file=file)  # type: ignore  # Always a Messageable
+
+        # type: ignore  # Always a Messageable
+        await channel.send(content=member.mention, file=file)
         await verify_here.send(  # type: ignore  # Always a Messageable
             f'Welcome {member.mention}! Follow the instructions in other channels to get verified. :)',
             embed=embed

@@ -11,7 +11,9 @@ if TYPE_CHECKING:
 
 
 
-class Misc(commands.Cog, command_attrs=dict(hidden=False)):
+class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
+
+    hidden = False
     def __init__(self, bot: CodingBot) -> None:
         self.bot = bot
 
@@ -66,5 +68,5 @@ class Misc(commands.Cog, command_attrs=dict(hidden=False)):
 
             
 async def setup(bot: CodingBot):
-    await bot.add_cog(Misc(bot))
+    await bot.add_cog(Miscellaneous(bot))
     

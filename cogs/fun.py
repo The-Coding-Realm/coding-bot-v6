@@ -81,13 +81,13 @@ class Fun(commands.Cog, command_attrs=dict(hidden=False)):
         
         await ctx.send(embed=embed)
 
-    @commands.get(invoke_without_command=True)
+    @commands.hybrid_group(invoke_without_command=True)
     async def binary(self, ctx: commands.Context):
         embed = discord.Embed(title="Binary command", description="Available methods: ```encode```, ```decode```")
 
         await ctx.send(embed=embed)
 
-    @binary.hybrid_command(name="encode")
+    @binary.command(name="encode")
     async def binary_encode(self, ctx, *, string: str):
         response = await self.bot.session.get(f"https://some-random-api.ml/binary?encode={string}")
         if response.status in range(200,300):
@@ -103,7 +103,7 @@ class Fun(commands.Cog, command_attrs=dict(hidden=False)):
 
         await ctx.send(embed=embed)
 
-    @binary.hybrid_command(name="decode")
+    @binary.command(name="decode")
     async def binary_decode(self, ctx, binary: str):
         response = await self.bot.session.get(f"https://some-random-api.ml/binary?decode={binary}")
         if response.status in range(200,300):
@@ -119,7 +119,7 @@ class Fun(commands.Cog, command_attrs=dict(hidden=False)):
             
         await ctx.send(embed=embed)
 
-    @binary.hybrid_command(name="lyrics")
+    @binary.command(name="lyrics")
     async def lyrics(self, ctx, *, query: str = None):
         if not query:
             embed = discord.Embed(title = "No search argument!", description=f"You must provide a search argument or I couldn't find the lyrics")
