@@ -1,0 +1,13 @@
+{
+    "rock": {
+        "random": "https://mrconos.pythonanywhere.com/rock/random",
+        "top": "https://mrconos.pythonanywhere.com/rock/top"
+    },
+    "numbers": {
+        "random_trivia": "http://numbersapi.com/random/trivia",
+        "random_math": "http://numbersapi.com/random/math",
+        "random_date": "http://numbersapi.com/random/date",
+        "random_year": "http://numbersapi.com/random/year",
+        "date": "http://numbersapi.com/date"
+    }
+}

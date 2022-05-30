@@ -4,8 +4,8 @@ from discord.ext import commands
 
 from ext.models import CodingBot
 
-if not os.path.exists('./database'):
-    os.mkdir('./database')
+if not os.path.exists("./database"):
+    os.mkdir("./database")
 
 bot = CodingBot()
 

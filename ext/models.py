@@ -16,7 +16,7 @@ from .helpers import WelcomeBanner, log_error
 
 
 class Record:
-    __slots__ = ('arguments',)
+    __slots__ = ("arguments",)
 
     def __init__(self, arguments: dict):
         self.arguments = arguments
@@ -25,26 +25,26 @@ class Record:
         if isinstance(__item, str):
             if __item in self.arguments:
                 return self.arguments[__item]
-            raise AttributeError(
-                f'Dynamic object has no attribute \'{__item}\'')
+            raise AttributeError(f"Dynamic object has no attribute '{__item}'")
         elif isinstance(__item, int):
             return tuple(self.arguments.values())[__item]
 
     def __getattr__(self, __item: str):
         if __item in self.arguments:
             return self.arguments[__item]
-        raise AttributeError(f'Dynamic object has no attribute \'{__item}\'')
+        raise AttributeError(f"Dynamic object has no attribute '{__item}'")
 
     def __len__(self):
         return len(self.arguments.keys())
 
     def __repr__(self) -> str:
-        argument = ', '.join(f'{key}={value}' for key,
-                             value in self.arguments.items())
-        return f'<Record: {argument}>'
+        argument = ", ".join(
+            f"{key}={value}" for key, value in self.arguments.items()
+        )
+        return f"<Record: {argument}>"
 
     @classmethod
-    def from_tuple(cls, arguments: tuple, tuple_: tuple) -> 'Record':
+    def from_tuple(cls, arguments: tuple, tuple_: tuple) -> "Record":
         return cls(dict(zip(arguments, tuple_)))
 
 
@@ -60,6 +60,7 @@ class Cache:
     channel_id : int
         The ID of the channel
     """
+
     prefixes: list
     commands: set = field(default_factory=set)
 
@@ -86,21 +87,23 @@ class Database:
         return super().__getattribute__(__name)
 
     async def __aenter__(self) -> "Database":
-        self.conn["config"] = await aiosqlite.connect('./database/config.db')
-        self.conn["warnings"] = await aiosqlite.connect('./database/warnings.db')
-        self.conn["afk"] = await aiosqlite.connect('./database/afk.db')
+        self.conn["config"] = await aiosqlite.connect("./database/config.db")
+        self.conn["warnings"] = await aiosqlite.connect(
+            "./database/warnings.db"
+        )
+        self.conn["afk"] = await aiosqlite.connect("./database/afk.db")
         await self.init_dbs()
         return self
 
     async def init_dbs(self):
-        async with self.cursor('config') as cursor:
+        async with self.cursor("config") as cursor:
             await cursor.execute(PREFIX_CONFIG_SCHEMA)
             await cursor.execute(COMMANDS_CONFIG_SCHEMA)
 
-        async with self.cursor('warnings') as cursor:
+        async with self.cursor("warnings") as cursor:
             await cursor.execute(WARNINGS_CONFIG_SCHEMA)
-        
-        async with self.cursor('afk') as cursor:
+
+        async with self.cursor("afk") as cursor:
             await cursor.execute(AFK_CONFIG_SCHEMA)
 
         await self.commit()
@@ -116,16 +119,17 @@ class Database:
     def __repr__(self) -> str:
         return f"<Database: {self.conn}>"
 
-    async def select_record(self,
-                            connection: str,
-                            /,
-                            *,
-                            arguments: List[str],
-                            table: str,
-                            where: List[str] = None,
-                            values: Optional[tuple] = None,
-                            extras: Optional[List[str]] = None,
-                        ) -> Optional[Record]:
+    async def select_record(
+        self,
+        connection: str,
+        /,
+        *,
+        arguments: List[str],
+        table: str,
+        where: List[str] = None,
+        values: Optional[tuple] = None,
+        extras: Optional[List[str]] = None,
+    ) -> Optional[Record]:
         SELECT_STATEMENT = """SELECT {} FROM {}""".format(
             ", ".join(arguments), table
         )
@@ -143,20 +147,39 @@ class Database:
             if rows:
                 return [Record.from_tuple(arguments, row) for row in rows]
 
-    async def delete_record(self, connection: str, /, *, table: str, where: List[str], values: Optional[tuple] = None) -> None:
+    async def delete_record(
+        self,
+        connection: str,
+        /,
+        *,
+        table: str,
+        where: List[str],
+        values: Optional[tuple] = None,
+    ) -> None:
         DELETE_STATEMENT = f"DELETE FROM {table}"
         if where is not None:
             assign_question = map(lambda x: f"{x} = ?", where)
             DELETE_STATEMENT += " WHERE {}".format(
-                " AND ".join(assign_question))
+                " AND ".join(assign_question)
+            )
         async with self.cursor(connection) as cursor:
             await cursor.execute(DELETE_STATEMENT, values)
             await getattr(self, connection).commit()
 
-    async def insert_record(self, connection: str, /, *, table: str, values: tuple, columns: List[str]) -> None:
+    async def insert_record(
+        self,
+        connection: str,
+        /,
+        *,
+        table: str,
+        values: tuple,
+        columns: List[str],
+    ) -> None:
         INSERT_STATEMENT = """
                            INSERT INTO {}({}) VALUES ({})
-                           """.format(table, ', '.join(columns), ', '.join(['?'] * len(values)))
+                           """.format(
+            table, ", ".join(columns), ", ".join(["?"] * len(values))
+        )
         async with self.cursor(connection) as cursor:
             await cursor.execute(INSERT_STATEMENT, values)
             await getattr(self, connection).commit()
@@ -178,20 +201,19 @@ class Database:
 class CodingBot(commands.Bot):
     def __init__(self) -> None:
         super().__init__(
-            command_prefix=[','],
-            intents=INTENTS,
-            case_insensitive=True
+            command_prefix=[","], intents=INTENTS, case_insensitive=True
         )
         self.conn: Database = None
         self.tracker = InviteTracker(self)
-        self.default_prefixes = [',']
+        self.default_prefixes = [","]
         self.welcomer = WelcomeBanner(self)
         self.processing_commands = 0
+        self.message_cache = {}
 
     async def setup_hook(self) -> None:
-        for filename in os.listdir('./cogs'):
-            if filename.endswith('.py'):
-                await self.load_extension(f'cogs.{filename[:-3]}')
+        for filename in os.listdir("./cogs"):
+            if filename.endswith(".py"):
+                await self.load_extension(f"cogs.{filename[:-3]}")
 
     async def start(self, token: str, *, reconnect: bool = True):
         async with Database() as self.conn:
@@ -208,7 +230,7 @@ class CodingBot(commands.Bot):
     async def on_ready(self) -> None:
         await self.wait_until_ready()
         await self.tracker.cache_invites()
-        print('Ready')
+        print("Ready")
 
     async def on_invite_create(self, invite: discord.Invite) -> None:
         await self.tracker.update_invite_cache(invite)
@@ -229,30 +251,83 @@ class CodingBot(commands.Bot):
         else:
             rules = "No official rule channel set yet."
         embed = discord.Embed(
-            title=f'Welcome to {member.guild.name}!',
+            title=f"Welcome to {member.guild.name}!",
             description=(
-                f'Welcome {member.mention}, we\'re glad you joined! Before you get'
-                ' started, here are some things to check out: \n**Read the Rules:'
-                f'** {rules} \n**Get roles:** <#726074137168183356> and '
-                '<#806909970482069556> \n**Want help? Read here:** '
-                '<#799527165863395338> and <#754712400757784709>'),
-            timestamp=dt.datetime.now(dt.timezone.utc)
+                f"Welcome {member.mention}, we're glad you joined! Before you get"
+                " started, here are some things to check out: \n**Read the Rules:"
+                f"** {rules} \n**Get roles:** <#726074137168183356> and "
+                "<#806909970482069556> \n**Want help? Read here:** "
+                "<#799527165863395338> and <#754712400757784709>"
+            ),
+            timestamp=dt.datetime.now(dt.timezone.utc),
         )
         file = await self.welcomer.construct_image(member=member)
         channel = member.guild.get_channel(743817386792058971)
         await channel.send(content=member.mention, file=file)
         verify_here = member.guild.get_channel(759220767711297566)
         await verify_here.send(
-            f'Welcome {member.mention}! Follow the instructions in other channels to get verified. :)',
-            embed=embed
+            f"Welcome {member.mention}! Follow the instructions in other channels to get verified. :)",
+            embed=embed,
         )
 
     async def on_error(self, event_method, *args, **kwargs):
         await log_error(self, event_method, *args, **kwargs)
 
+    async def send(
+        self, ctx, txt=None, *, embed=None, view=None, file=None
+    ) -> discord.Message:
+        if embed is None:
+            embed = await self.embed(title=" ", description=txt)
+        if getattr(ctx, "msg_before", None) is not None:
+            key = ctx.msg_before.id
+            await self.message_cache[key].edit(embed=embed)
+        else:
+            key = ctx.message.id
+            self.message_cache[key] = await ctx.send(embed=embed, file=file)
+        return self.message_cache[key]
+
+    async def reply(
+        self, ctx, txt=None, *, embed=None, view=None, file=None
+    ) -> discord.Message:
+        if embed is None:
+            embed = await self.embed(title=" ", description=txt)
+        if getattr(ctx, "msg_before", None) is not None:
+            key = ctx.msg_before.id
+            await self.message_cache[key].edit(embed=embed, view=view)
+        else:
+            key = (
+                ctx.id if isinstance(ctx, discord.Message) else ctx.message.id
+            )
+            self.message_cache[key] = await ctx.reply(
+                embed=embed, file=file, view=view
+            )
+        return self.message_cache[key]
+
+    async def embed(
+        self,
+        *,
+        title: str = None,
+        description: str = None,
+        url=None,
+        color=0x2F3136,
+    ):
+        if url:
+            return discord.Embed(
+                title=title, description=description, color=color, url=url
+            )
+        return discord.Embed(title=title, description=description, color=color)
+
+    async def process_edit(self, msg_before, msg_after):
+        ctx = await super().get_context(msg_after)
+        if msg_before.id in self.message_cache:
+            setattr(ctx, "msg_before", msg_before)
+        await super().invoke(ctx)
+
 
 class TimeConverter(commands.Converter):
-    async def convert(self, ctx: commands.Context, argument: str) -> Optional[dt.timedelta]:
+    async def convert(
+        self, ctx: commands.Context, argument: str
+    ) -> Optional[dt.timedelta]:
         """
         Parses a string into a timedelta object
 
@@ -260,7 +335,7 @@ class TimeConverter(commands.Converter):
         ----------
         ctx : commands.Context
             The context of the command
-        argument : str 
+        argument : str
             The string argument of time to parse
 
         Returns
@@ -275,5 +350,5 @@ class TimeConverter(commands.Converter):
         """
         time_in_secs = parse(argument)
         if time_in_secs is None:
-            raise commands.BadArgument(f'{argument} is not a valid time.')
+            raise commands.BadArgument(f"{argument} is not a valid time.")
         return dt.timedelta(seconds=time_in_secs)
