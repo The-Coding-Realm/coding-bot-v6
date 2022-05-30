@@ -1,8 +1,7 @@
-<<<<<<< HEAD
+
+from typing import TYPE_CHECKING, Optional
 import time
-=======
 from __future__ import annotations
->>>>>>> 8c577249f0768eea1c8950b4d31d3a5912a83068
 
 import discord
 from discord import ui
@@ -189,8 +188,6 @@ class Piston(discord.ui.View):
         )
 
 
-from typing import TYPE_CHECKING, Optional
-
 if TYPE_CHECKING:
     from ext.models import CodingBot
     from typing_extensions import Self
@@ -220,11 +217,7 @@ class ConfirmButton(ui.View):
     async def confirm(
         self,
         interaction: discord.Interaction,
-<<<<<<< HEAD
-        button: discord.Button
-=======
         button: discord.ui.Button[Self],
->>>>>>> 8c577249f0768eea1c8950b4d31d3a5912a83068
     ) -> None:
         self.confirmed = True
         if interaction.message:
@@ -237,19 +230,10 @@ class ConfirmButton(ui.View):
     async def cancel(
         self,
         interaction: discord.Interaction,
-<<<<<<< HEAD
-        button: discord.Button
-=======
         button: discord.ui.Button[Self],
->>>>>>> 8c577249f0768eea1c8950b4d31d3a5912a83068
     ) -> None:
         if interaction.message:
             await interaction.message.delete()
         else:
-<<<<<<< HEAD
-            interaction.delete_original_message()
-        self.stop()
-=======
             await interaction.delete_original_message()
         self.stop()
->>>>>>> 8c577249f0768eea1c8950b4d31d3a5912a83068
