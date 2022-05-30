@@ -1,32 +1,40 @@
+from __future__ import annotations
+
 import aiohttp
 import datetime as dt
 from dataclasses import dataclass, field
 import os
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union, Tuple, Set, Iterable
 
-import aiohttp
 import aiosqlite
 import discord
 from discord.ext import commands
 from DiscordUtils import InviteTracker
 from pytimeparse import parse
 
-from .consts import *
+from .consts import (
+    INTENTS,
+    PREFIX_CONFIG_SCHEMA,
+    COMMANDS_CONFIG_SCHEMA,
+    WARNINGS_CONFIG_SCHEMA,
+    AFK_CONFIG_SCHEMA
+)
 from .helpers import WelcomeBanner, log_error
 
 
 class Record:
     __slots__ = ("arguments",)
 
-    def __init__(self, arguments: dict):
+    def __init__(self, arguments: Dict[str, Any]) -> None:
         self.arguments = arguments
 
-    def __getitem__(self, __item: Union[str, int]):
+    def __getitem__(self, __item: Union[str, int]) -> Any:
         if isinstance(__item, str):
             if __item in self.arguments:
                 return self.arguments[__item]
-            raise AttributeError(f"Dynamic object has no attribute '{__item}'")
-        elif isinstance(__item, int):
+            raise AttributeError(
+                f'Dynamic object has no attribute \'{__item}\'')
+        elif isinstance(__item, int):  # type: ignore
             return tuple(self.arguments.values())[__item]
 
     def __getattr__(self, __item: str):
@@ -44,7 +52,7 @@ class Record:
         return f"<Record: {argument}>"
 
     @classmethod
-    def from_tuple(cls, arguments: tuple, tuple_: tuple) -> "Record":
+    def from_tuple(cls, arguments: Iterable[Any], tuple_: Iterable[Any]) -> Record:
         return cls(dict(zip(arguments, tuple_)))
 
 
@@ -60,9 +68,8 @@ class Cache:
     channel_id : int
         The ID of the channel
     """
-
-    prefixes: list
-    commands: set = field(default_factory=set)
+    prefixes: List[str]
+    commands: Set[str] = field(default_factory=set)
 
 
 class Database:
@@ -113,75 +120,58 @@ class Database:
         await self.close()
 
     def cursor(self, conn: str) -> aiosqlite.Cursor:
-        if hasattr(self, conn):
-            return getattr(self, conn).cursor()
+        return getattr(self, conn).cursor()
 
     def __repr__(self) -> str:
         return f"<Database: {self.conn}>"
 
-    async def select_record(
-        self,
-        connection: str,
-        /,
-        *,
-        arguments: List[str],
-        table: str,
-        where: List[str] = None,
-        values: Optional[tuple] = None,
-        extras: Optional[List[str]] = None,
-    ) -> Optional[Record]:
-        SELECT_STATEMENT = """SELECT {} FROM {}""".format(
+    async def select_record(self,
+                            connection: str,
+                            /,
+                            *,
+                            arguments: Tuple[str, ...],
+                            table: str,
+                            where: Optional[Tuple[str, ...]] = None,
+                            values: Optional[Tuple[Any, ...]] = None,
+                            extras: Optional[List[str]] = None,
+                        ) -> Optional[List[Record]]:
+        statement = """SELECT {} FROM {}""".format(
             ", ".join(arguments), table
         )
         if where is not None:
             assign_question = map(lambda x: f"{x} = ?", where)
-            SELECT_STATEMENT += " WHERE {}".format(
+            statement += " WHERE {}".format(
                 " AND ".join(assign_question)
             )
         if extras:
             for stuff in extras:
-                SELECT_STATEMENT += f" {stuff}"
+                statement += f" {stuff}"
         async with self.cursor(connection) as cursor:
-            await cursor.execute(SELECT_STATEMENT, values)
-            rows = [i async for i in cursor]
+            await cursor.execute(statement, values or ())
+            rows: List[aiosqlite.Row[Any]] = [i async for i in cursor]  # type: ignore # Type checker cries unnecessarily.
             if rows:
                 return [Record.from_tuple(arguments, row) for row in rows]
+            return None
 
-    async def delete_record(
-        self,
-        connection: str,
-        /,
-        *,
-        table: str,
-        where: List[str],
-        values: Optional[tuple] = None,
-    ) -> None:
-        DELETE_STATEMENT = f"DELETE FROM {table}"
+    async def delete_record(self, connection: str, /, *, table: str, where: Tuple[str, ...], values: Optional[Tuple[Any, ...]] = None) -> None:
+        delete_statement = f"DELETE FROM {table}"
         if where is not None:
             assign_question = map(lambda x: f"{x} = ?", where)
-            DELETE_STATEMENT += " WHERE {}".format(
-                " AND ".join(assign_question)
-            )
+            delete_statement += " WHERE {}".format(
+                " AND ".join(assign_question))
+            
         async with self.cursor(connection) as cursor:
-            await cursor.execute(DELETE_STATEMENT, values)
+            await cursor.execute(delete_statement, values or ())
             await getattr(self, connection).commit()
 
-    async def insert_record(
-        self,
-        connection: str,
-        /,
-        *,
-        table: str,
-        values: tuple,
-        columns: List[str],
-    ) -> None:
-        INSERT_STATEMENT = """
+    async def insert_record(self, connection: str, /, *, table: str, values: Tuple[Any, ...], columns: Tuple[str, ...]) -> None:
+        insert_statement = """
                            INSERT INTO {}({}) VALUES ({})
                            """.format(
             table, ", ".join(columns), ", ".join(["?"] * len(values))
         )
         async with self.cursor(connection) as cursor:
-            await cursor.execute(INSERT_STATEMENT, values)
+            await cursor.execute(insert_statement, values)
             await getattr(self, connection).commit()
 
     @property
@@ -203,7 +193,7 @@ class CodingBot(commands.Bot):
         super().__init__(
             command_prefix=[","], intents=INTENTS, case_insensitive=True
         )
-        self.conn: Database = None
+        self.conn: Database = discord.utils.MISSING
         self.tracker = InviteTracker(self)
         self.default_prefixes = [","]
         self.welcomer = WelcomeBanner(self)
@@ -215,12 +205,12 @@ class CodingBot(commands.Bot):
             if filename.endswith(".py"):
                 await self.load_extension(f"cogs.{filename[:-3]}")
 
-    async def start(self, token: str, *, reconnect: bool = True):
+    async def start(self, token: str, *, reconnect: bool = True) -> None:
         async with Database() as self.conn:
             async with aiohttp.ClientSession() as self.session:
                 return await super().start(token, reconnect=reconnect)
 
-    async def startup_task(self):
+    async def startup_task(self) -> None:
         await self.wait_until_ready()
         channel = self.get_channel(self.restart_channel)
         self.restart_channel = None
@@ -247,30 +237,35 @@ class CodingBot(commands.Bot):
     async def on_member_join(self, member: discord.Member) -> None:
         rules = member.guild.rules_channel
         if rules:
-            rules = rules.mention
+            rules_channel = rules.mention
         else:
-            rules = "No official rule channel set yet."
+            rules_channel = "No official rule channel set yet."
         embed = discord.Embed(
             title=f"Welcome to {member.guild.name}!",
             description=(
-                f"Welcome {member.mention}, we're glad you joined! Before you get"
-                " started, here are some things to check out: \n**Read the Rules:"
-                f"** {rules} \n**Get roles:** <#726074137168183356> and "
-                "<#806909970482069556> \n**Want help? Read here:** "
-                "<#799527165863395338> and <#754712400757784709>"
-            ),
-            timestamp=dt.datetime.now(dt.timezone.utc),
+
+                f'Welcome {member.mention}, we\'re glad you joined! Before you get'
+                ' started, here are some things to check out: \n**Read the Rules:'
+                f'** {rules_channel} \n**Get roles:** <#726074137168183356> and '
+                '<#806909970482069556> \n**Want help? Read here:** '
+                '<#799527165863395338> and <#754712400757784709>'),
+            timestamp=dt.datetime.now(dt.timezone.utc)
         )
         file = await self.welcomer.construct_image(member=member)
         channel = member.guild.get_channel(743817386792058971)
-        await channel.send(content=member.mention, file=file)
         verify_here = member.guild.get_channel(759220767711297566)
-        await verify_here.send(
-            f"Welcome {member.mention}! Follow the instructions in other channels to get verified. :)",
-            embed=embed,
+        
+        # Assertions for narrowing types
+        assert channel is not None
+        assert verify_here is not None
+        
+        await channel.send(content=member.mention, file=file)  # type: ignore  # Always a Messageable
+        await verify_here.send(  # type: ignore  # Always a Messageable
+            f'Welcome {member.mention}! Follow the instructions in other channels to get verified. :)',
+            embed=embed
         )
 
-    async def on_error(self, event_method, *args, **kwargs):
+    async def on_error(self, event_method: str, *args: Any, **kwargs: Any):
         await log_error(self, event_method, *args, **kwargs)
 
     async def send(
@@ -323,11 +318,8 @@ class CodingBot(commands.Bot):
             setattr(ctx, "msg_before", msg_before)
         await super().invoke(ctx)
 
-
-class TimeConverter(commands.Converter):
-    async def convert(
-        self, ctx: commands.Context, argument: str
-    ) -> Optional[dt.timedelta]:
+class TimeConverter(commands.Converter[dt.timedelta]):
+    async def convert(self, ctx: commands.Context[CodingBot], argument: str) -> dt.timedelta:
         """
         Parses a string into a timedelta object
 

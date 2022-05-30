@@ -1,14 +1,19 @@
+from __future__ import annotations
+
 import random
 
 import discord
 from discord.ext import commands, tasks
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from ext.models import CodingBot
 
 
-class TaskCog(commands.Cog):
-
+class TaskCog(commands.Cog, command_attrs=dict(hidden=True)):
     hidden = True
 
-    def __init__(self, bot):
+    def __init__(self, bot: CodingBot) -> None:
         self.bot = bot
 
     async def cog_load(self) -> None:
@@ -29,10 +34,10 @@ class TaskCog(commands.Cog):
         if tcr:
             if tcr.get_role(795145820210462771):
                 statuses.append(random.choice(
-                    tcr.get_role(795145820210462771).members).name)
+                    tcr.get_role(795145820210462771).members).name)  # type: ignore
             if tcr.get_role(737517726737629214):
                 statuses.append(random.choice(tcr.get_role(
-                    737517726737629214).members).name + ' (Server Booster)')
+                    737517726737629214).members).name + ' (Server Booster)')  # type: ignore
 
         await self.bot.change_presence(activity=discord.Activity(
             type=discord.ActivityType.watching,
@@ -44,5 +49,5 @@ class TaskCog(commands.Cog):
         await self.bot.wait_until_ready()
 
 
-async def setup(bot):
+async def setup(bot: CodingBot):
     await bot.add_cog(TaskCog(bot))
