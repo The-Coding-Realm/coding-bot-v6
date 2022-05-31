@@ -28,6 +28,14 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
     @commands.hybrid_command(name="afk", aliases = ["afk-set", "set-afk"], help = "Sets your afk")
     @commands.cooldown(1, 10, commands.BucketType.member)
     async def afk(self, ctx: commands.Context[CodingBot], *, reason: Optional[str] = None):
+        """
+        Set your afk status.
+
+        Usage:
+        ------
+        `{prefix}afk`: *will set your afk status to nothing*
+        `{prefix}afk [reason]`: *will set your afk status to [reason]*
+        """
         assert isinstance(ctx.author, discord.Member)
         assert ctx.guild is not None
 
@@ -78,6 +86,15 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
 
     @commands.command()
     async def run(self, ctx, *, codeblock: str):
+        """
+        Runs code in a codeblock.
+        The codeblock must be surrounded by ``` and the language must be specified.
+        Example: ```py\nprint('hello world')\n```
+
+        Usage:
+        ------
+        `{prefix}run [codeblock]`: *will run the code in the [codeblock]*
+        """
         matches = self.regex["codeblock"].findall(codeblock)
         lang = matches[0][0] or matches[0][1]
         if not matches:
@@ -133,7 +150,21 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
         )
 
     @commands.command()
-    async def number(self, ctx: commands.Context[CodingBot], number: Optional[int] = None):
+    async def number(
+        self, 
+        ctx: commands.Context[CodingBot], 
+        number: Optional[int] = None
+    ) -> None:
+        """
+        Gets a random number.
+        Usage:
+        ------
+        `{prefix}number`: *will get a random number*
+        `{prefix}number [number]`: *will get the [number]*
+        """
+        if number is None:
+            number = random.randint(1, 100)
+        await self.bot.reply(ctx, f"{number}")
         number = await (
             self.session.get_random_number()
             if (number is None)

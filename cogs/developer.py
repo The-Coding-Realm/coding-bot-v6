@@ -23,7 +23,13 @@ class Developer(commands.Cog, command_attrs=dict(hidden=True)):
     @commands.is_owner()
     async def sync(self, ctx: commands.Context[CodingBot]):
         """
-        Sync the database
+        Sync all the slash commands globally
+
+        It is not meant to be used after every restart.
+
+        Usage:
+        ------
+        `{prefix}sync`
         """
         await self.bot.tree.sync()
         await ctx.send("Finished syncing commands globally")

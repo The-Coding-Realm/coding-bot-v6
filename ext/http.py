@@ -1,8 +1,9 @@
+import aiohttp
 from discord.ext import tasks
 
 
 class Http:
-    def __init__(self, session):
+    def __init__(self, session: aiohttp.ClientSession):
         self.session = session
         self.cache = {"piston": {}}
         self.api = {
@@ -34,21 +35,34 @@ class Http:
 
     # 🪨 api
     async def get_random_rock(self):
-        return await self.get(_url=self.api["rock"]["random"], _json=True)
+        return await self.get(
+            _url=self.api["rock"]["random"], 
+            _json=True
+        )
 
     async def get_top_rock(self):
-        return await self.get(_url=self.api["rock"]["top"], _json=True)
+        return await self.get(
+            _url=self.api["rock"]["top"], 
+            _json=True
+        )
 
     # numbers api
     async def get_random_number(self, type="trivia"):
-        return await self.get(_url=self.api["numbers"]["random_" + type])
+        return await self.get(
+            _url=self.api["numbers"]["random_" + type]
+        )
 
     async def get_number(self, num, type="trivia"):
-        return await self.get(_url=self.api["numbers"][type](num))
+        return await self.get(
+            _url=self.api["numbers"][type](num)
+        )
 
     # piston api
     async def get_runtimes(self):
-        return await self.get(_url=self.api["piston"]["runtimes"], _json=True)
+        return await self.get(
+            _url=self.api["piston"]["runtimes"],
+            _json=True
+        )
 
     async def execute_code(self, language, code):
         r = await self.post(
