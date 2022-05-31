@@ -16,7 +16,6 @@ if TYPE_CHECKING:
 class Developer(commands.Cog, command_attrs=dict(hidden=True)):
 
     hidden = True
-
     def __init__(self, bot: CodingBot) -> None:
         self.bot = bot
         
@@ -32,21 +31,38 @@ class Developer(commands.Cog, command_attrs=dict(hidden=True)):
     @commands.command(name='load', aliases=['l'])
     @commands.is_owner()
     async def _load(self, ctx: commands.Context[CodingBot], cog_: str):
-        await self.bot.load_extension(cog_)
-        embed = discord.Embed(
-            title='Success', description='Saved Preference' if save else None,
-            color=discord.Color.green()
-        )
+        try:
+            await self.bot.load_extension(cog_)
+            embed = discord.Embed(
+                title=f'Successfully loaded extension: `{cog_}`',
+                color=discord.Color.green()
+            )
+        except Exception as e:
+            embed = discord.Embed(
+                title=f'Failed to load extension: `{cog_}`',
+                color=discord.Color.red()
+            )
+            embed.description = f'```py\n{traceback.format_exc()}\n```'
+            
         await ctx.send(embed=embed)
 
     @commands.command(name='unload', aliases=['u'])
     @commands.is_owner()
     async def _unload(self, ctx: commands.Context[CodingBot], cog_: str):
-        await self.bot.unload_extension(cog_)
-        embed = discord.Embed(
-            title='Success', description='Saved Preference' if save else None,
-            color=discord.Color.green()
-        )
+        try:
+            await self.bot.unload_extension(cog_)
+            embed = discord.Embed(
+                title=f'Successfully unloaded extension: `{cog_}`',
+                color=discord.Color.green()
+            )
+        except Exception as e:
+            embed = discord.Embed(
+                title=f'Failed to unload extension: `{cog_}`',
+                color=discord.Color.red()
+            )
+            embed.description = f'```py\n{traceback.format_exc()}\n```'
+            
+        await ctx.send(embed=embed)
 
     @commands.command(name='reload', aliases=['r'])
     @commands.is_owner()
@@ -116,7 +132,6 @@ class Developer(commands.Cog, command_attrs=dict(hidden=True)):
             'not': []
         }
         processing: Mapping[str, ModuleType] = self.bot.extensions.copy()  # type: ignore
-        print(processing)
         for cog in processing:
             try:
                 await self.bot.reload_extension(cog)
