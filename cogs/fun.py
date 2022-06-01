@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import io
 import random
 from textwrap import wrap
 
+import aiohttp
 import discord
 from discord.ext import commands
 from typing import TYPE_CHECKING, Optional
@@ -117,7 +119,7 @@ class Fun(commands.Cog, command_attrs=dict(hidden=False)):
             
         await ctx.send(embed=embed)
 
-    @binary.command(name="lyrics")
+    @commands.hybrid_command(name="lyrics")
     async def lyrics(self, ctx, *, query: str = None):
         if not query:
             embed = discord.Embed(title = "No search argument!", description=f"You must provide a search argument or I couldn't find the lyrics")
@@ -142,8 +144,6 @@ class Fun(commands.Cog, command_attrs=dict(hidden=False)):
             embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url)
 
         await ctx.send(embed=embed)
-
-    # DO YOUR COMMANDS HERE I HAVE NOT ENOUGH CREATIVITY TO THINK ABOUT THEM KEKW
 
 async def setup(bot: CodingBot):
     await bot.add_cog(Fun(bot))
