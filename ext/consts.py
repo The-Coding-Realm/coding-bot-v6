@@ -48,3 +48,15 @@ AFK_CONFIG_SCHEMA = """CREATE TABLE IF NOT EXISTS afk (
                             afk_time BIGINT
                         );
                         """
+
+
+HELP_COMMAND = """
+            Help command for Coding Bot
+
+            Usage:
+            ------
+            `{prefix}help`
+            `{prefix}help <command>`
+            `{prefix}help <category>`
+            `{prefix}help <command> <sub-command>`
+            """

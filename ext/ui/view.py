@@ -67,14 +67,22 @@ class Rocks(discord.ui.View):
 
 
 class Piston(discord.ui.View):
-    def __init__(self, cog, code, lang, msg):
+    
+    def __init__(
+        self, 
+        cog: commands.Cog, 
+        code: str, 
+        language: str, 
+        message: discord.Message
+    ) -> None:
+
         self.code = code
-        self.lang = lang
+        self.lang = language
         self.cog = cog
         self.timestamp = int(time.time())
         self.is_compiled = False
         self.output = []
-        self.msg = msg
+        self.msg = message
         self.page = 0
         super().__init__()
         self.timer.start()
@@ -140,7 +148,7 @@ class Piston(discord.ui.View):
         )
 
     @ui.button(label="<", custom_id="prev", disabled=True)
-    async def _prev(self, interaction, button):
+    async def _prev(self, interaction: discord.Interaction, button: discord.Button):
         if self.page == 0:
             button.disabled = True
             return await interaction.response.edit_message(view=self)
@@ -160,14 +168,12 @@ class Piston(discord.ui.View):
         label="...",
         custom_id="info",
         style=discord.ButtonStyle.gray,
-        disabled=True,
+        disabled=True
     )
-    async def _info(self, interaction, button):
+    async def _info(self, interaction: discord.Interaction, button: discord.Button):
         pass
 
-    @ui.button(
-        label=">", custom_id="next", style=discord.ButtonStyle.green
-    )
+    @ui.button(label=">", custom_id="next", style=discord.ButtonStyle.green)
     async def _next(self, interaction: discord.Interaction, button: discord.Button):
         if self.page + 1 == len(self.output):
             button.disabled = True

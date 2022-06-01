@@ -23,6 +23,17 @@ class ListenerCog(commands.Cog, command_attrs=dict(hidden=True)):
 
     @commands.Cog.listener()
     async def on_command_error(self, ctx: commands.Context[CodingBot], error: Exception):
+        """
+        Handles errors for commands during command invocation.
+        Errors that are not handled by this function are printed to stderr.
+
+        Parameters
+        ----------
+        ctx : commands.Context[CodingBot]
+            The context for the command.
+        error : Exception
+            The exception that was raised.
+        """
         if isinstance(error, commands.CommandNotFound):
             return
 
@@ -47,6 +58,16 @@ class ListenerCog(commands.Cog, command_attrs=dict(hidden=True)):
 
     @commands.Cog.listener("on_message")
     async def on_message(self, message: discord.Message):
+        """
+        Responsible for checking if a message was sent by an AFK user.
+        If so, the bot will send a message to the channel informating that they are no longer AFK.
+        It will also remove the [AFK] tag from the user's name.
+
+        Parameters
+        ----------
+        message : discord.Message
+            The message that was sent.
+        """
         if message.author.bot or not message.guild:
             return
         record = await self.bot.conn.select_record(
@@ -71,9 +92,10 @@ class ListenerCog(commands.Cog, command_attrs=dict(hidden=True)):
                     values=(message.author.id,),
                 )
                 try:
-                    name = message.author.display_name.split(' ')[1:]
-                    # type: ignore
-                    await message.author.edit(nick=" ".join(name))
+                    if "[AFK]" in message.author.display_name:
+                        name = message.author.display_name.split(' ')[1:]
+                        # type: ignore 
+                        await message.author.edit(nick=" ".join(name))
                 except (discord.HTTPException, discord.Forbidden):
                     pass
 
@@ -93,6 +115,15 @@ class ListenerCog(commands.Cog, command_attrs=dict(hidden=True)):
 
     @commands.Cog.listener("on_message")
     async def user_mentioned(self, message: discord.Message):
+        """
+        Responsible for checking if an AFK user was mentioned in a message.
+        If so, the bot will send a message to the channel informing that the user that was mentioned is AFK.
+
+        Parameters
+        ----------
+        message : discord.Message
+            The message that was sent.
+        """
         if message.author.bot or not message.guild:
             return
         if message.mentions:
@@ -118,12 +149,28 @@ class ListenerCog(commands.Cog, command_attrs=dict(hidden=True)):
                     break
 
     @commands.Cog.listener()
-    async def on_message_edit(self, message_before, msg):
-        if msg.author.bot:
+    async def on_message_edit(
+        self, 
+        before: discord.Message, 
+        after: discord.Message
+    ) -> None:
+        """
+        Responsible for checking if a message was edited.
+        If so, the bot will check if message cache of bot has exceeded 200.
+        If so, the bot will clear the cache.
+
+        Parameters
+        ----------
+        message_before : discord.Message
+            The message before the edit.
+        msg : discord.Message
+            The message after the edit.
+        """
+        if after.author.bot:
             return
         if len(self.bot.message_cache) > 200:
             self.bot.message_cache.clear()
-        await self.bot.process_edit(message_before, msg)
+        await self.bot.process_edit(before, after)
 
 
 async def setup(bot: CodingBot):

@@ -17,7 +17,8 @@ from .consts import (
     PREFIX_CONFIG_SCHEMA,
     COMMANDS_CONFIG_SCHEMA,
     WARNINGS_CONFIG_SCHEMA,
-    AFK_CONFIG_SCHEMA
+    AFK_CONFIG_SCHEMA,
+    HELP_COMMAND
 )
 from .helpers import WelcomeBanner, log_error
 
@@ -195,9 +196,11 @@ class CodingHelp(commands.HelpCommand):
 
     async def send_bot_help(
             self,
-            mapping: Mapping[Optional[commands.Cog],
-                             List[commands.Command]],
-            /) -> None:
+            mapping: Mapping[
+                Optional[commands.Cog],
+                List[commands.Command]
+            ]
+    ) -> None:
         embed = discord.Embed(title="Bot Commands",
                               description="Coding Bot V6")
         for cog, commands in mapping.items():
@@ -211,9 +214,12 @@ class CodingHelp(commands.HelpCommand):
 class CodingBot(commands.Bot):
     def __init__(self) -> None:
         help_command = CodingHelp(
-            command_attrs={'cooldown': commands.CooldownMapping.from_cooldown(
-                3, 5, commands.BucketType.user
-            )
+            command_attrs={
+                'cooldown': commands.CooldownMapping.from_cooldown(
+                    3, 5, commands.BucketType.user
+                ),
+                'cooldown_after_parsing': True,
+                'help': HELP_COMMAND
             }
         )
         super().__init__(
