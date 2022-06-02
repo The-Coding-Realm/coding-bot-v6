@@ -5,7 +5,9 @@ __all__ = (
     'PREFIX_CONFIG_SCHEMA',
     'COMMANDS_CONFIG_SCHEMA',
     'WARNINGS_CONFIG_SCHEMA',
-    'AFK_CONFIG_SCHEMA'
+    'AFK_CONFIG_SCHEMA',
+    'HELP_WARNINGS_CONFIG_SCHEMA',
+    'HELP_COMMAND'
 )
 
 INTENTS = discord.Intents(
@@ -28,11 +30,13 @@ PREFIX_CONFIG_SCHEMA = """CREATE TABLE IF NOT EXISTS prefixconf (
                            prefix TEXT
                         );
                         """
+
 COMMANDS_CONFIG_SCHEMA = """CREATE TABLE IF NOT EXISTS commandconf (
                             id BIGINT,
                             command TEXT
                         );
                         """
+
 WARNINGS_CONFIG_SCHEMA = """CREATE TABLE IF NOT EXISTS warnings (
                             user_id BIGINT,
                             guild_id BIGINT,
@@ -49,6 +53,14 @@ AFK_CONFIG_SCHEMA = """CREATE TABLE IF NOT EXISTS afk (
                         );
                         """
 
+HELP_WARNINGS_CONFIG_SCHEMA = """CREATE TABLE IF NOT EXISTS help_warns (
+                            user_id BIGINT,
+                            guild_id BIGINT,
+                            helper_id BIGINT,
+                            reason TEXT,
+                            date BIGINT,
+                       );
+                       """
 
 HELP_COMMAND = """
             Help command for Coding Bot
