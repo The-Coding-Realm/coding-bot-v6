@@ -58,7 +58,7 @@ class TaskCog(commands.Cog, command_attrs=dict(hidden=True)):
                                                     arguments=('date','user_id'),
                                                     table='warnings',
                                                     where=('guild_id',),
-                                                    values=(TCR_GUILD_ID)
+                                                    values=(TCR_GUILD_ID,)
                                                     )
         now = datetime.datetime.utcnow().timestamp()
         for record in records:
