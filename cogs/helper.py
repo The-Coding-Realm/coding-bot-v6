@@ -1,7 +1,21 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 import discord
 from discord.ext import commands
 import datetime
-from ..ext.consts import OFFICIAL_HELPER_ROLE_ID, TCR_GUILD_ID, HELP_BAN_ROLE_ID, READ_HELP_RULES_ROLE_ID
+
+from ext.consts import (
+    OFFICIAL_HELPER_ROLE_ID, 
+    TCR_GUILD_ID, 
+    HELP_BAN_ROLE_ID, 
+    READ_HELP_RULES_ROLE_ID
+)
+
+if TYPE_CHECKING:
+    from ext.models import CodingBot
+
 
 class Helper(commands.Cog, command_attrs=dict(hidden=False)):
 
@@ -22,7 +36,14 @@ class Helper(commands.Cog, command_attrs=dict(hidden=False)):
 
         return True
 
-    @commands.hybrid_command(name="help-warn")
+    @commands.hybrid_group(name="helper")
+    async def helper(self, ctx: commands.Context[CodingBot]):
+        """
+        Help commands
+        """
+        await ctx.send_help(ctx.command)
+
+    @helper.command(name="warn")
     async def help_warn(self, ctx, member: discord.Member, reason):
         await self.bot.conn.insert_record(
             'warnings',
@@ -33,22 +54,19 @@ class Helper(commands.Cog, command_attrs=dict(hidden=False)):
         )
         await ctx.send(f'Help-warned {member.mention}')
 
-    @commands.hybrid_command(name="help-warnings")
+    @helper.command(name="warnings")
     async def help_warnings(self, ctx, member: discord.Member):
 
         embed = discord.Embed(
             title=f"{member} Help warnings List", color=discord.Color.red())
-        records = await self.bot.conn.select_record('warnings',
-                                                    arguments=(
-                                                        'reason', 'helper_id', 'date'),
-                                                    table='help_warns',
-                                                    where=(
-                                                        'guild_id', 'user_id'),
-                                                    values=(
-                                                        ctx.guild.id, member.id),
-                                                    extras=[
-                                                        'ORDER BY date DESC']
-                                                    )
+        records = await self.bot.conn.select_record(
+            'warnings',
+            arguments=('reason', 'helper_id', 'date'),
+            table='help_warns',
+            where=('guild_id', 'user_id'),
+            values=(ctx.guild.id, member.id),
+            extras=['ORDER BY date DESC']
+        )
         if not records:
             return await ctx.send(f'{member.mention} has no help-warnings.')
 
@@ -63,44 +81,42 @@ class Helper(commands.Cog, command_attrs=dict(hidden=False)):
 
         await ctx.send(embed=embed)
 
-    @commands.hybrid_command(name="help-clearwarning")
+    @helper.command(name="clearwarning")
     async def help_clearwarning(self, ctx, member: discord.Member, index: int = None):
         target = member or ctx.author
         if index is None:
-            await self.bot.conn.delete_record('warnings',
-                                              table='help_warns',
-                                              where=('guild_id', 'user_id'),
-                                              values=(ctx.guild.id, target.id)
-                                              )
+            await self.bot.conn.delete_record(
+                'warnings',
+                table='help_warns',
+                where=('guild_id', 'user_id'),
+                values=(ctx.guild.id, target.id)
+            )
         else:
-            records = await self.bot.conn.select_record('warnings',
-                                                        arguments=('date',),
-                                                        table='help_warns',
-                                                        where=(
-                                                            'guild_id', 'user_id'),
-                                                        values=(
-                                                            ctx.guild.id, target.id),
-                                                        extras=[
-                                                            'ORDER BY date DESC']
-                                                        )
+            records = await self.bot.conn.select_record(
+                'warnings',
+                arguments=('date',),
+                table='help_warns',
+                where=('guild_id', 'user_id'),
+                values=(ctx.guild.id, target.id),
+                extras=['ORDER BY date DESC']
+            )
 
             if not records:
                 return await ctx.send(f'{target.mention} has no warnings.')
 
             for i, sublist in enumerate(records, 1):
                 if index == i:
-                    await self.bot.conn.delete_record('warnings',
-                                                      table='help_warns',
-                                                      where=(
-                                                          'guild_id', 'user_id', 'date'),
-                                                      values=(
-                                                          ctx.guild.id, target.id, sublist.date)
-                                                      )
+                    await self.bot.conn.delete_record(
+                        'warnings',
+                        table='help_warns',
+                        where=('guild_id', 'user_id', 'date'),
+                        values=(ctx.guild.id, target.id, sublist.date)
+                    )
                     break
 
         await ctx.reply(f'{target.mention}\'s warning was cleared.')
 
-    @commands.hybrid_command(name="help-ban")
+    @helper.command(name="help-ban")
     async def help_ban(self, ctx, member:discord.Member, reason):
         help_ban_role = ctx.guild.get_role(HELP_BAN_ROLE_ID)
         read_help_rules_role = ctx.guild.get_role(HELP_BAN_ROLE_ID)
@@ -118,8 +134,8 @@ class Helper(commands.Cog, command_attrs=dict(hidden=False)):
         except discord.Forbidden:
             pass
 
-    @commands.hybrid_command(name="help-unban")
-    async def help_unban(self, ctx, member:discord.Member):
+    @helper.command(name="help-unban")
+    async def help_unban(self, ctx, member: discord.Member):
         help_ban_role = ctx.guild.get_role(HELP_BAN_ROLE_ID)
         read_help_rules_role = ctx.guild.get_role(HELP_BAN_ROLE_ID)
         if not help_ban_role in member.roles:
