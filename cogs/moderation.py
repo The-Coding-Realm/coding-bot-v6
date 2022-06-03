@@ -236,6 +236,7 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
             evidence = await self.capture_evidence(ctx)
             await self.log(action='mute', moderator=ctx.author, member=member, undo=False, reason=reason, duration=duration, evidence=evidence)  # type: ignore
 
+    @trainee_check()
     @commands.hybrid_command(name="unmute")
     @commands.has_permissions(manage_roles=True)
     async def unmute(self, ctx: commands.Context[CodingBot], member: discord.Member, *, reason: Optional[str] = None):
@@ -250,6 +251,7 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
             await ctx.send(f'Unmuted {member.mention}')
             await self.log(action='mute', moderator=ctx.author, member=member, undo=True, reason=reason)  # type: ignore
 
+    @trainee_check()
     @commands.hybrid_command()
     async def massban(self, ctx: commands.Context[CodingBot], users: commands.Greedy[Union[discord.Member, discord.User]]):
         if not users:

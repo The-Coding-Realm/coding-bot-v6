@@ -18,6 +18,7 @@ from .consts import (
     COMMANDS_CONFIG_SCHEMA,
     WARNINGS_CONFIG_SCHEMA,
     AFK_CONFIG_SCHEMA,
+    HELP_WARNINGS_CONFIG_SCHEMA,
     HELP_COMMAND
 )
 from .helpers import WelcomeBanner, log_error
@@ -110,6 +111,7 @@ class Database:
 
         async with self.cursor("warnings") as cursor:
             await cursor.execute(WARNINGS_CONFIG_SCHEMA)
+            await cursor.execute(HELP_WARNINGS_CONFIG_SCHEMA)
 
         async with self.cursor("afk") as cursor:
             await cursor.execute(AFK_CONFIG_SCHEMA)
