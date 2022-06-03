@@ -116,7 +116,7 @@ class Helper(commands.Cog, command_attrs=dict(hidden=False)):
 
         await ctx.reply(f'{target.mention}\'s warning was cleared.')
 
-    @helper.command(name="help-ban")
+    @helper.command(name="ban")
     async def help_ban(self, ctx, member:discord.Member, reason):
         help_ban_role = ctx.guild.get_role(HELP_BAN_ROLE_ID)
         read_help_rules_role = ctx.guild.get_role(READ_HELP_RULES_ROLE_ID)
@@ -134,7 +134,7 @@ class Helper(commands.Cog, command_attrs=dict(hidden=False)):
         except discord.Forbidden:
             pass
 
-    @helper.command(name="help-unban")
+    @helper.command(name="unban")
     async def help_unban(self, ctx, member: discord.Member):
         help_ban_role = ctx.guild.get_role(HELP_BAN_ROLE_ID)
         read_help_rules_role = ctx.guild.get_role(READ_HELP_RULES_ROLE_ID)
@@ -152,7 +152,7 @@ class Helper(commands.Cog, command_attrs=dict(hidden=False)):
         except discord.Forbidden:
             pass
 
-    @commands.hybrid_command(name="help-verify")
+    @helper.command(name="verify")
     async def help_verify(self, ctx, target: discord.Member):
         read_help_rules_role = ctx.guild.get_role(READ_HELP_RULES_ROLE_ID)
         if read_help_rules_role in target.roles:
