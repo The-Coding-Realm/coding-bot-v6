@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-import io
 import random
 from textwrap import wrap
 
-import aiohttp
 import discord
+from ext.http import Http
+from ext.ui.view import *
 from discord.ext import commands
 from typing import TYPE_CHECKING, Optional
 
@@ -17,12 +17,69 @@ class Fun(commands.Cog, command_attrs=dict(hidden=False)):
 
     hidden = False
     def __init__(self, bot: CodingBot) -> None:
+        self.http = Http(bot.session)
         self.bot = bot
+    
+    @commands.command()
+    async def rock(self, ctx: commands.Context[CodingBot], *, query: Optional[str] = None):
+        async def get_rock(self):
+            rock = await self.http.api["rock"]["random"]()
+            name = rock["name"]
+            desc = rock["desc"]
+            image = rock["image"]
+            rating = rock["rating"]
+            embed = await self.bot.embed(
+                title=f"🪨   {name}",
+                url=image or "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+                description=f"```yaml\n{desc}```",
+            )
+            if image is not None and image != "none" and image != "":
+                embed.set_thumbnail(url=image)
+            return (embed, rating)
+
+        rock_info = await get_rock(self)
+        return await self.bot.reply(
+            ctx,
+            embed=rock_info[0],
+            view=Rocks(
+                cog=self,
+                embed_gen=get_rock,
+                stars=rock_info[1],
+                embed=rock_info[0],
+            ),
+        )
+
+    @commands.command()
+    async def number(
+        self, 
+        ctx: commands.Context[CodingBot], 
+        number: Optional[int] = None
+    ) -> None:
+        """
+        Gets a random number.
+        Usage:
+        ------
+        `{prefix}number`: *will get a random number*
+        `{prefix}number [number]`: *will get the [number]*
+        """
+        if number is None:
+            number = random.randint(1, 100)
+        await self.bot.reply(ctx, f"{number}")
+        number = await (
+            self.http.api["numbers"]["random"]()
+            if (number is None)
+            else self.api["numbers"]["number"](number)
+        )
+        embed = await self.bot.embed(
+            title=f"**{number}**",
+            description=" ",
+            url="https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        )
+        return await self.bot.reply(ctx, embed=embed)
 
     @commands.hybrid_command(name="meme")
     async def meme(self, ctx: commands.Context[CodingBot]):
-        response = await self.bot.session.get("https://meme-api.herokuapp.com/gimme")
-        meme_json = await response.json()
+        meme_json = await self.http.api["get"]["meme"]()
 
         meme_url = meme_json['url']
         meme_name = meme_json['title']
@@ -50,7 +107,7 @@ class Fun(commands.Cog, command_attrs=dict(hidden=False)):
     @commands.hybrid_command(name="token")
     async def token(self, ctx: commands.Context[CodingBot]):
         # If you like, you can use sr_api
-        response = await self.bot.session.get("https://some-random-api.ml/bottoken")
+        response = await self.http.api["some-random-api"]["bottoken"]()
         json = await response.json()
 
         bottoken = json['token']
@@ -65,7 +122,7 @@ class Fun(commands.Cog, command_attrs=dict(hidden=False)):
         if (not animal) or (animal and animal not in options):
             animal = random.choice(options)
 
-        response = await self.bot.session.get(f"https://some-random-api.ml/animal/{animal}")
+        response = await self.http.api["some-random-api"]["animal"](animal)
         if response.status in range(200,300):
             json = await response.json()
 
@@ -89,7 +146,7 @@ class Fun(commands.Cog, command_attrs=dict(hidden=False)):
 
     @binary.command(name="encode")
     async def binary_encode(self, ctx, *, string: str):
-        response = await self.bot.session.get(f"https://some-random-api.ml/binary?encode={string}")
+        response = await self.http.api["some-random-api"]["binary-encode"](string)
         if response.status in range(200,300):
             json = await response.json()
 
@@ -105,7 +162,7 @@ class Fun(commands.Cog, command_attrs=dict(hidden=False)):
 
     @binary.command(name="decode")
     async def binary_decode(self, ctx, binary: str):
-        response = await self.bot.session.get(f"https://some-random-api.ml/binary?decode={binary}")
+        response = await self.http.api["some-random-api"]["binary-decode"](binary)
         if response.status in range(200,300):
             json = await response.json()
 
@@ -125,7 +182,7 @@ class Fun(commands.Cog, command_attrs=dict(hidden=False)):
             embed = discord.Embed(title = "No search argument!", description=f"You must provide a search argument or I couldn't find the lyrics")
             embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url)
 
-        response = await self.bot.session.get(f"https://some-random-api.ml/lyrics?title={query}")
+        response = await self.http.api["some-random-api"]["lyrics"](query)
         if response.status in range(200, 300):
             json = await response.json()
             
@@ -143,6 +200,12 @@ class Fun(commands.Cog, command_attrs=dict(hidden=False)):
             embed = discord.Embed(title="ERROR!",  description=f"Received a bad status code of {response.status}")
             embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url)
 
+        await ctx.send(embed=embed)
+        
+    @commands.hybrid_command(name="reverse")
+    async def reverse(self, ctx: commands.Context, *, text: str):
+        embed = discord.Embed(title=f"Reversed Text", description=f"{text[::-1]}", color=discord.Color.random())
+        embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url)
         await ctx.send(embed=embed)
 
 async def setup(bot: CodingBot):

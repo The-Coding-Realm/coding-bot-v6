@@ -1,12 +1,10 @@
 from __future__ import annotations
 
 import random
-import datetime
 
 import discord
 from discord.ext import commands, tasks
 from typing import TYPE_CHECKING
-from ..ext.consts import TCR_GUILD_ID
 
 if TYPE_CHECKING:
     from ext.models import CodingBot
