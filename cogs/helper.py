@@ -116,10 +116,10 @@ class Helper(commands.Cog, command_attrs=dict(hidden=False)):
 
         await ctx.reply(f'{target.mention}\'s warning was cleared.')
 
-    @helper.command(name="help-ban")
+    @helper.command(name="ban")
     async def help_ban(self, ctx, member:discord.Member, reason):
         help_ban_role = ctx.guild.get_role(HELP_BAN_ROLE_ID)
-        read_help_rules_role = ctx.guild.get_role(HELP_BAN_ROLE_ID)
+        read_help_rules_role = ctx.guild.get_role(READ_HELP_RULES_ROLE_ID)
         if help_ban_role in member.roles:
             return await ctx.send(f'{member.mention} is already help-banned')
 
@@ -134,10 +134,10 @@ class Helper(commands.Cog, command_attrs=dict(hidden=False)):
         except discord.Forbidden:
             pass
 
-    @helper.command(name="help-unban")
+    @helper.command(name="unban")
     async def help_unban(self, ctx, member: discord.Member):
         help_ban_role = ctx.guild.get_role(HELP_BAN_ROLE_ID)
-        read_help_rules_role = ctx.guild.get_role(HELP_BAN_ROLE_ID)
+        read_help_rules_role = ctx.guild.get_role(READ_HELP_RULES_ROLE_ID)
         if not help_ban_role in member.roles:
             return await ctx.send(f'{member.mention} is not help-banned')
 
@@ -151,6 +151,18 @@ class Helper(commands.Cog, command_attrs=dict(hidden=False)):
             await member.send(f"You have been help-unbanned")
         except discord.Forbidden:
             pass
+
+    @helper.command(name="verify")
+    async def help_verify(self, ctx, target: discord.Member):
+        read_help_rules_role = ctx.guild.get_role(READ_HELP_RULES_ROLE_ID)
+        if read_help_rules_role in target.roles:
+            embed = discord.Embed(title="ERROR!", description=f"{target.mention} is already verified")
+            embed.set_footer(text=f"Command executed by {ctx.author}", icon_url=ctx.author.display_avatar.url)
+        else:
+            embed = discord.Embed(title="Member verified", description=f"{target.mention} was successfully verified")
+            embed.set_footer(text=f"Command executed by {ctx.author}", icon_url=ctx.author.display_avatar.url)
+            await target.add_roles(read_help_rules_role)
+        await ctx.send(embed=embed)
 
 async def setup(bot):
     await bot.add_cog(Helper(bot))
