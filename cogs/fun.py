@@ -142,6 +142,12 @@ class Fun(commands.Cog, command_attrs=dict(hidden=False)):
             embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url)
 
         await ctx.send(embed=embed)
+        
+    @commands.hybrid_command(name="reverse")
+    async def reverse(self, ctx: commands.Context, *, text: str):
+        embed = discord.Embed(title=f"Reversed Text", description=f"{text[::-1]}", color=discord.Color.random())
+        embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url)
+        await ctx.send(embed=embed)
 
 async def setup(bot: CodingBot):
     await bot.add_cog(Fun(bot))
