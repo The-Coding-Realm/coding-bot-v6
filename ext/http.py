@@ -147,7 +147,3 @@ class Http:
     async def delete(self, _url, _json=False, **kwargs):
         async with self.session.delete(_url, **kwargs) as response:
             return await (response.json() if _json else response.text())
-
-class Get:
-    def __init__(self,apis):
-        self.__dict__ = apis
