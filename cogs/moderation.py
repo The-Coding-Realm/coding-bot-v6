@@ -304,7 +304,7 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
         await ctx.send(f'Purged {purged_amt} messages in {ctx.channel.mention}')  # type: ignore
 
     @trainee_check()
-    @commands.command(name="warnings")
+    @commands.hybrid_command(name="warnings")
     async def warnings(self, ctx: commands.Context[CodingBot], member: discord.Member):
         assert ctx.guild is not None
         embed = discord.Embed(
@@ -374,6 +374,20 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
 
         await ctx.reply(f'{target.mention}\'s warning was cleared.', allowed_mentions=discord.AllowedMentions(users=False))
         await self.log(action='warn', moderator=ctx.author, member=target, undo=True)  # type: ignore
+
+    @trainee_check()
+    @commands.hybrid_command(name="verify")
+    @commands.has_permissions(manage_messages=True) # Luz : I don't know what permission is required for this command
+    async def verify_member(self, ctx: commands.Context[CodingBot], target: discord.Member):
+        member = ctx.guild.get_role(744403871262179430)
+        if member in target.roles:
+            embed = discord.Embed(title="ERROR!", description=f"{target.mention} is already verified")
+            embed.set_footer(text=f"Command executed by {ctx.author}", icon_url=ctx.author.display_avatar.url)
+        else:
+            embed = discord.Embed(title="Member verified", description=f"{target.mention} was successfully verified")
+            embed.set_footer(text=f"Command executed by {ctx.author}", icon_url=ctx.author.display_avatar.url)
+            await target.add_roles(member)
+        await ctx.send(embed=embed)
 
     # FEEL FREE TO MOVE THIS TO ANY COGS (IF YOU ADD ONE)
 

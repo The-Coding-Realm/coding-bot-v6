@@ -62,7 +62,7 @@ HELP_WARNINGS_CONFIG_SCHEMA = """CREATE TABLE IF NOT EXISTS help_warns (
                             guild_id BIGINT,
                             helper_id BIGINT,
                             reason TEXT,
-                            date BIGINT,
+                            date BIGINT
                        );
                        """
 

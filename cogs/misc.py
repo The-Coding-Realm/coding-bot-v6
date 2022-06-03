@@ -69,9 +69,8 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
             except:
                 pass
 
-            emoji = random.choice(['⚪','🔴','🟤','🟣','🟢','🟡','🟠','🔵'])
             embed = discord.Embed(
-                description=f"{emoji} I set your AFK: {reason}",
+                description=f"{ctx.author.mention} I set your AFK: {reason}",
                 color=discord.Color.blue()
             )
             await ctx.reply(embed=embed)

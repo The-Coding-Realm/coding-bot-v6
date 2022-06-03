@@ -1,10 +1,8 @@
 from __future__ import annotations
 
-import io
 import random
 from textwrap import wrap
 
-import aiohttp
 import discord
 from ext.http import Http
 from ext.ui.view import *
@@ -202,6 +200,12 @@ class Fun(commands.Cog, command_attrs=dict(hidden=False)):
             embed = discord.Embed(title="ERROR!",  description=f"Received a bad status code of {response.status}")
             embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url)
 
+        await ctx.send(embed=embed)
+        
+    @commands.hybrid_command(name="reverse")
+    async def reverse(self, ctx: commands.Context, *, text: str):
+        embed = discord.Embed(title=f"Reversed Text", description=f"{text[::-1]}", color=discord.Color.random())
+        embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url)
         await ctx.send(embed=embed)
 
 async def setup(bot: CodingBot):
