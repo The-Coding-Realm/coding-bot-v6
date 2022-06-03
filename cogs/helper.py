@@ -1,11 +1,7 @@
 import discord
 from discord.ext import commands
 import datetime
-
-OFFICIAL_HELPER_ROLE_ID = 726650418444107869
-TCR_GUILD_ID = 681882711945641997
-HELP_BAN_ROLE_ID = 903133405317857300
-READ_HELP_RULES_ROLE_ID = 903133599715459153
+from ..ext.consts import OFFICIAL_HELPER_ROLE_ID, TCR_GUILD_ID, HELP_BAN_ROLE_ID, READ_HELP_RULES_ROLE_ID
 
 class Helper(commands.Cog, command_attrs=dict(hidden=False)):
 
