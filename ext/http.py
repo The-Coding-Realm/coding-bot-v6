@@ -7,75 +7,131 @@ class Http:
         self.session = session
         self.cache = {"piston": {}}
         self.api = {
+            # //////////////////////////////////////////////////////////////////////////////////////
+            # prelude
+            "get":{
+                "meme": lambda: self.api["meme-api"]["gimme"](),
+            },
+            # //////////////////////////////////////////////////////////////////////////////////////
             "rock": {
-                "random": "https://mrconos.pythonanywhere.com/rock/random",
-                "top": "https://mrconos.pythonanywhere.com/rock/top",
+                "random": lambda: self.get("https://mrconos.pythonanywhere.com/rock/random", _json=True),
+                "top": lambda:self.get("https://mrconos.pythonanywhere.com/rock/top"),
             },
             "numbers": {
-                "random_trivia": "http://numbersapi.com/random/trivia",
-                "random_math": "http://numbersapi.com/random/math",
-                "random_date": "http://numbersapi.com/random/date",
-                "random_year": "http://numbersapi.com/random/year",
-                "date": lambda date: f"http://numbersapi.com/{date}/date",
-                "year": lambda year: f"http://numbersapi.com/{year}/year",
-                "trivia": lambda num: f"http://numbersapi.com/{num}",
-                "math": lambda num: f"http://numbersapi.com/{num}/math",
+                "random": lambda _type="trivia": self.api["numbers"]["random_"+_type](),
+                "number": lambda _type="trivia": self.api["numbers"][_type](),
+                "random_trivia": lambda: self.get("http://numbersapi.com/random/trivia"),
+                "random_math": lambda: self.get("http://numbersapi.com/random/math"),
+                "random_date": lambda: self.get("http://numbersapi.com/random/date"),
+                "random_year": lambda: self.get("http://numbersapi.com/random/year"),
+                "date": lambda date: self.get(f"http://numbersapi.com/{date}/date"),
+                "year": lambda year: self.get(f"http://numbersapi.com/{year}/year"),
+                "trivia": lambda num: self.get(f"http://numbersapi.com/{num}"),
+                "math": lambda num: self.get(f"http://numbersapi.com/{num}/math"),
             },
             "piston": {
-                "runtimes": "https://emkc.org/api/v2/piston/runtimes",
+                "runtimes": lambda: self.get("https://emkc.org/api/v2/piston/runtimes", _json=True),
                 # "execute": "https://emkc.org/api/v2/piston/execute",
-                "execute": "https://emkc.org/api/v1/piston/execute",
+                "execute": lambda language,code: self.post(
+                    "https://emkc.org/api/v1/piston/execute",
+                    _json=True,
+                    data={"language": language, "source": code}
+                    ),
             },
+            "meme-api":{
+                "gimme": lambda: self.get("https://meme-api.herokuapp.com/gimme", _json=True)
+            },
+            "some-random-api":{
+                "bottoken": lambda: self.get("https://some-random-api.ml/bottoken", _json=True),
+                "animal": lambda animal: self.get(f"https://some-random-api.ml/animal/{animal}"),
+                "binary-encode": lambda string: self.get(f"https://some-random-api.ml/binary?encode={string}"),
+                "binary-decode": lambda binary: self.get(f"https://some-random-api.ml/binary?decode={binary}"),
+                "lyrics": lambda query: self.get(f"https://some-random-api.ml/lyrics?title={query}"),
+            }
         }
-        self.update_data.start()
+        
+        # self.update_data.start()
 
     @tasks.loop(minutes=5)
     async def update_data(self):
-        self.cache["piston"]["runtimes"] = await self.get_runtimes()
+        self.cache["piston"]["runtimes"] = await self.api["piston"]["runtimes"]()
 
-    # 🪨 api
-    async def get_random_rock(self):
-        return await self.get(
-            _url=self.api["rock"]["random"], 
-            _json=True
-        )
 
-    async def get_top_rock(self):
-        return await self.get(
-            _url=self.api["rock"]["top"], 
-            _json=True
-        )
+    # #/////////////////////////////////////////////////////////////////////////
+    # # some-random-api
+    # #/////////////////////////////////////////////////////////////////////////
 
-    # numbers api
-    async def get_random_number(self, type="trivia"):
-        return await self.get(
-            _url=self.api["numbers"]["random_" + type]
-        )
+    # async def get_bottoken(self):
+    #     return await self.get(
+    #         _url=self.api["some-random-api"]["bottoken"],
+    #         _json=True
+    #     )
 
-    async def get_number(self, num, type="trivia"):
-        return await self.get(
-            _url=self.api["numbers"][type](num)
-        )
+    # #/////////////////////////////////////////////////////////////////////////
+    # # meme-api
+    # #/////////////////////////////////////////////////////////////////////////
 
-    # piston api
-    async def get_runtimes(self):
-        return await self.get(
-            _url=self.api["piston"]["runtimes"],
-            _json=True
-        )
+    # async def get_meme(self):
+    #     return await self.get(
+    #         _url=self.api["meme-api"]["gimme"],
+    #         _json=True
+    #     )
 
-    async def execute_code(self, language, code):
-        r = await self.post(
-            _url=self.api["piston"]["execute"],
-            _json=True,
-            data={
-                "language": language,
-                "source": code,
-            },
-        )
-        return r
+    # #/////////////////////////////////////////////////////////////////////////
+    # # 🪨 api
+    # #/////////////////////////////////////////////////////////////////////////
 
+    # async def get_random_rock(self):
+    #     return await self.get(
+    #         _url=self.api["rock"]["random"], 
+    #         _json=True
+    #     )
+
+    # async def get_top_rock(self):
+    #     return await self.get(
+    #         _url=self.api["rock"]["top"], 
+    #         _json=True
+    #     )
+
+    # #/////////////////////////////////////////////////////////////////////////
+    # # numbers-api
+    # #/////////////////////////////////////////////////////////////////////////
+
+    # async def get_random_number(self, type="trivia"):
+    #     return await self.get(
+    #         _url=self.api["numbers"]["random_" + type]
+    #     )
+
+    # async def get_number(self, num, type="trivia"):
+    #     return await self.get(
+    #         _url=self.api["numbers"][type](num)
+    #     )
+
+    # #/////////////////////////////////////////////////////////////////////////
+    # # piston-api
+    # #/////////////////////////////////////////////////////////////////////////
+
+    # async def get_runtimes(self):
+    #     return await self.get(
+    #         _url=self.api["piston"]["runtimes"],
+    #         _json=True
+    #     )
+
+    # async def execute_code(self, language, code):
+    #     r = await self.post(
+    #         _url=self.api["piston"]["execute"],
+    #         _json=True,
+    #         data={
+    #             "language": language,
+    #             "source": code,
+    #         },
+    #     )
+    #     return r
+
+    #/////////////////////////////////////////////////////////////////////////
     # http
+    #/////////////////////////////////////////////////////////////////////////
+
     async def get(self, _url, _json=False, **kwargs):
         async with self.session.get(_url, **kwargs) as response:
             return await (response.json() if _json else response.text())
@@ -91,3 +147,7 @@ class Http:
     async def delete(self, _url, _json=False, **kwargs):
         async with self.session.delete(_url, **kwargs) as response:
             return await (response.json() if _json else response.text())
+
+class Get:
+    def __init__(self,apis):
+        self.__dict__ = apis

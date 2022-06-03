@@ -19,7 +19,7 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
     hidden = False
     def __init__(self, bot: CodingBot) -> None:
         self.bot = bot
-        self.session = Http(bot.session)
+        self.http = Http(bot.session)
         self.bot = bot
         self.regex = {
             "codeblock": re.compile(r"(\w*)\s*(?:```)(\w*)?([\s\S]*)(?:```$)")
@@ -120,62 +120,7 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
             ),
         )
 
-    @commands.command()
-    async def rock(self, ctx: commands.Context[CodingBot], *, query: Optional[str] = None):
-        async def get_rock(self):
-            rock = await self.session.get_random_rock()
-            name = rock["name"]
-            desc = rock["desc"]
-            image = rock["image"]
-            rating = rock["rating"]
-            embed = await self.bot.embed(
-                title=f"🪨   {name}",
-                url=image or "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
-                description=f"```yaml\n{desc}```",
-            )
-            if image is not None and image != "none" and image != "":
-                embed.set_thumbnail(url=image)
-            return (embed, rating)
-
-        rock_info = await get_rock(self)
-        return await self.bot.reply(
-            ctx,
-            embed=rock_info[0],
-            view=Rocks(
-                cog=self,
-                embed_gen=get_rock,
-                stars=rock_info[1],
-                embed=rock_info[0],
-            ),
-        )
-
-    @commands.command()
-    async def number(
-        self, 
-        ctx: commands.Context[CodingBot], 
-        number: Optional[int] = None
-    ) -> None:
-        """
-        Gets a random number.
-        Usage:
-        ------
-        `{prefix}number`: *will get a random number*
-        `{prefix}number [number]`: *will get the [number]*
-        """
-        if number is None:
-            number = random.randint(1, 100)
-        await self.bot.reply(ctx, f"{number}")
-        number = await (
-            self.session.get_random_number()
-            if (number is None)
-            else self.session.get_number(number)
-        )
-        embed = await self.bot.embed(
-            title=f"**{number}**",
-            description=" ",
-            url="https://www.youtube.com/watch?v=dQw4w9WgXcQ",
-        )
-        return await self.bot.reply(ctx, embed=embed)
+    
 
             
 async def setup(bot: CodingBot):
