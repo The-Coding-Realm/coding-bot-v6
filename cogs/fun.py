@@ -1,10 +1,8 @@
 from __future__ import annotations
 
-import io
 import random
 from textwrap import wrap
 
-import aiohttp
 import discord
 from discord.ext import commands
 from typing import TYPE_CHECKING, Optional
