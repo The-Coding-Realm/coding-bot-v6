@@ -341,35 +341,33 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
         assert ctx.guild is not None
         target: discord.Member = member or ctx.author  # type: ignore
         if index is None:
-            await self.bot.conn.delete_record('warnings',
-                                              table='warnings',
-                                              where=('guild_id', 'user_id'),
-                                              values=(ctx.guild.id, target.id)
-                                              )
+            await self.bot.conn.delete_record(
+                'warnings',
+                table='warnings',
+                where=('guild_id', 'user_id'),
+                values=(ctx.guild.id, target.id)
+            )
         else:
-            records = await self.bot.conn.select_record('warnings',
-                                                        arguments=('date',),
-                                                        table='warnings',
-                                                        where=(
-                                                            'guild_id', 'user_id'),
-                                                        values=(
-                                                            ctx.guild.id, target.id),
-                                                        extras=[
-                                                            'ORDER BY date DESC']
-                                                        )
+            records = await self.bot.conn.select_record(
+                'warnings',
+                arguments=('date',),
+                table='warnings',
+                where=('guild_id', 'user_id'),
+                values=(ctx.guild.id, target.id),
+                extras=['ORDER BY date DESC']
+            )
 
             if not records:
                 return await ctx.send(f'{target.mention} has no warnings.')
 
             for i, sublist in enumerate(records, 1):
                 if index == i:
-                    await self.bot.conn.delete_record('warnings',
-                                                      table='warnings',
-                                                      where=(
-                                                          'guild_id', 'user_id', 'date'),
-                                                      values=(
-                                                          ctx.guild.id, target.id, sublist.date)
-                                                      )
+                    await self.bot.conn.delete_record(
+                        'warnings',
+                        table='warnings',
+                        where=('guild_id', 'user_id', 'date'),
+                        values=(ctx.guild.id, target.id, sublist.date)
+                    )
                     break
 
         await ctx.reply(f'{target.mention}\'s warning was cleared.', allowed_mentions=discord.AllowedMentions(users=False))

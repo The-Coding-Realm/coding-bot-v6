@@ -118,9 +118,7 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
                 msg,
             ),
         )
-
-    
-
+        
             
 async def setup(bot: CodingBot):
     await bot.add_cog(Miscellaneous(bot))
