@@ -104,7 +104,7 @@ class Piston(discord.ui.View):
 
     @tasks.loop(seconds=1, count=1)
     async def get_code_out(self):
-        self.res = await self.cog.session.execute_code(self.lang, self.code)
+        self.res = await self.cog.http.api["piston"]["execute"](self.lang, self.code)
         self.is_compiled = True
         self.timer.cancel()
         if "message" in self.res:
