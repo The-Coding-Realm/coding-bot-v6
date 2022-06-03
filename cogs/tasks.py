@@ -48,6 +48,26 @@ class TaskCog(commands.Cog, command_attrs=dict(hidden=True)):
     async def before_status_change(self):
         await self.bot.wait_until_ready()
 
+    @tasks.loop(hours=24)
+    async def remove_inactive_warns(self):
+        await self.bot.wait_until_ready()
+
+        records = await self.bot.conn.select_record('warnings',
+                                                    arguments=('date','user_id'),
+                                                    table='warnings',
+                                                    where=('guild_id',),
+                                                    values=(TCR_GUILD_ID,)
+                                                    )
+        now = datetime.datetime.utcnow().timestamp()
+        for record in records:
+            if record.date+(60*60*24*31) < now:
+                await self.bot.conn.delete_record('warnings',
+                                                  table='warnings',
+                                                  where=(
+                                                      'guild_id', 'user_id', 'date'),
+                                                  values=(
+                                                      TCR_GUILD_ID, record.user_id, record.date)
+                                                  )
 
 async def setup(bot: CodingBot):
     await bot.add_cog(TaskCog(bot))
