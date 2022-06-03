@@ -335,7 +335,7 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
         await ctx.send(embed=embed)
 
     @trainee_check()
-    @commands.hybrid_command(name="warning")
+    @commands.hybrid_command(name="clearwarning")
     @commands.has_permissions(manage_messages=True)
     async def clearwarning(self, ctx: commands.Context[CodingBot], member: Optional[discord.Member] = None, index: Optional[int] = None):
         assert ctx.guild is not None
