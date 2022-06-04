@@ -11,7 +11,9 @@ __all__ = (
     'OFFICIAL_HELPER_ROLE_ID',
     'TCR_GUILD_ID',
     'HELP_BAN_ROLE_ID',
-    'READ_HELP_RULES_ROLE_ID'
+    'READ_HELP_RULES_ROLE_ID',
+    'THANK_INFO_CONFIG_SCHEMA',
+    'THANK_DATA_CONFIG_SCHEMA'
 )
 
 INTENTS = discord.Intents(
@@ -65,6 +67,22 @@ HELP_WARNINGS_CONFIG_SCHEMA = """CREATE TABLE IF NOT EXISTS help_warns (
                             date BIGINT
                        );
                        """
+
+THANK_INFO_CONFIG_SCHEMA = """CREATE TABLE IF NOT EXISTS thanks_info (
+                            user_id BIGINT,
+                            guild_id BIGINT,
+                            thanks INT,
+                      );
+                      """
+
+THANK_DATA_CONFIG_SCHEMA = """CREATE TABLE IF NOT EXISTS thanks_data (
+                            user_id BIGINT,
+                            giver_id BIGINT,
+                            guild_id BIGINT,
+                            date BIGINT,
+                            reason TEXT,
+                      );
+                      """
 
 HELP_COMMAND = """
             Help command for Coding Bot

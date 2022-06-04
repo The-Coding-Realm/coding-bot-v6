@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+import datetime
 import random
 
 import discord
 from discord.ext import commands, tasks
 from typing import TYPE_CHECKING
+from ..ext.consts import TCR_GUILD_ID
 
 if TYPE_CHECKING:
     from ext.models import CodingBot
@@ -26,7 +28,7 @@ class TaskCog(commands.Cog, command_attrs=dict(hidden=True)):
                     'bob and shadow argue', 'swas simp for false', 'new members', 'the staff team', 'helpers', 'code',
                     'mass murders', 'karen be an idiot', 'a video', 'watches', 'bob', 'fight club', 'youtube',
                     'https://devbio.me/u/CodingBot', 'potatoes', 'simps', 'people', 'my server', 'humans destroy the world',
-                    'AI take over the world', 'female bots 😳', 'dinosaurs', 'https://youtu.be/dQw4w9WgXcQ', 'idiots',
+                    'AI take over the world', 'female bots 😳', 'dinosaurs', 'https://youtu.be/o-YBDTqX_ZU', 'idiots',
                     'the beginning of WWIII', 'verified bot tags with envy', 'Server Boosters (boost to get your name on here)',
                     'OG members', "dalek rising from the ashes", 'spongebob', 'turtles', 'SQUIRREL!!!', 'people get banned',
                     'por...k chops', 'my poggers discriminator', 'tux', 'linux overcome windows', 'bob get a gf', 'a documentary']

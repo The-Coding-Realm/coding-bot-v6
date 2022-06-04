@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import random
 import sys
 import traceback
 from datetime import datetime
@@ -22,7 +21,11 @@ class ListenerCog(commands.Cog, command_attrs=dict(hidden=True)):
         self.bot = bot
 
     @commands.Cog.listener()
-    async def on_command_error(self, ctx: commands.Context[CodingBot], error: Exception):
+    async def on_command_error(
+        self, 
+        ctx: commands.Context[CodingBot], 
+        error: Exception
+    ) -> None:
         """
         Handles errors for commands during command invocation.
         Errors that are not handled by this function are printed to stderr.
@@ -57,7 +60,7 @@ class ListenerCog(commands.Cog, command_attrs=dict(hidden=True)):
             )
 
     @commands.Cog.listener("on_message")
-    async def on_message(self, message: discord.Message):
+    async def afk_user_messaage(self, message: discord.Message):
         """
         Responsible for checking if a message was sent by an AFK user.
         If so, the bot will send a message to the channel informating that they are no longer AFK.
@@ -106,9 +109,8 @@ class ListenerCog(commands.Cog, command_attrs=dict(hidden=True)):
                         await message.author.add_roles(on_pat_staff)
                     except (discord.Forbidden, discord.HTTPException):
                         pass
-                emoji = random.choice(("⚪", "🔴", "🟤", "🟣", "🟢", "🟡", "🟠", "🔵"))
                 em = discord.Embed(
-                    description=f"{emoji} Welcome back, I removed your AFK!",
+                    description=f"{message.author.mentioned_in} Welcome back, I removed your AFK!",
                     color=discord.Color.dark_gold(),
                 )
                 await message.reply(embed=em)
@@ -137,12 +139,9 @@ class ListenerCog(commands.Cog, command_attrs=dict(hidden=True)):
                 )
                 if record:
                     record = record[0]
-                    emoji = random.choice(
-                        ["⚪", "🔴", "🟤", "🟣", "🟢", "🟡", "🟠", "🔵"]
-                    )
                     time_ = int(record.afk_time)
                     em = discord.Embed(
-                        description=f"{emoji} {member.mention} is AFK: {record.reason} (<t:{time_}:R>)",
+                        description=f"{member.mention} is AFK: {record.reason} (<t:{time_}:R>)",
                         color=discord.Color.dark_blue(),
                     )
                     await message.reply(embed=em)

@@ -19,7 +19,9 @@ from .consts import (
     WARNINGS_CONFIG_SCHEMA,
     AFK_CONFIG_SCHEMA,
     HELP_WARNINGS_CONFIG_SCHEMA,
-    HELP_COMMAND
+    HELP_COMMAND,
+    THANK_INFO_CONFIG_SCHEMA,
+    THANK_DATA_CONFIG_SCHEMA
 )
 from .helpers import WelcomeBanner, log_error
 
@@ -101,6 +103,7 @@ class Database:
             "./database/warnings.db"
         )
         self.conn["afk"] = await aiosqlite.connect("./database/afk.db")
+        self.conn["thanks"] = await aiosqlite.connect("./database/thanks.db")
         await self.init_dbs()
         return self
 
@@ -115,6 +118,10 @@ class Database:
 
         async with self.cursor("afk") as cursor:
             await cursor.execute(AFK_CONFIG_SCHEMA)
+
+        async with self.cursor("thanks") as cursor:
+            await cursor.execute(THANK_DATA_CONFIG_SCHEMA)
+            await cursor.execute(THANK_INFO_CONFIG_SCHEMA)
 
         await self.commit()
 
