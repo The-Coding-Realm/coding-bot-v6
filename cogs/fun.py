@@ -30,7 +30,7 @@ class Fun(commands.Cog, command_attrs=dict(hidden=False)):
             rating = rock["rating"]
             embed = await self.bot.embed(
                 title=f"🪨   {name}",
-                url=image or "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+                url=image or "https://www.youtube.com/watch?v=o-YBDTqX_ZU",
                 description=f"```yaml\n{desc}```",
             )
             if image is not None and image != "none" and image != "":
@@ -73,7 +73,7 @@ class Fun(commands.Cog, command_attrs=dict(hidden=False)):
         embed = await self.bot.embed(
             title=f"**{number}**",
             description=" ",
-            url="https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+            url="https://www.youtube.com/watch?v=o-YBDTqX_ZU",
         )
         return await self.bot.reply(ctx, embed=embed)
 
@@ -86,9 +86,21 @@ class Fun(commands.Cog, command_attrs=dict(hidden=False)):
         meme_poster = meme_json['author']
         meme_sub = meme_json['subreddit']
 
-        embed = discord.Embed(title = meme_name, description=f"Meme by {meme_poster} from subreddit {meme_sub}")
+        embed = discord.Embed(title=meme_name, description=f"Meme by {meme_poster} from subreddit {meme_sub}")
         embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url)
         embed.set_image(url=meme_url)
+
+        await ctx.send(embed=embed)
+
+    @commands.hybrid_command(name="joke")
+    async def joke(self, ctx: commands.Context[CodingBot]):
+        response = await self.http.api["some-random-api"]["joke"]()
+        json = await response.json()
+
+        joke = json['joke']
+
+        embed = discord.Embed(title="He're a joke", description=joke)
+        embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url)
 
         await ctx.send(embed=embed)
 
@@ -106,7 +118,6 @@ class Fun(commands.Cog, command_attrs=dict(hidden=False)):
 
     @commands.hybrid_command(name="token")
     async def token(self, ctx: commands.Context[CodingBot]):
-        # If you like, you can use sr_api
         response = await self.http.api["some-random-api"]["bottoken"]()
         json = await response.json()
 
