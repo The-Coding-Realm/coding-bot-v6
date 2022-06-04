@@ -83,7 +83,7 @@ class General(commands.Cog, command_attrs=dict(hidden=False)):
 
     @commands.hybrid_command(name="define")
     async def define(self, ctx: commands.Context[CodingBot], *, word: str):
-        summary = wikipedia.summary(word)
+        summary = await self.bot.loop.run_in_executor(None, wikipedia.summary, word)
         for chunk in wrap(summary, 4096, replace_whitespace=False):
             embed = discord.Embed(title = word, description = chunk)
             embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url)
