@@ -47,6 +47,7 @@ class Http:
                 "binary-encode": lambda string: self.get(f"https://some-random-api.ml/binary?encode={string}"),
                 "binary-decode": lambda binary: self.get(f"https://some-random-api.ml/binary?decode={binary}"),
                 "lyrics": lambda query: self.get(f"https://some-random-api.ml/lyrics?title={query}"),
+                "joke": lambda: self.get("https://some-random-api.ml/joke", _json=True),
             }
         }
         

@@ -5,6 +5,8 @@ import os
 from typing import TYPE_CHECKING
 
 import discord
+import wikipedia
+from textwrap import wrap
 from discord.ext import commands
 
 if TYPE_CHECKING:
@@ -77,6 +79,15 @@ class General(commands.Cog, command_attrs=dict(hidden=False)):
         final_url = (f'{source_url}/blob/{branch}/{location}#L{firstlineno}-L'
                      f'{firstlineno + len(lines) - 1}')
         embed.url = final_url
+        await ctx.send(embed=embed)
+
+    @commands.hybrid_command(name="define")
+    async def define(self, ctx: commands.Context[CodingBot], *, word: str):
+        summary = wikipedia.summary(word)
+        for chunk in wrap(summary, 4096, replace_whitespace=False):
+            embed = discord.Embed(title = word, description = chunk)
+            embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url)
+        
         await ctx.send(embed=embed)
 
 async def setup(bot: CodingBot) -> None:
