@@ -49,7 +49,7 @@ class ListenerCog(commands.Cog, command_attrs=dict(hidden=True)):
                 description=error.message,
                 color=discord.Color.red(),
             )
-            return await ctx.send(embed=embed)
+            return await self.bot.reply(ctx,embed=embed)
         else:
             print(
                 "Ignoring exception in command {}:".format(ctx.command),

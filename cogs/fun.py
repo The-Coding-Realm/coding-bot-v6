@@ -90,7 +90,7 @@ class Fun(commands.Cog, command_attrs=dict(hidden=False)):
         embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url)
         embed.set_image(url=meme_url)
 
-        await ctx.send(embed=embed)
+        await self.bot.reply(ctx,embed=embed)
 
     @commands.hybrid_command(name="joke")
     async def joke(self, ctx: commands.Context[CodingBot]):
@@ -102,7 +102,7 @@ class Fun(commands.Cog, command_attrs=dict(hidden=False)):
         embed = discord.Embed(title="He're a joke", description=joke)
         embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url)
 
-        await ctx.send(embed=embed)
+        await self.bot.replu(ctx,embed=embed)
 
     @commands.hybrid_command(name="8ball")
     async def eightball(self, ctx: commands.Context[CodingBot], *, question: str):
@@ -114,7 +114,7 @@ class Fun(commands.Cog, command_attrs=dict(hidden=False)):
         
         embed = discord.Embed(title="8ball is answering", description=f"{question}\nAnswer : {response}")
         embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url) # Support for nitro users
-        await ctx.send(embed=embed)
+        await self.bot.reply(ctx,embed=embed)
 
     @commands.hybrid_command(name="token")
     async def token(self, ctx: commands.Context[CodingBot]):
@@ -125,7 +125,7 @@ class Fun(commands.Cog, command_attrs=dict(hidden=False)):
 
         embed = discord.Embed(title="Ha ha ha, I grabbed your bot token.", description=bottoken)
         embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url)
-        await ctx.send(embed=embed)
+        await self.bot.reply(ctx, embed=embed)
 
     @commands.hybrid_command(name="animal")
     async def animal(self, ctx: commands.Context[CodingBot], animal: Optional[str] = None):
@@ -147,13 +147,13 @@ class Fun(commands.Cog, command_attrs=dict(hidden=False)):
             embed = discord.Embed(title="ERROR!",  description=f"Received a bad status code of {response.status}")
             embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url)
         
-        await ctx.send(embed=embed)
+        await self.bot.reply(ctx,embed=embed)
 
     @commands.hybrid_group(invoke_without_command=True)
     async def binary(self, ctx: commands.Context):
         embed = discord.Embed(title="Binary command", description="Available methods: ```encode```, ```decode```")
 
-        await ctx.send(embed=embed)
+        await self.bot.reply(ctx,embed=embed)
 
     @binary.command(name="encode")
     async def binary_encode(self, ctx, *, string: str):
@@ -169,7 +169,7 @@ class Fun(commands.Cog, command_attrs=dict(hidden=False)):
             embed = discord.Embed(title="ERROR!",  description=f"Received a bad status code of {response.status}")
             embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url)
 
-        await ctx.send(embed=embed)
+        await self.bot.reply(ctx,embed=embed)
 
     @binary.command(name="decode")
     async def binary_decode(self, ctx, binary: str):
@@ -185,7 +185,7 @@ class Fun(commands.Cog, command_attrs=dict(hidden=False)):
             embed = discord.Embed(title="ERROR!",  description=f"Received a bad status code of {response.status}")
             embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url)
             
-        await ctx.send(embed=embed)
+        await self.bot.reply(ctx,embed=embed)
 
     @commands.hybrid_command(name="lyrics")
     async def lyrics(self, ctx, *, query: str = None):
@@ -211,13 +211,13 @@ class Fun(commands.Cog, command_attrs=dict(hidden=False)):
             embed = discord.Embed(title="ERROR!",  description=f"Received a bad status code of {response.status}")
             embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url)
 
-        await ctx.send(embed=embed)
+        await self.bot.reply(ctx,embed=embed)
         
     @commands.hybrid_command(name="reverse")
     async def reverse(self, ctx: commands.Context, *, text: str):
         embed = discord.Embed(title=f"Reversed Text", description=f"{text[::-1]}", color=discord.Color.random())
         embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url)
-        await ctx.send(embed=embed)
+        await self.bot.reply(ctx,embed=embed)
 
 async def setup(bot: CodingBot):
     await bot.add_cog(Fun(bot))
