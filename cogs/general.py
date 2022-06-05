@@ -2,21 +2,23 @@ from __future__ import annotations
 
 import inspect
 import os
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, List
 
 import discord
-import wikipedia
-from textwrap import wrap
 from discord.ext import commands
 
 if TYPE_CHECKING:
     from ext.models import CodingBot
+
+from ext.helpers import UrbanDefinition, UrbanDictionary
+
 
 class General(commands.Cog, command_attrs=dict(hidden=False)):
 
     hidden = False
     def __init__(self, bot: CodingBot) -> None:
         self.bot = bot
+        self.ud = UrbanDictionary(bot.session)
 
     @commands.hybrid_command(name="source", aliases=["github", "code"])
     @commands.cooldown(1, 1, commands.BucketType.channel)
@@ -64,8 +66,6 @@ class General(commands.Cog, command_attrs=dict(hidden=False)):
             src = obj.callback.__code__
             module = obj.callback.__module__
             filename = src.co_filename
-            
-        
 
         lines, firstlineno = inspect.getsourcelines(src)
         if not module.startswith('discord'):
@@ -82,19 +82,29 @@ class General(commands.Cog, command_attrs=dict(hidden=False)):
         await ctx.send(embed=embed)
 
     @commands.hybrid_command(name="define")
+    @commands.cooldown(1, 5, commands.BucketType.user)
     async def define(self, ctx: commands.Context[CodingBot], *, word: str):
         """
-        Define a word from Wikipedia API library.
+        Gets deinitions from Urban Dictionary.
 
         Usage:
         ------
-        `{prefix}define [word]` *Define a specific word*
+        `{prefix}define [word]` *will send the definition of the word*
         """
-        summary = await self.bot.loop.run_in_executor(None, wikipedia.summary, word)
-        for chunk in wrap(summary, 4096, replace_whitespace=False):
-            embed = discord.Embed(title = word, description = chunk)
-            embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url)
-        
+        definition: List[UrbanDefinition] = await self.ud.define(word)
+        if not definition:
+            return await ctx.send(f"Could not find definition for `{word}`")
+        definition = definition[0]
+        embed = discord.Embed(
+            title="Definition of {}".format(word), 
+            description=f"**Meaning**: {definition.meaning}\n", 
+            color=discord.Color.random()
+        )
+        embed.description += f"\n**Example:** {definition.example}\n\n{definition.author}"
+        embed.set_footer(
+            text=f"Requested by {ctx.author}", 
+            icon_url=ctx.author.display_avatar.url
+        )
         await ctx.send(embed=embed)
 
 async def setup(bot: CodingBot) -> None:
