@@ -6,7 +6,7 @@ import random
 import discord
 from discord.ext import commands, tasks
 from typing import TYPE_CHECKING
-from ..ext.consts import TCR_GUILD_ID
+from ext.consts import TCR_GUILD_ID
 
 if TYPE_CHECKING:
     from ext.models import CodingBot
@@ -54,22 +54,22 @@ class TaskCog(commands.Cog, command_attrs=dict(hidden=True)):
     async def remove_inactive_warns(self):
         await self.bot.wait_until_ready()
 
-        records = await self.bot.conn.select_record('warnings',
-                                                    arguments=('date','user_id'),
-                                                    table='warnings',
-                                                    where=('guild_id',),
-                                                    values=(TCR_GUILD_ID,)
-                                                    )
+        records = await self.bot.conn.select_record(
+            'warnings',
+            arguments=('date','user_id'),
+            table='warnings',
+            where=('guild_id',),
+            alues=(TCR_GUILD_ID,)
+        )
         now = datetime.datetime.utcnow().timestamp()
         for record in records:
             if record.date+(60*60*24*31) < now:
-                await self.bot.conn.delete_record('warnings',
-                                                  table='warnings',
-                                                  where=(
-                                                      'guild_id', 'user_id', 'date'),
-                                                  values=(
-                                                      TCR_GUILD_ID, record.user_id, record.date)
-                                                  )
+                await self.bot.conn.delete_record(
+                    'warnings',
+                    table='warnings',
+                    where=('guild_id', 'user_id', 'date'),
+                    values=(TCR_GUILD_ID, record.user_id, record.date)
+                )
 
 async def setup(bot: CodingBot):
     await bot.add_cog(TaskCog(bot))

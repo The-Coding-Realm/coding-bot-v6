@@ -1,13 +1,12 @@
 from __future__ import annotations
 
 import re
-import random
 from typing import TYPE_CHECKING, Optional
 
 import discord
 from discord.ext import commands
 from ext.http import Http
-from ext.ui.view import Piston, Rocks
+from ext.ui.view import Piston
 
 if TYPE_CHECKING:
     from ext.models import CodingBot
@@ -94,22 +93,22 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
         ------
         `{prefix}run [codeblock]`: *will run the code in the [codeblock]*
         """
+        msg = await self.bot.reply(ctx, "...")
         matches = self.regex["codeblock"].findall(codeblock)
         lang = matches[0][0] or matches[0][1]
         if not matches:
             return await msg.edit(
-                await self.bot.embed(
-                    title="```ansi\n[1;31mInvalid codeblock\n```"
+                embed=await self.bot.embed(
+                    title="```ansi\nInvalid codeblock\n```"
                 )
             )
         if not lang:
             return await msg.edit(
-                await self.bot.embed(
-                    title="```ansi\n[1;31mno language specified\n```"
+                embed=await self.bot.embed(
+                    title="```ansi\nno language specified\n```"
                 )
             )
         code = matches[0][2]
-        msg = await self.bot.reply(ctx, "...")
         await msg.edit(
             view=Piston(
                 self,

@@ -200,7 +200,7 @@ class Helper(commands.Cog, command_attrs=dict(hidden=False)):
         {prefix}helper warn {member} "Breaking rules"
         """
         if len(reason) > 256:
-            return await ctx.send("The reason must be less than 256 characters.")
+            return await self.bot.reply(ctx,"The reason must be less than 256 characters.")
 
         await self.bot.conn.insert_record(
             'warnings',
@@ -209,7 +209,7 @@ class Helper(commands.Cog, command_attrs=dict(hidden=False)):
             values=(ctx.guild.id, member.id, ctx.author.id,
                     reason, ctx.message.created_at.timestamp())
         )
-        await ctx.send(f'Help-warned {member.mention}')
+        await self.bot.reply(ctx,f'Help-warned {member.mention}')
         evidence = await self.capture_evidence(ctx)
         await self.log(
             action='warn', 
@@ -239,7 +239,7 @@ class Helper(commands.Cog, command_attrs=dict(hidden=False)):
             extras=['ORDER BY date DESC']
         )
         if not records:
-            return await ctx.send(f'{member.mention} has no help-warnings.')
+            return await self.bot.reply(ctx,f'{member.mention} has no help-warnings.')
 
         for i, warning in enumerate(records, 1):
             helper = ctx.guild.get_member(warning.helper_id)
@@ -250,7 +250,7 @@ class Helper(commands.Cog, command_attrs=dict(hidden=False)):
             embed.add_field(name="`{}.` Reason: {}".format(
                 i, warning.reason), value=f"Issued by: {helper} - <t:{int(warning.date)}:f>", inline=False)
 
-        await ctx.send(embed=embed)
+        await self.bot.reply(ctx,embed=embed)
 
     @helper.command(name="clearwarning")
     async def help_clearwarning(
@@ -280,7 +280,7 @@ class Helper(commands.Cog, command_attrs=dict(hidden=False)):
             )
 
             if not records:
-                return await ctx.send(f'{target.mention} has no warnings.')
+                return await self.bot.reply(ctx,f'{target.mention} has no warnings.')
 
             for i, sublist in enumerate(records, 1):
                 if index == i:
@@ -293,7 +293,7 @@ class Helper(commands.Cog, command_attrs=dict(hidden=False)):
                     )
                     break
 
-        await ctx.reply(f'{target.mention}\'s warning was cleared.')
+        await self.bot.reply(ctx,f'{target.mention}\'s warning was cleared.')
         await self.log(action='warn', undo=True, member=target, helper=ctx.author, warn=warn)
 
     @helper.command(name="ban")
@@ -308,14 +308,14 @@ class Helper(commands.Cog, command_attrs=dict(hidden=False)):
         help_ban_role = ctx.guild.get_role(HELP_BAN_ROLE_ID)
         read_help_rules_role = ctx.guild.get_role(READ_HELP_RULES_ROLE_ID)
         if help_ban_role in member.roles:
-            return await ctx.send(f'{member.mention} is already help-banned')
+            return await self.bot.reply(ctx,f'{member.mention} is already help-banned')
 
         if read_help_rules_role in member.roles:
             await member.remove_roles(read_help_rules_role)
         if not help_ban_role in member.roles:
             await member.add_roles(help_ban_role)
 
-        await ctx.send(f'help-banned {member.mention} with reason: {reason}')
+        await self.bot.reply(ctx,f'help-banned {member.mention} with reason: {reason}')
         try:
             await member.send(f"You have been help-banned with reason: {reason}")
         except discord.Forbidden:
@@ -331,14 +331,14 @@ class Helper(commands.Cog, command_attrs=dict(hidden=False)):
         help_ban_role = ctx.guild.get_role(HELP_BAN_ROLE_ID)
         read_help_rules_role = ctx.guild.get_role(READ_HELP_RULES_ROLE_ID)
         if not help_ban_role in member.roles:
-            return await ctx.send(f'{member.mention} is not help-banned')
+            return await self.bot.reply(ctx,f'{member.mention} is not help-banned')
 
         if not read_help_rules_role in member.roles:
             await member.add_roles(read_help_rules_role)
         if help_ban_role in member.roles:
             await member.remove_roles(help_ban_role)
 
-        await ctx.send(f'help-unbanned {member.mention}')
+        await self.bot.reply(ctx,f'help-unbanned {member.mention}')
         try:
             await member.send(f"You have been help-unbanned")
             await self.log(action='ban', undo=True, member=member, helper=ctx.author)
@@ -362,7 +362,7 @@ class Helper(commands.Cog, command_attrs=dict(hidden=False)):
             embed.set_footer(text=f"Command executed by {ctx.author}", icon_url=ctx.author.display_avatar.url)
             await target.add_roles(read_help_rules_role)
 
-        await ctx.send(embed=embed)
+        await self.bot.reply(ctx,embed=embed)
 
 async def setup(bot):
     await bot.add_cog(Helper(bot))

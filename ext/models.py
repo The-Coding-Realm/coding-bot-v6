@@ -305,32 +305,27 @@ class CodingBot(commands.Bot):
         await log_error(self, event_method, *args, **kwargs)
 
     async def send(
-        self, ctx, txt=None, *, embed=None, view=None, file=None
+        self, ctx,*args,**kwargs
     ) -> discord.Message:
-        if embed is None:
-            embed = await self.embed(title=" ", description=txt)
         if getattr(ctx, "msg_before", None) is not None:
             key = ctx.msg_before.id
-            await self.message_cache[key].edit(embed=embed)
+            await self.message_cache[key].edit(*args,**kwargs)
         else:
             key = ctx.message.id
-            self.message_cache[key] = await ctx.send(embed=embed, file=file)
+            self.message_cache[key] = await ctx.send(*args,**kwargs)
         return self.message_cache[key]
 
     async def reply(
-        self, ctx, txt=None, *, embed=None, view=None, file=None
-    ) -> discord.Message:
-        if embed is None:
-            embed = await self.embed(title=" ", description=txt)
+        self, ctx,*args,**kwargs) -> discord.Message:
         if getattr(ctx, "msg_before", None) is not None:
             key = ctx.msg_before.id
-            await self.message_cache[key].edit(embed=embed, view=view)
+            await self.message_cache[key].edit(*args,**kwargs)
         else:
             key = (
                 ctx.id if isinstance(ctx, discord.Message) else ctx.message.id
             )
             self.message_cache[key] = await ctx.reply(
-                embed=embed, file=file, view=view
+                *args,**kwargs
             )
         return self.message_cache[key]
 
