@@ -81,6 +81,7 @@ THANK_DATA_CONFIG_SCHEMA = """CREATE TABLE IF NOT EXISTS thanks_data (
                             guild_id BIGINT,
                             date BIGINT,
                             reason TEXT,
+                            message_link TEXT
                       );
                       """
 
