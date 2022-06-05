@@ -86,7 +86,7 @@ class Fun(commands.Cog, command_attrs=dict(hidden=False)):
         meme_poster = meme_json['author']
         meme_sub = meme_json['subreddit']
 
-        embed = discord.Embed(title=meme_name, description=f"Meme by {meme_poster} from subreddit {meme_sub}")
+        embed = discord.Embed(title=meme_name, description=f"Meme by {meme_poster} from subreddit {meme_sub}", color=discord.Color.random())
         embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url)
         embed.set_image(url=meme_url)
 
@@ -112,7 +112,7 @@ class Fun(commands.Cog, command_attrs=dict(hidden=False)):
                     "Yes.", "Yes, definitely.", "You may rely on it."]
         response = random.choice(responses)
         
-        embed = discord.Embed(title="8ball is answering", description=f"{question}\nAnswer : {response}")
+        embed = discord.Embed(title="8ball is answering", description=f"{question}\nAnswer : {response}", color=discord.Color.random())
         embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url) # Support for nitro users
         await self.bot.reply(ctx,embed=embed)
 
@@ -123,7 +123,7 @@ class Fun(commands.Cog, command_attrs=dict(hidden=False)):
 
         bottoken = json['token']
 
-        embed = discord.Embed(title="Ha ha ha, I grabbed your bot token.", description=bottoken)
+        embed = discord.Embed(title="Ha ha ha, I grabbed your bot token.", description=bottoken, color=discord.Color.random())
         embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url)
         await self.bot.reply(ctx, embed=embed)
 
@@ -140,7 +140,7 @@ class Fun(commands.Cog, command_attrs=dict(hidden=False)):
             image = json["image"]
             fact = json["fact"]
 
-            embed = discord.Embed(title="Here's the animal image you asked.")
+            embed = discord.Embed(title="Here's the animal image you asked.", color=discord.Color.random())
             embed.set_image(url=image)
             embed.set_footer(text=fact)
         else:
@@ -150,20 +150,21 @@ class Fun(commands.Cog, command_attrs=dict(hidden=False)):
         await self.bot.reply(ctx,embed=embed)
 
     @commands.hybrid_group(invoke_without_command=True)
-    async def binary(self, ctx: commands.Context):
-        embed = discord.Embed(title="Binary command", description="Available methods: ```encode```, ```decode```")
+    async def binary(self, ctx: commands.Context[CodingBot]):
+        embed = discord.Embed(title="Binary command", description="Available methods: `encode`, `decode`")
+        embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url)
 
         await self.bot.reply(ctx,embed=embed)
 
     @binary.command(name="encode")
-    async def binary_encode(self, ctx, *, string: str):
+    async def binary_encode(self, ctx: commands.Context[CodingBot], *, string: str):
         response = await self.http.api["some-random-api"]["binary-encode"](string)
         if response.status in range(200,300):
             json = await response.json()
 
             binary_string = json['binary']
 
-            embed = discord.Embed(title="Encoded to binary", description=binary_string)
+            embed = discord.Embed(title="Encoded to binary", description=binary_string, color=discord.Color.random())
             embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url)
         else:
             embed = discord.Embed(title="ERROR!",  description=f"Received a bad status code of {response.status}")
@@ -172,14 +173,14 @@ class Fun(commands.Cog, command_attrs=dict(hidden=False)):
         await self.bot.reply(ctx,embed=embed)
 
     @binary.command(name="decode")
-    async def binary_decode(self, ctx, binary: str):
+    async def binary_decode(self, ctx: commands.Context[CodingBot], binary: str):
         response = await self.http.api["some-random-api"]["binary-decode"](binary)
         if response.status in range(200,300):
             json = await response.json()
 
             string = json['text']
 
-            embed = discord.Embed(title="Encoded to binary", description=string)
+            embed = discord.Embed(title="Encoded to binary", description=string, color=discord.Color.random())
             embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url)
         else:
             embed = discord.Embed(title="ERROR!",  description=f"Received a bad status code of {response.status}")
@@ -188,9 +189,9 @@ class Fun(commands.Cog, command_attrs=dict(hidden=False)):
         await self.bot.reply(ctx,embed=embed)
 
     @commands.hybrid_command(name="lyrics")
-    async def lyrics(self, ctx, *, query: str = None):
+    async def lyrics(self, ctx: commands.Context[CodingBot], *, query: str = None):
         if not query:
-            embed = discord.Embed(title = "No search argument!", description=f"You must provide a search argument or I couldn't find the lyrics")
+            embed = discord.Embed(title = "Hey! I'm confused", description=f"You must provide a search argument or I couldn't find the lyrics")
             embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url)
 
         response = await self.http.api["some-random-api"]["lyrics"](query)
@@ -203,7 +204,7 @@ class Fun(commands.Cog, command_attrs=dict(hidden=False)):
             thumbnail = json['thumbnail']['genius']
 
             for chunk in wrap(lyrics, 4096, replace_whitespace = False):
-                embed = discord.Embed(title = f"{artist} - {title}", description = chunk)
+                embed = discord.Embed(title = f"{artist} - {title}", description = chunk, color=discord.Color.random())
                 embed.set_thumbnail(url=thumbnail)
                 embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url)
 
@@ -214,8 +215,14 @@ class Fun(commands.Cog, command_attrs=dict(hidden=False)):
         await self.bot.reply(ctx,embed=embed)
         
     @commands.hybrid_command(name="reverse")
-    async def reverse(self, ctx: commands.Context, *, text: str):
-        embed = discord.Embed(title=f"Reversed Text", description=f"{text[::-1]}", color=discord.Color.random())
+    async def reverse(self, ctx: commands.Context[CodingBot], *, text: str):
+        embed = discord.Embed(title="Reversed Text", description=f"{text[::-1]}", color=discord.Color.random())
+        embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url)
+        await ctx.send(embed=embed)
+
+    @commands.hybrid_command(name="owofy")
+    async def owofy(self, ctx: commands.Context[CodingBot], *, text: str):
+        embed = discord.Embed(title=f"Owofied Text", description=text.replace("o", "OwO"), color=discord.Color.random())
         embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url)
         await self.bot.reply(ctx,embed=embed)
 

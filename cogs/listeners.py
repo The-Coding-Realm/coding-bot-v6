@@ -110,7 +110,7 @@ class ListenerCog(commands.Cog, command_attrs=dict(hidden=True)):
                     except (discord.Forbidden, discord.HTTPException):
                         pass
                 em = discord.Embed(
-                    description=f"{message.author.mentioned_in} Welcome back, I removed your AFK!",
+                    description=f"{message.author.mention} Welcome back, I removed your AFK!",
                     color=discord.Color.dark_gold(),
                 )
                 await message.reply(embed=em)
