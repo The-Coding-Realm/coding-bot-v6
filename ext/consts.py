@@ -71,7 +71,7 @@ HELP_WARNINGS_CONFIG_SCHEMA = """CREATE TABLE IF NOT EXISTS help_warns (
 THANK_INFO_CONFIG_SCHEMA = """CREATE TABLE IF NOT EXISTS thanks_info (
                             user_id BIGINT,
                             guild_id BIGINT,
-                            thanks INT,
+                            thanks INT
                       );
                       """
 
@@ -80,7 +80,7 @@ THANK_DATA_CONFIG_SCHEMA = """CREATE TABLE IF NOT EXISTS thanks_data (
                             giver_id BIGINT,
                             guild_id BIGINT,
                             date BIGINT,
-                            reason TEXT,
+                            reason TEXT
                       );
                       """
 

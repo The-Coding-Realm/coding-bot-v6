@@ -20,44 +20,6 @@ class ListenerCog(commands.Cog, command_attrs=dict(hidden=True)):
     def __init__(self, bot: CodingBot) -> None:
         self.bot = bot
 
-    @commands.Cog.listener()
-    async def on_command_error(
-        self, 
-        ctx: commands.Context[CodingBot], 
-        error: Exception
-    ) -> None:
-        """
-        Handles errors for commands during command invocation.
-        Errors that are not handled by this function are printed to stderr.
-
-        Parameters
-        ----------
-        ctx : commands.Context[CodingBot]
-            The context for the command.
-        error : Exception
-            The exception that was raised.
-        """
-        if isinstance(error, commands.CommandNotFound):
-            return
-
-        if isinstance(error, commands.CommandInvokeError):
-            error = error.original
-
-        if isinstance(error, InsufficientPrivilegeError):
-            embed = discord.Embed(
-                title="Insufficient Privilege",
-                description=error.message,
-                color=discord.Color.red(),
-            )
-            return await self.bot.reply(ctx,embed=embed)
-        else:
-            print(
-                "Ignoring exception in command {}:".format(ctx.command),
-                file=sys.stderr,
-            )
-            traceback.print_exception(
-                type(error), error, error.__traceback__, file=sys.stderr
-            )
 
     @commands.Cog.listener("on_message")
     async def afk_user_messaage(self, message: discord.Message):
@@ -170,6 +132,39 @@ class ListenerCog(commands.Cog, command_attrs=dict(hidden=True)):
         if len(self.bot.message_cache) > 200:
             self.bot.message_cache.clear()
         await self.bot.process_edit(before, after)
+
+    @commands.Cog.listener()
+    async def on_command_error(self, ctx: commands.Context, error: Exception) -> None:
+        """
+        Handles errors for commands during command invocation.
+        Errors that are not handled by this function are printed to stderr.
+        """
+        if isinstance(error, commands.CommandNotFound):
+            return
+        if isinstance(error, commands.CommandInvokeError):
+            error = error.original
+        if isinstance(error, InsufficientPrivilegeError):
+            embed = discord.Embed(
+                title="Insufficient Privilege, ",
+                description=error.message,
+                color=discord.Color.red(),
+            )
+            return await ctx.send(ctx,embed=embed, ephemeral=True)
+        elif isinstance(error, commands.CommandOnCooldown):
+            embed = discord.Embed(
+                title="Command on Cooldown",
+                description=f"{ctx.author.mention} Please wait {error.retry_after:.2f} seconds before using this command again.",
+                color=discord.Color.red(),
+            )
+            return await ctx.send(embed=embed, ephemeral=True)
+        else:
+            print(
+                "Ignoring exception in command {}:".format(ctx.command),
+                file=sys.stderr,
+            )
+            traceback.print_exception(
+                type(error), error, error.__traceback__, file=sys.stderr
+            )
 
 
 async def setup(bot: CodingBot):

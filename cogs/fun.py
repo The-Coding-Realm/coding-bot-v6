@@ -153,38 +153,25 @@ class Fun(commands.Cog, command_attrs=dict(hidden=False)):
     async def binary(self, ctx: commands.Context[CodingBot]):
         embed = discord.Embed(title="Binary command", description="Available methods: `encode`, `decode`")
         embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url)
-
         await self.bot.reply(ctx,embed=embed)
 
     @binary.command(name="encode")
     async def binary_encode(self, ctx: commands.Context[CodingBot], *, string: str):
-        response = await self.http.api["some-random-api"]["binary-encode"](string)
-        if response.status in range(200,300):
-            json = await response.json()
+        binary_string = " ".join((map(lambda x: f"{ord(x):08b}", "okay but why?")))
 
-            binary_string = json['binary']
-
-            embed = discord.Embed(title="Encoded to binary", description=binary_string, color=discord.Color.random())
-            embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url)
-        else:
-            embed = discord.Embed(title="ERROR!",  description=f"Received a bad status code of {response.status}")
-            embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url)
+        embed = discord.Embed(title="Encoded to binary", description=binary_string, color=discord.Color.random())
+        embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url)
 
         await self.bot.reply(ctx,embed=embed)
 
     @binary.command(name="decode")
     async def binary_decode(self, ctx: commands.Context[CodingBot], binary: str):
-        response = await self.http.api["some-random-api"]["binary-decode"](binary)
-        if response.status in range(200,300):
-            json = await response.json()
-
-            string = json['text']
-
-            embed = discord.Embed(title="Encoded to binary", description=string, color=discord.Color.random())
-            embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url)
-        else:
-            embed = discord.Embed(title="ERROR!",  description=f"Received a bad status code of {response.status}")
-            embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url)
+        if (len(binary) - binary.count(" ")) % 8 != 0:
+            return await self.bot.reply(ctx, "The binary is an invalid length.")
+        binary = binary.replace(" ", "")
+        string = "".join(chr(int(binary[i:i+8], 2)) for i in range(0, len(binary), 8))
+        embed = discord.Embed(title="Encoded to binary", description=string, color=discord.Color.random())
+        embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url)
             
         await self.bot.reply(ctx,embed=embed)
 

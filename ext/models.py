@@ -185,6 +185,30 @@ class Database:
             await cursor.execute(insert_statement, values)
             await getattr(self, connection).commit()
 
+    async def update_record(
+        self, 
+        connection: str, 
+        /, 
+        *,
+        table: str,
+        to_update: Tuple[str, ...], 
+        where: Tuple[str, ...], 
+        values: Tuple[Any, ...], 
+        extras: Optional[List[str]] = None
+    ) -> None:
+        update_statement = """
+                           UPDATE {} SET {} WHERE {}
+                           """.format(
+                               table, ", ".join(map(lambda x: f"{x} = ?", to_update)), 
+                               " AND ".join(map(lambda x: f"{x} = ?", where))
+                        )
+        if extras:
+            for stuff in extras:
+                update_statement += f" {stuff}"
+        async with self.cursor(connection) as cursor:
+            await cursor.execute(update_statement, values)
+            await getattr(self, connection).commit()
+
     @property
     def closed(self):
         return self.is_closed
