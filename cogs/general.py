@@ -83,6 +83,13 @@ class General(commands.Cog, command_attrs=dict(hidden=False)):
 
     @commands.hybrid_command(name="define")
     async def define(self, ctx: commands.Context[CodingBot], *, word: str):
+        """
+        Define a word from Wikipedia API library.
+
+        Usage:
+        ------
+        `{prefix}define [word]` *Define a specific word*
+        """
         summary = await self.bot.loop.run_in_executor(None, wikipedia.summary, word)
         for chunk in wrap(summary, 4096, replace_whitespace=False):
             embed = discord.Embed(title = word, description = chunk)
