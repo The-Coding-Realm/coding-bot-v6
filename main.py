@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import warnings
 
 from discord.ext import commands
 
@@ -11,6 +12,7 @@ if not os.path.exists("./database"):
 
 bot = CodingBot()
 
+warnings.filterwarnings(action='ignore', module='wikipedia')
 
 @bot.before_invoke
 async def before_invoke(ctx: commands.Context[CodingBot]):

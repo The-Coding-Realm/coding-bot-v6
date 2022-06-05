@@ -1,18 +1,18 @@
 from __future__ import annotations
 
-from ast import Bytes
 import asyncio
 import datetime as dt
 import functools
 import sys
 import traceback
 from io import BytesIO
-from typing import Union
+from typing import TYPE_CHECKING, Any, Callable, List, Optional
 
+import aiohttp
 import discord
 import humanize
+from bs4 import BeautifulSoup
 from PIL import Image, ImageDraw, ImageFilter, ImageFont
-from typing import TYPE_CHECKING, Any, Callable, Optional
 
 if TYPE_CHECKING:
     from ext.models import CodingBot
@@ -148,3 +148,115 @@ class WelcomeBanner:
             ago=ago
         )
         return file
+
+
+class UrbanDefinition:
+    
+    __slots__ = ('meaning', 'example', 'author')
+    def __init__(self, meaning: str, example: str, author: str) -> None:
+        self.meaning = meaning
+        self.example = example
+        self.author = author
+
+    @classmethod
+    def from_tuple(cls, tuple: tuple) -> 'UrbanDefinition':
+        return cls(*tuple)
+
+class UrbanDictionary:
+
+    BASE_URL = "https://www.urbandictionary.com"
+    def __init__(self, session: Optional[aiohttp.ClientSession] = None):
+        self.session = session
+
+    def require_session(coro) -> None:
+        async def wrapper(self, *args):
+            if self.session is None or self.session.closed:
+                self.session = aiohttp.ClientSession()
+            return await coro(self, *args)
+        return wrapper
+
+    async def __aenter__(self) -> 'UrbanDictionary':
+        return self
+
+    async def __aexit__(self, *exc) -> None:
+        await self.session.close()
+
+    def get_example(self, soup: BeautifulSoup, references: list) -> str:
+        final_examples = []
+        examples = soup.find_all('div', {'class', 'example'})
+        examples = [example.text for example in examples]
+        for example in examples:
+            final_example = example
+            for key, value in references:
+                if key not in final_example:
+                    if final_example not in final_examples:
+                        final_examples.append(final_example)
+                        continue
+                final_example = final_example.replace(key, f"[{key}]({self.BASE_URL}{value})")
+        return final_examples
+
+    def get_meanings(self, soup: BeautifulSoup, references: list, autolinks: list) -> list:
+        final_meanings = []
+
+        meanings = soup.find_all('div', {'class', 'meaning'})
+        meanings = [meaning.text for meaning in meanings]
+        references = [(autolink.text, autolink["href"]) for autolink in autolinks]
+
+        for meaning in meanings:
+            final_meaning = meaning
+            for key, value in references:
+                if key not in final_meaning:
+                    if final_meaning not in final_meanings:
+                        continue
+                final_meaning = final_meaning.replace(key, f"[{key}]({self.BASE_URL}{value})")
+            final_meanings.append(final_meaning)
+        return final_meanings
+
+    def get_authors(self, soup: BeautifulSoup) -> dict:
+        authors = soup.find_all('div', {'class', 'contributor'})
+        authors = {author.text: f"{self.BASE_URL}{author.find('a')['href']}" for author in authors}
+        return authors
+
+    @executor()
+    def parse(self, html: str, results: int) -> List[UrbanDefinition]:
+        soup = BeautifulSoup(html, 'lxml')
+        autolinks = soup.find_all('a', {'class', 'autolink'})
+        references = [(autolink.text, autolink["href"]) for autolink in autolinks]
+        final_meanings = self.get_meanings(soup, references, autolinks)
+        final_examples = self.get_example(soup, references)
+        authors = self.get_authors(soup)
+        final_meanings = final_meanings
+        final_examples = final_examples
+        authors = authors
+        return [UrbanDefinition(meaning, example, author) for meaning, example, author in zip(final_meanings, final_examples, authors)]
+
+    @require_session
+    async def define(self, word: str, results: int = 1) -> List[UrbanDefinition]:
+        """
+        Get the definition of a word from urban dictionary.
+
+        Parameters
+        ----------
+        word : str
+            The word to define.
+        results : int   
+            The number of results to return.
+        
+        Returns
+        -------
+        List[UrbanDefinition]
+            A list of UrbanDefinition objects.
+
+        Raises
+        ------
+        Exception
+            If the word is not found.
+        """
+        real_link = f"{self.BASE_URL}/define.php?term={word}"
+        async with self.session.get(real_link) as resp:
+            if resp.status != 200:
+                raise Exception("Failed to get definition")
+            else:
+               text = await resp.text()
+        result = await self.parse(text, results)
+        return result
