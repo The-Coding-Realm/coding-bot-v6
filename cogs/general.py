@@ -45,7 +45,7 @@ class General(commands.Cog, command_attrs=dict(hidden=False)):
         branch = 'master'
         if command is None:
             embed.url = source_url
-            return await ctx.send(embed=embed)
+            return await self.bot.reply(ctx,embed=embed)
 
         if command == 'help':
             src = type(self.bot.help_command)
@@ -58,7 +58,7 @@ class General(commands.Cog, command_attrs=dict(hidden=False)):
             obj = self.bot.get_command(command.replace('.', ' '))
             if obj is None:
                 embed = discord.Embed(title="Error 404", description=f"Command `{command}` not found.")
-                return await ctx.send(embed=embed)
+                return await self.bot.reply(ctx,embed=embed)
 
             if obj.help:
                 embed.description = obj.help.format(prefix=ctx.prefix)
@@ -79,7 +79,7 @@ class General(commands.Cog, command_attrs=dict(hidden=False)):
         final_url = (f'{source_url}/blob/{branch}/{location}#L{firstlineno}-L'
                      f'{firstlineno + len(lines) - 1}')
         embed.url = final_url
-        await ctx.send(embed=embed)
+        await self.bot.reply(ctx,embed=embed)
 
     @commands.hybrid_command(name="define")
     @commands.cooldown(1, 5, commands.BucketType.user)
@@ -105,7 +105,8 @@ class General(commands.Cog, command_attrs=dict(hidden=False)):
             text=f"Requested by {ctx.author}", 
             icon_url=ctx.author.display_avatar.url
         )
-        await ctx.send(embed=embed)
+        await self.bot.reply(ctx,embed=embed)
+
 
 async def setup(bot: CodingBot) -> None:
     await bot.add_cog(General(bot))
