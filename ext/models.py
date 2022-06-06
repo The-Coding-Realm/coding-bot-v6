@@ -205,7 +205,7 @@ class Database:
         insert_statement = """
                            INSERT INTO {}({}) VALUES ({})
                            """.format(
-            table, ", ".join(columns), ", ".join(["?"] * len(values))
+            table, ", ".join(columns), ", ".join(["?"] * len(columns))
         )
         if extras:
             for stuff in extras:
@@ -228,7 +228,7 @@ class Database:
         update_statement = """
                            UPDATE {} SET {} WHERE {}
                            """.format(
-            table, ", ".join(map(lambda x: f"{x} = ?", to_update)), 
+            table, ", ".join(map(lambda x: f"{x} = ?" if "=" not in x else x, to_update)), 
             " AND ".join(map(lambda x: f"{x} = ?", where))
         )
         if extras:

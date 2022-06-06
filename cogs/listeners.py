@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 
 import discord
 from discord.ext import commands
+from ext.consts import TCR_STAFF_ROLE_ID
 
 from ext.errors import InsufficientPrivilegeError
 
@@ -165,6 +166,58 @@ class ListenerCog(commands.Cog, command_attrs=dict(hidden=True)):
             traceback.print_exception(
                 type(error), error, error.__traceback__, file=sys.stderr
             )
+
+    @commands.Cog.listener('on_message')
+    async def track_staff_message(self, message: discord.Message):
+        """
+        Responsible for tracking staff messages.
+        """
+
+        if message.author.bot or not message.guild:
+            return
+
+        values = [message.author.id, message.guild.id, 1, 1]
+        columns = ['user_id', 'guild_id', 'message_count']
+
+        columns.append(status := message.author.status.name)
+        
+        staff_role = message.guild.get_role(TCR_STAFF_ROLE_ID)
+        if staff_role and staff_role in message.author.roles:  # type: ignore
+            columns.append('is_staff')
+            values.append(1)
+        else:
+            pass
+            
+        return await self.bot.conn.insert_record(
+            'metrics',
+            table='message_metric',
+            columns=columns,
+            values=values,
+            extras=[f'ON CONFLICT (user_id) DO UPDATE SET message_count = message_count + 1, {status} = {status} + 1'],
+        )
+
+    @commands.Cog.listener('on_message_delete')
+    async def track_user_message(self, message: discord.Message):
+        """
+        Responsible for tracking user messages.
+        """
+        
+        if message.author.bot or not message.guild:
+            return
+        
+        values = [message.author.id, message.guild.id]
+
+        columns = ['deleted_message_count = deleted_message_count + 1']
+
+        await self.bot.conn.update_record(
+            'metrics',
+            table='message_metric',
+            to_update=columns,
+            where=['user_id', 'guild_id'],
+            values=values,
+        )
+
+
 
 
 async def setup(bot: CodingBot):

@@ -174,20 +174,40 @@ class Developer(commands.Cog, command_attrs=dict(hidden=True)):
             values=[ctx.guild.id, member.id, 1]
         )
         revoked_thank_count = revoked_thank_count[0].count
+        surviving_thank_count = total_thank_count - revoked_thank_count 
 
-        surviving_thank_count = total_thank_count - revoked_thank_count
+        message_metric = await self.bot.conn.select_record(
+            'metrics',
+            table='message_metric',
+            arguments=['user_id', 'guild_id', 'message_count', 'deleted_message_count', 'offline', 'online', 'dnd', 'idle'],
+            where=['user_id', 'guild_id'],
+            values=[member.id, ctx.guild.id]
+        )
+        record = message_metric[0] if message_metric else None
+        if record:
+            formatted_message = f"""
+            **__Message metrics__** For {member.mention}:
+            \u3164 • **__Total message count__**:            {record.message_count}
+            \u3164 • **__Deleted message count__**:          {record.deleted_message_count} (`{record.deleted_message_count / record.message_count * 100:.2f}%`)
+            \u3164 • **__Actual message count__**:           {record.message_count - record.deleted_message_count} (`{(record.message_count - record.deleted_message_count) / record.message_count * 100:.2f}%`)
+            \u3164 • **__Offline message count__**:          {record.offline} (`{record.offline / record.message_count * 100:.2f}%`)
+            \u3164 • **__Online message count__**:           {record.online} (`{record.online / record.message_count * 100:.2f}%`)
+            \u3164 • **__Dnd message count__**:              {record.dnd} (`{record.dnd / record.message_count * 100:.2f}%`)
+            \u3164 • **__Idle message count__**:             {record.idle} (`{record.idle / record.message_count * 100:.2f}%`)
+            """
 
         embed = discord.Embed(
             title=f'{member.name}#{member.discriminator} Detailed anaylysis',
             description=
             f'Total thanks this month: {total_thank_count}\n'
-            f'Revoked thanks this month: {revoked_thank_count} (`{revoked_thank_count/total_thank_count*100:.2f}%`)\n'
-            f'Actual thanks this month: {surviving_thank_count} (`{surviving_thank_count/total_thank_count*100:.2f}%`)'
+            f'Revoked thanks this month: {revoked_thank_count} (`{revoked_thank_count/total_thank_count*100 if total_thank_count > 0 else 0:.2f}%`)\n'
+            f'Actual thanks this month: {surviving_thank_count} (`{surviving_thank_count/total_thank_count*100 if total_thank_count > 0 else 0:.2f}%`)'
+            f'\n{formatted_message if record else ""}',
+            timestamp=discord.utils.utcnow()
         )
-        file = await self.make_graph({'Revoked': revoked_thank_count, 'Actual': surviving_thank_count})
-        embed.set_image(url=f'attachment://graph.png')
         embed.set_thumbnail(url=member.display_avatar.url)
-        await ctx.send(embed=embed, file=file)
+        embed.set_footer(text=f'Requested by {ctx.author}', )
+        await ctx.send(embed=embed)
 
 
 

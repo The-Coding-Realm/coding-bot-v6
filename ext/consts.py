@@ -13,7 +13,9 @@ __all__ = (
     'HELP_BAN_ROLE_ID',
     'READ_HELP_RULES_ROLE_ID',
     'THANK_INFO_CONFIG_SCHEMA',
-    'THANK_DATA_CONFIG_SCHEMA'
+    'THANK_DATA_CONFIG_SCHEMA',
+    'MESSAGE_METRIC_SCHEMA',
+    'TCR_STAFF_ROLE_ID',
 )
 
 INTENTS = discord.Intents(
@@ -27,7 +29,8 @@ INTENTS = discord.Intents(
     webhooks=True,
     voice_states=True,
     reactions=True,
-    message_content=True
+    message_content=True,
+    presences=True
 )
 
 
@@ -88,14 +91,14 @@ THANK_DATA_CONFIG_SCHEMA = """CREATE TABLE IF NOT EXISTS thanks_data (
                       """
 
 MESSAGE_METRIC_SCHEMA = """CREATE TABLE IF NOT EXISTS message_metric (
-                            user_id BIGINT,
+                            user_id BIGINT UNIQUE,
                             guild_id BIGINT,
                             message_count INT,
-                            deleted_message_count INT,
-                            offline INT,
-                            online INT,
-                            dnd INT,
-                            idle INT,
+                            deleted_message_count INT DEFAULT 0,
+                            offline INT DEFAULT 0,
+                            online INT DEFAULT 0,
+                            dnd INT DEFAULT 0,
+                            idle INT DEFAULT 0,
                             is_staff BOOLEAN CHECK(is_staff IN (0, 1)) DEFAULT 0
                         );"""
 
@@ -114,4 +117,5 @@ OFFICIAL_HELPER_ROLE_ID = 726650418444107869
 TCR_GUILD_ID = 681882711945641997
 HELP_BAN_ROLE_ID = 903133405317857300
 READ_HELP_RULES_ROLE_ID = 903133599715459153
+TCR_STAFF_ROLE_ID = 795145820210462771
 

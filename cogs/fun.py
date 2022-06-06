@@ -157,7 +157,7 @@ class Fun(commands.Cog, command_attrs=dict(hidden=False)):
 
     @binary.command(name="encode")
     async def binary_encode(self, ctx: commands.Context[CodingBot], *, string: str):
-        binary_string = " ".join((map(lambda x: f"{ord(x):08b}", "okay but why?")))
+        binary_string = " ".join((map(lambda x: f"{ord(x):08b}", string)))
 
         embed = discord.Embed(title="Encoded to binary", description=binary_string, color=discord.Color.random())
         embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url)
