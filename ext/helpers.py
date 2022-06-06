@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import datetime as dt
 import functools
+import itertools
 import sys
 import traceback
 from io import BytesIO
@@ -16,6 +17,25 @@ from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
 if TYPE_CHECKING:
     from ext.models import CodingBot
+
+
+def grouper(n, iterable):
+    it = iter(iterable)
+    while True:
+        chunk = tuple(itertools.islice(it, n))
+        if not chunk:
+            return
+        yield chunk
+
+def ordinal_suffix_of(i):
+    if i % 100 // 10 != 1:
+        if i % 10 == 1:
+            return 'st'
+        elif i % 10 == 2:
+            return 'nd'
+        elif i % 10 == 3:
+            return 'rd'
+    return 'th'
 
 
 async def log_error(bot: CodingBot, event_method: str, *args: Any, **kwargs: Any):
@@ -160,6 +180,19 @@ class UrbanDefinition:
 
     @classmethod
     def from_tuple(cls, tuple: tuple) -> 'UrbanDefinition':
+        """
+        Class method to convert a tuple to a UrbanDefinition object.
+
+        Parameters
+        ----------
+        tuple: tuple
+            The tuple to convert.
+
+        Returns
+        -------
+        UrbanDefinition
+            The UrbanDefinition object.
+        """
         return cls(*tuple)
 
 class UrbanDictionary:
@@ -168,7 +201,20 @@ class UrbanDictionary:
     def __init__(self, session: Optional[aiohttp.ClientSession] = None):
         self.session = session
 
-    def require_session(coro) -> None:
+    def require_session(coro: Callable) -> None:
+        """
+        Outer decorator for methods that require a session.
+
+        Parameters
+        ----------
+        coro : `Callable`
+            The coroutine to be wrapped.
+        
+        Returns
+        -------
+        `Callable`
+            The wrapped coroutine.
+        """
         async def wrapper(self, *args):
             if self.session is None or self.session.closed:
                 self.session = aiohttp.ClientSession()
@@ -182,6 +228,21 @@ class UrbanDictionary:
         await self.session.close()
 
     def get_example(self, soup: BeautifulSoup, references: list) -> str:
+        """
+        Responsible for getting the example from the soup.
+        
+        Parameters
+        ----------
+        soup : BeautifulSoup
+            The soup to get the example from.
+        references : list
+            The list of references to the example.
+
+        Returns
+        -------
+        str
+            The example.
+        """
         final_examples = []
         examples = soup.find_all('div', {'class', 'example'})
         examples = [example.text for example in examples]
@@ -196,6 +257,23 @@ class UrbanDictionary:
         return final_examples
 
     def get_meanings(self, soup: BeautifulSoup, references: list, autolinks: list) -> list:
+        """
+        Responsible for getting the meanings of the word
+
+        Parameters
+        ----------
+        soup: BeautifulSoup
+            The soup of the page
+        references: list
+            A list of tuples containing the key and value of the references
+        autolinks: list
+            A list of tuples containing the key and value of the autolinks
+        
+        Returns
+        -------
+        list
+            A list of meanings
+        """
         final_meanings = []
 
         meanings = soup.find_all('div', {'class', 'meaning'})
@@ -219,6 +297,21 @@ class UrbanDictionary:
 
     @executor()
     def parse(self, html: str, results: int) -> List[UrbanDefinition]:
+        """
+        Responsible for parsing the html and returning a list of UrbanDefinitions
+        
+        Parameters
+        ----------
+        html: str
+            The html to parse
+        results: int
+            The amount of results to return
+        
+        Returns
+        -------
+        List[UrbanDefinition]
+            A list of UrbanDefinitions
+        """
         soup = BeautifulSoup(html, 'lxml')
         autolinks = soup.find_all('a', {'class', 'autolink'})
         references = [(autolink.text, autolink["href"]) for autolink in autolinks]
@@ -228,7 +321,11 @@ class UrbanDictionary:
         final_meanings = final_meanings
         final_examples = final_examples
         authors = authors
-        return [UrbanDefinition(meaning, example, author) for meaning, example, author in zip(final_meanings, final_examples, authors)]
+        return [
+            UrbanDefinition(meaning, example, author) 
+            for (meaning, example, author) in 
+            zip(final_meanings, final_examples, authors)
+        ]
 
     @require_session
     async def define(self, word: str, results: int = 1) -> List[UrbanDefinition]:

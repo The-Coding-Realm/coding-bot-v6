@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 
 import discord
 from discord.ext import commands
+from ext.consts import TCR_STAFF_ROLE_ID
 
 from ext.errors import InsufficientPrivilegeError
 
@@ -20,44 +21,6 @@ class ListenerCog(commands.Cog, command_attrs=dict(hidden=True)):
     def __init__(self, bot: CodingBot) -> None:
         self.bot = bot
 
-    @commands.Cog.listener()
-    async def on_command_error(
-        self, 
-        ctx: commands.Context[CodingBot], 
-        error: Exception
-    ) -> None:
-        """
-        Handles errors for commands during command invocation.
-        Errors that are not handled by this function are printed to stderr.
-
-        Parameters
-        ----------
-        ctx : commands.Context[CodingBot]
-            The context for the command.
-        error : Exception
-            The exception that was raised.
-        """
-        if isinstance(error, commands.CommandNotFound):
-            return
-
-        if isinstance(error, commands.CommandInvokeError):
-            error = error.original
-
-        if isinstance(error, InsufficientPrivilegeError):
-            embed = discord.Embed(
-                title="Insufficient Privilege",
-                description=error.message,
-                color=discord.Color.red(),
-            )
-            return await self.bot.reply(ctx,embed=embed)
-        else:
-            print(
-                "Ignoring exception in command {}:".format(ctx.command),
-                file=sys.stderr,
-            )
-            traceback.print_exception(
-                type(error), error, error.__traceback__, file=sys.stderr
-            )
 
     @commands.Cog.listener("on_message")
     async def afk_user_messaage(self, message: discord.Message):
@@ -170,6 +133,91 @@ class ListenerCog(commands.Cog, command_attrs=dict(hidden=True)):
         if len(self.bot.message_cache) > 200:
             self.bot.message_cache.clear()
         await self.bot.process_edit(before, after)
+
+    @commands.Cog.listener()
+    async def on_command_error(self, ctx: commands.Context, error: Exception) -> None:
+        """
+        Handles errors for commands during command invocation.
+        Errors that are not handled by this function are printed to stderr.
+        """
+        if isinstance(error, commands.CommandNotFound):
+            return
+        if isinstance(error, commands.CommandInvokeError):
+            error = error.original
+        if isinstance(error, InsufficientPrivilegeError):
+            embed = discord.Embed(
+                title="Insufficient Privilege, ",
+                description=error.message,
+                color=discord.Color.red(),
+            )
+            return await ctx.send(ctx,embed=embed, ephemeral=True)
+        elif isinstance(error, commands.CommandOnCooldown):
+            embed = discord.Embed(
+                title="Command on Cooldown",
+                description=f"{ctx.author.mention} Please wait {error.retry_after:.2f} seconds before using this command again.",
+                color=discord.Color.red(),
+            )
+            return await ctx.send(embed=embed, ephemeral=True)
+        else:
+            print(
+                "Ignoring exception in command {}:".format(ctx.command),
+                file=sys.stderr,
+            )
+            traceback.print_exception(
+                type(error), error, error.__traceback__, file=sys.stderr
+            )
+
+    @commands.Cog.listener('on_message')
+    async def track_staff_message(self, message: discord.Message):
+        """
+        Responsible for tracking staff messages.
+        """
+
+        if message.author.bot or not message.guild:
+            return
+
+        values = [message.author.id, message.guild.id, 1, 1]
+        columns = ['user_id', 'guild_id', 'message_count']
+
+        columns.append(status := message.author.status.name)
+        
+        staff_role = message.guild.get_role(TCR_STAFF_ROLE_ID)
+        if staff_role and staff_role in message.author.roles:  # type: ignore
+            columns.append('is_staff')
+            values.append(1)
+        else:
+            pass
+            
+        return await self.bot.conn.insert_record(
+            'metrics',
+            table='message_metric',
+            columns=columns,
+            values=values,
+            extras=[f'ON CONFLICT (user_id) DO UPDATE SET message_count = message_count + 1, {status} = {status} + 1'],
+        )
+
+    @commands.Cog.listener('on_message_delete')
+    async def track_user_message(self, message: discord.Message):
+        """
+        Responsible for tracking user messages.
+        """
+        
+        if message.author.bot or not message.guild:
+            return
+        
+        values = [message.author.id, message.guild.id]
+
+        columns = ['deleted_message_count = deleted_message_count + 1']
+
+        await self.bot.conn.update_record(
+            'metrics',
+            table='message_metric',
+            to_update=columns,
+            where=['user_id', 'guild_id'],
+            values=values,
+        )
+
+
 
 
 async def setup(bot: CodingBot):

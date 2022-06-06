@@ -1,4 +1,5 @@
 from __future__ import annotations
+import string
 
 import aiohttp
 import datetime as dt
@@ -21,7 +22,8 @@ from .consts import (
     HELP_WARNINGS_CONFIG_SCHEMA,
     HELP_COMMAND,
     THANK_INFO_CONFIG_SCHEMA,
-    THANK_DATA_CONFIG_SCHEMA
+    THANK_DATA_CONFIG_SCHEMA,
+    MESSAGE_METRIC_SCHEMA
 )
 from .helpers import WelcomeBanner, log_error
 
@@ -57,6 +59,7 @@ class Record:
 
     @classmethod
     def from_tuple(cls, arguments: Iterable[Any], tuple_: Iterable[Any]) -> Record:
+        arguments = ["".join(map(lambda x: x if x in string.ascii_letters + string.digits + '_' else "", arg)) for arg in arguments]
         return cls(dict(zip(arguments, tuple_)))
 
 
@@ -104,6 +107,7 @@ class Database:
         )
         self.conn["afk"] = await aiosqlite.connect("./database/afk.db")
         self.conn["thanks"] = await aiosqlite.connect("./database/thanks.db")
+        self.conn["metrics"] = await aiosqlite.connect("./database/metrics.db")
         await self.init_dbs()
         return self
 
@@ -123,6 +127,9 @@ class Database:
             await cursor.execute(THANK_DATA_CONFIG_SCHEMA)
             await cursor.execute(THANK_INFO_CONFIG_SCHEMA)
 
+        async with self.cursor("metrics") as cursor:
+            await cursor.execute(MESSAGE_METRIC_SCHEMA)
+
         await self.commit()
 
     async def __aexit__(self, *args: Any) -> None:
@@ -135,16 +142,17 @@ class Database:
     def __repr__(self) -> str:
         return f"<Database: {self.conn}>"
 
-    async def select_record(self,
-                            connection: str,
-                            /,
-                            *,
-                            arguments: Tuple[str, ...],
-                            table: str,
-                            where: Optional[Tuple[str, ...]] = None,
-                            values: Optional[Tuple[Any, ...]] = None,
-                            extras: Optional[List[str]] = None,
-                            ) -> Optional[List[Record]]:
+    async def select_record(
+        self,
+        connection: str,
+        /,
+        *,
+        arguments: Tuple[str, ...],
+        table: str,
+        where: Optional[Tuple[str, ...]] = None,
+        values: Optional[Tuple[Any, ...]] = None,
+        extras: Optional[List[str]] = None,
+    ) -> Optional[List[Record]]:
         statement = """SELECT {} FROM {}""".format(
             ", ".join(arguments), table
         )
@@ -164,7 +172,15 @@ class Database:
                 return [Record.from_tuple(arguments, row) for row in rows]
             return None
 
-    async def delete_record(self, connection: str, /, *, table: str, where: Tuple[str, ...], values: Optional[Tuple[Any, ...]] = None) -> None:
+    async def delete_record(
+        self, 
+        connection: str, 
+        /, 
+        *, 
+        table: str,
+        where: Tuple[str, ...], 
+        values: Optional[Tuple[Any, ...]] = None
+    ) -> None:
         delete_statement = f"DELETE FROM {table}"
         if where is not None:
             assign_question = map(lambda x: f"{x} = ?", where)
@@ -175,14 +191,51 @@ class Database:
             await cursor.execute(delete_statement, values or ())
             await getattr(self, connection).commit()
 
-    async def insert_record(self, connection: str, /, *, table: str, values: Tuple[Any, ...], columns: Tuple[str, ...]) -> None:
+    async def insert_record(
+        self, 
+        connection: str, 
+        /, 
+        *, 
+        table: str, 
+        values: Tuple[Any, ...], 
+        columns: Tuple[str, ...],
+        extras: Optional[List[str]] = None
+    ) -> None:
+        
         insert_statement = """
                            INSERT INTO {}({}) VALUES ({})
                            """.format(
-            table, ", ".join(columns), ", ".join(["?"] * len(values))
+            table, ", ".join(columns), ", ".join(["?"] * len(columns))
         )
+        if extras:
+            for stuff in extras:
+                insert_statement += f" {stuff}"
         async with self.cursor(connection) as cursor:
             await cursor.execute(insert_statement, values)
+            await getattr(self, connection).commit()
+
+    async def update_record(
+        self, 
+        connection: str, 
+        /, 
+        *,
+        table: str,
+        to_update: Tuple[str, ...], 
+        where: Tuple[str, ...], 
+        values: Tuple[Any, ...], 
+        extras: Optional[List[str]] = None
+    ) -> None:
+        update_statement = """
+                           UPDATE {} SET {} WHERE {}
+                           """.format(
+            table, ", ".join(map(lambda x: f"{x} = ?" if "=" not in x else x, to_update)), 
+            " AND ".join(map(lambda x: f"{x} = ?", where))
+        )
+        if extras:
+            for stuff in extras:
+                update_statement += f" {stuff}"
+        async with self.cursor(connection) as cursor:
+            await cursor.execute(update_statement, values)
             await getattr(self, connection).commit()
 
     @property
