@@ -6,6 +6,7 @@ import re
 from typing import TYPE_CHECKING, Optional
 
 import discord
+import button_paginator as pg
 from discord.ext import commands
 from ext.helpers import grouper, ordinal_suffix_of
 from ext.http import Http
@@ -129,7 +130,7 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
 
         Usage:
         ------
-        `{prefix}thanks {user}`: *will thank you*
+        `{prefix}thanks {user} {reason}`: *will thank user*
         """
 
         if member.id == ctx.author.id:
@@ -197,7 +198,14 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
                 color=discord.Color.blue()
             )
             embeds.append(embed)
-        await self.bot.reply(ctx, embed=embeds[0])
+        if len(embeds) == 1:
+            await self.bot.reply(ctx, embed=embeds[0])
+        else:
+            paginator = pg.Paginator(self.bot, embeds, ctx)
+            paginator.add_button("back", emoji="◀️")
+            paginator.add_button("goto", style=discord.ButtonStyle.primary)
+            paginator.add_button("next", emoji="▶️")
+            await paginator.start()
 
 
             

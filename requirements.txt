@@ -20,4 +20,4 @@ toml==0.10.2
 typing_extensions==4.2.0
 yarl==1.7.2
 more_itertools==8.10.0
-
+button-paginator @ https://github.com/andrewthederp/Button_paginator
