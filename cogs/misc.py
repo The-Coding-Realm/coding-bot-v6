@@ -130,7 +130,7 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
 
         Usage:
         ------
-        `{prefix}thanks {user} {user}`: *will thank you*
+        `{prefix}thanks {user} {reason}`: *will thank you*
         """
 
         if member.id == ctx.author.id:
