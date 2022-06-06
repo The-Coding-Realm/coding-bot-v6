@@ -107,6 +107,25 @@ class General(commands.Cog, command_attrs=dict(hidden=False)):
         )
         await self.bot.reply(ctx,embed=embed)
 
+    @commands.hybrid_command(invoke_without_command=True)
+    async def avatar(self, ctx: commands.Context[CodingBot]):
+        embed = discord.Embed(title="Avatar command", description="Available methods: `main`, `display`")
+        embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url)
+        await self.bot.reply(ctx,embed=embed)
+
+    @avatar.command(name="main")
+    async def avatar_main(self, ctx: commands.Context[CodingBot], member: discord.Member):
+        embed = discord.Embed(title=f"{member}'s Main Avatar", description=f"Showing {member.mention}'s Main Avatar")
+        embed.set_image(url=member.avatar.url)
+        embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url)
+        await self.bot.reply(ctx,embed=embed)
+
+    @avatar.command(name="display")
+    async def avatar_display(self, ctx: commands.Context[CodingBot], member: discord.Member):
+        embed = discord.Embed(title=f"{member}'s Avatar", description=f"Showing {member.mention}'s Avatar")
+        embed.set_image(url=member.display_avatar.url)
+        embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url)
+        await self.bot.reply(ctx,embed=embed)
 
 async def setup(bot: CodingBot) -> None:
     await bot.add_cog(General(bot))

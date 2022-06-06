@@ -20,7 +20,7 @@ class Fun(commands.Cog, command_attrs=dict(hidden=False)):
         self.http = Http(bot.session)
         self.bot = bot
     
-    @commands.command()
+    @commands.hybrid_command()
     async def rock(self, ctx: commands.Context[CodingBot], *, query: Optional[str] = None):
         async def get_rock(self):
             rock = await self.http.api["rock"]["random"]()
@@ -49,7 +49,7 @@ class Fun(commands.Cog, command_attrs=dict(hidden=False)):
             ),
         )
 
-    @commands.command()
+    @commands.hybrid_command()
     async def number(
         self, 
         ctx: commands.Context[CodingBot], 
