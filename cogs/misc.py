@@ -124,13 +124,13 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
 
     @commands.hybrid_group(name="thanks", invoke_without_command=True)
     @commands.cooldown(1, 10, commands.BucketType.member)
-    async def thanks(self, ctx: commands.Context[CodingBot], member: discord.Member, *, reason: str):
+    async def thanks(self, ctx: commands.Context[CodingBot], member: discord.Member, *, reason: Optional[str] = None):
         """
         Thanks someone.
 
         Usage:
         ------
-        `{prefix}thanks {user} {reason}`: *will thank you*
+        `{prefix}thanks {user} {reason}`: *will thank user*
         """
 
         if member.id == ctx.author.id:
