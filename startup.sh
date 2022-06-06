@@ -4,6 +4,14 @@ clear
 enable_virual_env () {
 
     source ./venv/bin/activate
+    command -v git > /dev/null 2 >&1
+    if [ $? -eq 0 ]; 
+        then
+          echo "Repo status: " && git pull
+    else
+        echo "Git isn't installed/added to path"
+    fi
+    echo "-----------------------------"
     pip install -r requirements.txt --quiet --exists-action i
     python3.10 main.py
     

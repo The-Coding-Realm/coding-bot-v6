@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import datetime as dt
 import functools
+import itertools
 import sys
 import traceback
 from io import BytesIO
@@ -16,6 +17,25 @@ from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
 if TYPE_CHECKING:
     from ext.models import CodingBot
+
+
+def grouper(n, iterable):
+    it = iter(iterable)
+    while True:
+        chunk = tuple(itertools.islice(it, n))
+        if not chunk:
+            return
+        yield chunk
+
+def ordinal_suffix_of(i):
+    if i % 100 // 10 != 1:
+        if i % 10 == 1:
+            return 'st'
+        elif i % 10 == 2:
+            return 'nd'
+        elif i % 10 == 3:
+            return 'rd'
+    return 'th'
 
 
 async def log_error(bot: CodingBot, event_method: str, *args: Any, **kwargs: Any):

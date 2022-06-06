@@ -1,10 +1,13 @@
 from __future__ import annotations
+import asyncio
+from datetime import datetime
 
 import re
 from typing import TYPE_CHECKING, Optional
 
 import discord
 from discord.ext import commands
+from ext.helpers import grouper, ordinal_suffix_of
 from ext.http import Http
 from ext.ui.view import Piston
 
@@ -117,7 +120,86 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
                 msg,
             ),
         )
+
+    @commands.hybrid_group(name="thanks", invoke_without_command=True)
+    @commands.cooldown(1, 10, commands.BucketType.member)
+    async def thanks(self, ctx: commands.Context[CodingBot], member: discord.Member, *, reason: Optional[str] = None):
+        """
+        Thanks someone.
+
+        Usage:
+        ------
+        `{prefix}thanks {user}`: *will thank you*
+        """
+
+        if member.id == ctx.author.id:
+            return await ctx.reply("You can't thank yourself.", ephemeral=True)
+
+        elif member.id == self.bot.user.id:
+            return await ctx.reply("You can't thank me.", ephemeral=True)
         
+        await self.bot.conn.insert_record(
+            'thanks',
+            table='thanks_info',
+            values=(member.id, ctx.guild.id, 1),
+            columns=['user_id', 'guild_id', 'thanks_count'],
+            extras=['ON CONFLICT (user_id) DO UPDATE SET thanks_count = thanks_count + 1']
+        )
+        staff_role = ctx.guild.get_role(795145820210462771)
+        member_is_staff = 1 if staff_role and staff_role in member.roles else 0
+        await self.bot.conn.insert_record(
+            'thanks',
+            table='thanks_data',
+            columns=(
+                'is_staff', 'user_id', 'giver_id', 'guild_id', 
+                'message_id', 'channel_id', 'reason'
+            ),
+            values=(member_is_staff, member.id, ctx.author.id, ctx.guild.id, 
+                ctx.message.id, ctx.channel.id, reason or "No reason given"
+            )
+        )
+        await ctx.reply(f"{ctx.author.mention} you thanked {member.mention}!", ephemeral=True)
+
+    @thanks.command(name="leaderboard")
+    async def thanks_leaderboard(self, ctx: commands.Context[CodingBot]):
+        """
+        Shows the thanks leaderboard.
+
+        Usage:
+        ------
+        `{prefix}thanks leaderboard`: *will show the thanks leaderboard*
+        """
+
+
+        records = await self.bot.conn.select_record(
+            'thanks',
+            table='thanks_info',
+            arguments=('user_id', 'thanks_count'),
+            where=['guild_id'],
+            values=[ctx.guild.id],
+            extras=['ORDER BY thanks_count DESC, user_id ASC LIMIT 100'],
+        )
+        if not records:
+            return await ctx.reply("No thanks leaderboard yet.", ephemeral=True)
+
+        information = tuple(grouper(10, records))
+
+        embeds = []
+        for info in information:
+            user = [ctx.guild.get_member(i.user_id) for i in info]
+            embed = discord.Embed(
+                title=f"Thank points leaderboard",
+                description="\n\n".join(
+                    [f"`{i}{ordinal_suffix_of(i)}` is {user.mention} with `{thanks_count.thanks_count}` Thank point(s)" for i, (user, thanks_count) 
+                    in enumerate(zip(user, info), 1)
+                ]
+                ),
+                color=discord.Color.blue()
+            )
+            embeds.append(embed)
+        await self.bot.reply(ctx, embed=embeds[0])
+
+
             
 async def setup(bot: CodingBot):
     await bot.add_cog(Miscellaneous(bot))

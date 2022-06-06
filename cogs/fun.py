@@ -212,6 +212,7 @@ class Fun(commands.Cog, command_attrs=dict(hidden=False)):
         embed = discord.Embed(title=f"Owofied Text", description=text.replace("o", "OwO"), color=discord.Color.random())
         embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url)
         await self.bot.reply(ctx,embed=embed)
+    
 
 async def setup(bot: CodingBot):
     await bot.add_cog(Fun(bot))

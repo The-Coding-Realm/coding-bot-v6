@@ -69,9 +69,9 @@ HELP_WARNINGS_CONFIG_SCHEMA = """CREATE TABLE IF NOT EXISTS help_warns (
                        """
 
 THANK_INFO_CONFIG_SCHEMA = """CREATE TABLE IF NOT EXISTS thanks_info (
-                            user_id BIGINT,
+                            user_id BIGINT UNIQUE,
                             guild_id BIGINT,
-                            thanks INT
+                            thanks_count INT
                       );
                       """
 
@@ -79,10 +79,25 @@ THANK_DATA_CONFIG_SCHEMA = """CREATE TABLE IF NOT EXISTS thanks_data (
                             user_id BIGINT,
                             giver_id BIGINT,
                             guild_id BIGINT,
-                            date BIGINT,
-                            reason TEXT
+                            message_id BIGINT,
+                            channel_id BIGINT,
+                            reason TEXT DEFAULT "No reason given",
+                            is_staff BOOLEAN CHECK(is_staff IN (0, 1)) DEFAULT 0,
+                            thank_revoked BOOLEAN CHECK(is_staff IN (0, 1)) DEFAULT 0
                       );
                       """
+
+MESSAGE_METRIC_SCHEMA = """CREATE TABLE IF NOT EXISTS message_metric (
+                            user_id BIGINT,
+                            guild_id BIGINT,
+                            message_count INT,
+                            deleted_message_count INT,
+                            offline INT,
+                            online INT,
+                            dnd INT,
+                            idle INT,
+                            is_staff BOOLEAN CHECK(is_staff IN (0, 1)) DEFAULT 0
+                        );"""
 
 HELP_COMMAND = """
             Help command for Coding Bot

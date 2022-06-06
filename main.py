@@ -20,6 +20,11 @@ async def before_invoke(ctx: commands.Context[CodingBot]):
 async def after_invoke(ctx: commands.Context[CodingBot]):
     bot.processing_commands -= 1
 
+@bot.check
+async def check_processing_commands(ctx: commands.Context[CodingBot]):
+    await bot.wait_until_ready()
+    return True
+
 
 TOKEN = os.getenv("TOKEN")
 bot.run(TOKEN)
