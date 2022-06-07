@@ -151,7 +151,7 @@ class Fun(commands.Cog, command_attrs=dict(hidden=False)):
 
     @commands.hybrid_group(invoke_without_command=True)
     async def binary(self, ctx: commands.Context[CodingBot]):
-        embed = discord.Embed(title="Binary command", description="Available methods: `encode`, `decode`")
+        embed = discord.Embed(title="Binary command", description="Available methods: `encode`, `decode`", color=discord.Color.random())
         embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url)
         await self.bot.reply(ctx,embed=embed)
 
@@ -212,8 +212,52 @@ class Fun(commands.Cog, command_attrs=dict(hidden=False)):
         embed = discord.Embed(title=f"Owofied Text", description=text.replace("o", "OwO"), color=discord.Color.random())
         embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url)
         await self.bot.reply(ctx,embed=embed)
-    
 
+    @commands.hybrid_group(invoke_without_command=True)
+    async def filter(self, ctx: commands.Context[CodingBot]):
+        embed = discord.Embed(title="Filter command", description="Available methods: `invert`, `greyscale`, `colour [hex]`", color=discord.Color.random())
+        embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url)
+        await self.bot.reply(ctx,embed=embed)
+
+    @filter.commands(name="invert")
+    async def invert(self, ctx: commands.Context[CodingBot], member: discord.Member = None):
+        if not member:
+            member = ctx.author
+        pfp = member.display_avatar.url
+        response = await self.http.api["some-random-api"]["filters"]["invert"](pfp)
+
+        embed = discord.Embed(title="Filter command - Invert", color=discord.Color.random())
+        embed.set_image(url=response)
+        embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url)
+        await self.bot.reply(ctx,embed=embed)
+
+    @filter.commands(name="greyscale")
+    async def greyscale(self, ctx: commands.Context[CodingBot], member: discord.Member = None):
+        if not member:
+            member = ctx.author
+        pfp = member.display_avatar.url
+        response = await self.http.api["some-random-api"]["filters"]["greyscale"](pfp)
+
+        embed = discord.Embed(title="Filter command - Greyscale", color=discord.Color.random())
+        embed.set_image(url=response)
+        embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url)
+        await self.bot.reply(ctx,embed=embed)
+
+    @filter.commands(name="colour")
+    async def colour(self, ctx: commands.Context[CodingBot], member: discord.Member = None, hex_code: str = None):
+        if not member:
+            member = ctx.author
+        if not hex:
+            embed = discord.Embed(title="ERROR!",  description="No Hex? Hex colour code is required")
+            embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url)
+        pfp = member.display_avatar.url
+        response = await self.http.api["some-random-api"]["filters"]["greyscale"](pfp, hex_code)
+
+        embed = discord.Embed(title="Filter command - Colour")
+        embed.set_image(url=response)
+        embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url)
+        await self.bot.reply(ctx,embed=embed)
+    
 async def setup(bot: CodingBot):
     await bot.add_cog(Fun(bot))
     
