@@ -115,14 +115,14 @@ class General(commands.Cog, command_attrs=dict(hidden=False)):
 
     @avatar.command(name="main")
     async def avatar_main(self, ctx: commands.Context[CodingBot], member: discord.Member):
-        embed = discord.Embed(title=f"{member}'s Main Avatar", description=f"Showing {member.mention}'s Main Avatar")
+        embed = discord.Embed(title=f"{member}'s Main Avatar", description=f"Showing {member.mention}'s Main Avatar", color=discord.Color.random())
         embed.set_image(url=member.avatar.url)
         embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url)
         await self.bot.reply(ctx,embed=embed)
 
     @avatar.command(name="display")
     async def avatar_display(self, ctx: commands.Context[CodingBot], member: discord.Member):
-        embed = discord.Embed(title=f"{member}'s Avatar", description=f"Showing {member.mention}'s Avatar")
+        embed = discord.Embed(title=f"{member}'s Avatar", description=f"Showing {member.mention}'s Avatar", color=discord.Color.random())
         embed.set_image(url=member.display_avatar.url)
         embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url)
         await self.bot.reply(ctx,embed=embed)

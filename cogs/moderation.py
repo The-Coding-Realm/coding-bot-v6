@@ -392,7 +392,7 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
     @commands.hybrid_command(name="whois")
     async def whois(self, ctx: commands.Context[CodingBot], member: Optional[discord.Member] = None):
         target: discord.Member = member or ctx.author  # type: ignore
-        embed = discord.Embed(title=f"Showing user info : {member}")
+        embed = discord.Embed(title=f"Showing user info : {member}", color=discord.Color.random())
         embed.set_thumbnail(url=target.display_avatar.url)
         # Support for nitro users
         embed.set_footer(

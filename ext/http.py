@@ -48,6 +48,13 @@ class Http:
                 "binary-decode": lambda binary: self.get(f"https://some-random-api.ml/binary?decode={binary}"),
                 "lyrics": lambda query: self.get(f"https://some-random-api.ml/lyrics?title={query}"),
                 "joke": lambda: self.get("https://some-random-api.ml/joke", _json=True),
+                "filters":{
+                    "invert": lambda pfp: f"https://some-random-api.ml/canvas/invert?avatar={pfp}",
+                    "greyscale": lambda pfp: f"https://some-random-api.ml/canvas/greyscale?avatar={pfp}",
+                    "colour": lambda pfp, hex_code: f"https://some-random-api.ml/canvas/color?avatar={pfp}&color={hex_code}",
+                    "brightness": lambda pfp: f"https://some-random-api.ml/canvas/brightness?avatar={pfp}",
+                    "threshold": lambda pfp: f"https://some-random-api.ml/canvas/threshold?avatar={pfp}",
+                }
             }
         }
         
