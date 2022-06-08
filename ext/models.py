@@ -1,30 +1,25 @@
 from __future__ import annotations
+
+import datetime as dt
+import os
 import string
+from dataclasses import dataclass, field
+from typing import (Any, Dict, Iterable, List, Mapping, Optional, Set, Tuple,
+                    Union)
 
 import aiohttp
-import datetime as dt
-from dataclasses import dataclass, field
-import os
-from typing import Any, Dict, List, Mapping, Optional, Union, Tuple, Set, Iterable
-
 import aiosqlite
 import discord
+import sr_api
 from discord.ext import commands
 from DiscordUtils import InviteTracker
 from pytimeparse import parse
 
-from .consts import (
-    INTENTS,
-    PREFIX_CONFIG_SCHEMA,
-    COMMANDS_CONFIG_SCHEMA,
-    WARNINGS_CONFIG_SCHEMA,
-    AFK_CONFIG_SCHEMA,
-    HELP_WARNINGS_CONFIG_SCHEMA,
-    HELP_COMMAND,
-    THANK_INFO_CONFIG_SCHEMA,
-    THANK_DATA_CONFIG_SCHEMA,
-    MESSAGE_METRIC_SCHEMA
-)
+from .consts import (AFK_CONFIG_SCHEMA, COMMANDS_CONFIG_SCHEMA, HELP_COMMAND,
+                     HELP_WARNINGS_CONFIG_SCHEMA, INTENTS,
+                     MESSAGE_METRIC_SCHEMA, PREFIX_CONFIG_SCHEMA,
+                     THANK_DATA_CONFIG_SCHEMA, THANK_INFO_CONFIG_SCHEMA,
+                     WARNINGS_CONFIG_SCHEMA)
 from .helpers import WelcomeBanner, log_error
 
 
@@ -59,7 +54,8 @@ class Record:
 
     @classmethod
     def from_tuple(cls, arguments: Iterable[Any], tuple_: Iterable[Any]) -> Record:
-        arguments = ["".join(map(lambda x: x if x in string.ascii_letters + string.digits + '_' else "", arg)) for arg in arguments]
+        arguments = ["".join(map(lambda x: x if x in string.ascii_letters +
+                             string.digits + '_' else "", arg)) for arg in arguments]
         return cls(dict(zip(arguments, tuple_)))
 
 
@@ -173,12 +169,12 @@ class Database:
             return None
 
     async def delete_record(
-        self, 
-        connection: str, 
-        /, 
-        *, 
+        self,
+        connection: str,
+        /,
+        *,
         table: str,
-        where: Tuple[str, ...], 
+        where: Tuple[str, ...],
         values: Optional[Tuple[Any, ...]] = None
     ) -> None:
         delete_statement = f"DELETE FROM {table}"
@@ -186,22 +182,22 @@ class Database:
             assign_question = map(lambda x: f"{x} = ?", where)
             delete_statement += " WHERE {}".format(
                 " AND ".join(assign_question))
-            
+
         async with self.cursor(connection) as cursor:
             await cursor.execute(delete_statement, values or ())
             await getattr(self, connection).commit()
 
     async def insert_record(
-        self, 
-        connection: str, 
-        /, 
-        *, 
-        table: str, 
-        values: Tuple[Any, ...], 
+        self,
+        connection: str,
+        /,
+        *,
+        table: str,
+        values: Tuple[Any, ...],
         columns: Tuple[str, ...],
         extras: Optional[List[str]] = None
     ) -> None:
-        
+
         insert_statement = """
                            INSERT INTO {}({}) VALUES ({})
                            """.format(
@@ -215,20 +211,21 @@ class Database:
             await getattr(self, connection).commit()
 
     async def update_record(
-        self, 
-        connection: str, 
-        /, 
+        self,
+        connection: str,
+        /,
         *,
         table: str,
-        to_update: Tuple[str, ...], 
-        where: Tuple[str, ...], 
-        values: Tuple[Any, ...], 
+        to_update: Tuple[str, ...],
+        where: Tuple[str, ...],
+        values: Tuple[Any, ...],
         extras: Optional[List[str]] = None
     ) -> None:
         update_statement = """
                            UPDATE {} SET {} WHERE {}
                            """.format(
-            table, ", ".join(map(lambda x: f"{x} = ?" if "=" not in x else x, to_update)), 
+            table, ", ".join(
+                map(lambda x: f"{x} = ?" if "=" not in x else x, to_update)),
             " AND ".join(map(lambda x: f"{x} = ?", where))
         )
         if extras:
@@ -294,6 +291,7 @@ class CodingBot(commands.Bot):
         self.welcomer = WelcomeBanner(self)
         self.processing_commands = 0
         self.message_cache = {}
+        self.sr_api = sr_api.Client()
 
     async def setup_hook(self) -> None:
         for filename in os.listdir("./cogs"):
@@ -358,27 +356,27 @@ class CodingBot(commands.Bot):
         await log_error(self, event_method, *args, **kwargs)
 
     async def send(
-        self, ctx,*args,**kwargs
+        self, ctx, *args, **kwargs
     ) -> discord.Message:
         if getattr(ctx, "msg_before", None) is not None:
             key = ctx.msg_before.id
-            await self.message_cache[key].edit(*args,**kwargs)
+            await self.message_cache[key].edit(*args, **kwargs)
         else:
             key = ctx.message.id
-            self.message_cache[key] = await ctx.send(*args,**kwargs)
+            self.message_cache[key] = await ctx.send(*args, **kwargs)
         return self.message_cache[key]
 
     async def reply(
-        self, ctx,*args,**kwargs) -> discord.Message:
+            self, ctx, *args, **kwargs) -> discord.Message:
         if getattr(ctx, "msg_before", None) is not None:
             key = ctx.msg_before.id
-            await self.message_cache[key].edit(*args,**kwargs)
+            await self.message_cache[key].edit(*args, **kwargs)
         else:
             key = (
                 ctx.id if isinstance(ctx, discord.Message) else ctx.message.id
             )
             self.message_cache[key] = await ctx.reply(
-                *args,**kwargs
+                *args, **kwargs
             )
         return self.message_cache[key]
 
@@ -401,6 +399,7 @@ class CodingBot(commands.Bot):
         if msg_before.id in self.message_cache:
             setattr(ctx, "msg_before", msg_before)
         await super().invoke(ctx)
+
 
 class TimeConverter(commands.Converter[dt.timedelta]):
     async def convert(self, ctx: commands.Context[CodingBot], argument: str) -> dt.timedelta:

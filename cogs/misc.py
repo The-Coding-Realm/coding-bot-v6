@@ -207,6 +207,36 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
             paginator.add_button("next", emoji="▶️")
             await paginator.start()
 
+    @commands.hybrid_group(invoke_without_command=True)
+    async def trainee(self, ctx: commands.Context[CodingBot]):
+        await ctx.send_help('trainee')
+
+    @trainee.command(name="list")
+    @commands.cooldown(1, 10, commands.BucketType.member)
+    async def trainee_list(self, ctx: commands.Context[CodingBot]):
+        """
+        Lists all the trainees in the server.
+
+        Usage:
+        ------
+        `{prefix}list trainees`: *will list all the trainees in the server*
+        """
+
+        trainee_role = ctx.guild.get_role(729537643951554583)  # type: ignore
+        members = trainee_role.members
+        
+        if not members:
+            trainees = "No trainees yet."
+        else:
+            trainees = "\n".join(
+                f"{i}. {member.mention}" for i, member in enumerate(members, 1)
+            )
+        embed = discord.Embed(
+            title=f"Trainees list",
+            description=trainees,
+            color=discord.Color.blue()
+        )
+        await self.bot.reply(embed=embed)
 
             
 async def setup(bot: CodingBot):

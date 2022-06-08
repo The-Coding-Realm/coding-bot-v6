@@ -9,13 +9,13 @@ class Http:
         self.api = {
             # //////////////////////////////////////////////////////////////////////////////////////
             # prelude
-            "get":{
+            "get": {
                 "meme": lambda: self.api["meme-api"]["gimme"](),
             },
             # //////////////////////////////////////////////////////////////////////////////////////
             "rock": {
                 "random": lambda: self.get("https://mrconos.pythonanywhere.com/rock/random", _json=True),
-                "top": lambda:self.get("https://mrconos.pythonanywhere.com/rock/top"),
+                "top": lambda: self.get("https://mrconos.pythonanywhere.com/rock/top"),
             },
             "numbers": {
                 "random": lambda _type="trivia": self.api["numbers"]["random_"+_type](),
@@ -32,16 +32,16 @@ class Http:
             "piston": {
                 "runtimes": lambda: self.get("https://emkc.org/api/v2/piston/runtimes", _json=True),
                 # "execute": "https://emkc.org/api/v2/piston/execute",
-                "execute": lambda language,code: self.post(
+                "execute": lambda language, code: self.post(
                     "https://emkc.org/api/v1/piston/execute",
                     _json=True,
                     data={"language": language, "source": code}
-                    ),
+                ),
             },
-            "meme-api":{
+            "meme-api": {
                 "gimme": lambda: self.get("https://meme-api.herokuapp.com/gimme", _json=True)
             },
-            "some-random-api":{
+            "some-random-api": {
                 "bottoken": lambda: self.get("https://some-random-api.ml/bottoken", _json=True),
                 "animal": lambda animal: self.get(f"https://some-random-api.ml/animal/{animal}"),
                 "binary-encode": lambda string: self.get(f"https://some-random-api.ml/binary?encode={string}"),
@@ -50,13 +50,12 @@ class Http:
                 "joke": lambda: self.get("https://some-random-api.ml/joke", _json=True),
             }
         }
-        
+
         # self.update_data.start()
 
     @tasks.loop(minutes=5)
     async def update_data(self):
         self.cache["piston"]["runtimes"] = await self.api["piston"]["runtimes"]()
-
 
     # #/////////////////////////////////////////////////////////////////////////
     # # some-random-api
@@ -84,13 +83,13 @@ class Http:
 
     # async def get_random_rock(self):
     #     return await self.get(
-    #         _url=self.api["rock"]["random"], 
+    #         _url=self.api["rock"]["random"],
     #         _json=True
     #     )
 
     # async def get_top_rock(self):
     #     return await self.get(
-    #         _url=self.api["rock"]["top"], 
+    #         _url=self.api["rock"]["top"],
     #         _json=True
     #     )
 
@@ -129,9 +128,9 @@ class Http:
     #     )
     #     return r
 
-    #/////////////////////////////////////////////////////////////////////////
+    # /////////////////////////////////////////////////////////////////////////
     # http
-    #/////////////////////////////////////////////////////////////////////////
+    # /////////////////////////////////////////////////////////////////////////
 
     async def get(self, _url, _json=False, **kwargs):
         async with self.session.get(_url, **kwargs) as response:
