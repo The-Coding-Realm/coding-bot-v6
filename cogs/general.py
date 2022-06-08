@@ -107,7 +107,7 @@ class General(commands.Cog, command_attrs=dict(hidden=False)):
         )
         await self.bot.reply(ctx,embed=embed)
 
-    @commands.hybrid_command(invoke_without_command=True)
+    @commands.hybrid_group(invoke_without_command=True)
     async def avatar(self, ctx: commands.Context[CodingBot]):
         embed = discord.Embed(title="Avatar command", description="Available methods: `main`, `display`")
         embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url)

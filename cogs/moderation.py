@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 import datetime
 from io import BytesIO
-from typing import Any, Dict, Optional, Union
+from typing import TYPE_CHECKING, Any, Dict, Optional, Union
 
 import discord
 import humanize
@@ -11,7 +11,6 @@ from discord.ext import commands
 from ext.errors import InsufficientPrivilegeError
 from ext.models import CodingBot, TimeConverter
 from ext.ui.view import ConfirmButton
-from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from ext.models import CodingBot
@@ -375,7 +374,7 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
 
     @trainee_check()
     @commands.hybrid_command(name="verify")
-    @commands.has_permissions(manage_messages=True) # Luz : I don't know what permission is required for this command
+    @commands.has_permissions(manage_roles=True) # Luz : I don't know what permission is required for this command
     async def verify_member(self, ctx: commands.Context[CodingBot], target: discord.Member):
         member = ctx.guild.get_role(744403871262179430)
         if member in target.roles:
@@ -390,20 +389,65 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
     # FEEL FREE TO MOVE THIS TO ANY COGS (IF YOU ADD ONE)
 
     @commands.hybrid_command(name="whois")
-    async def whois(self, ctx: commands.Context[CodingBot], member: Optional[discord.Member] = None):
+    async def whois(
+        self, 
+        ctx: commands.Context[CodingBot], 
+        member: Optional[discord.Member] = None
+    ) -> None:
         target: discord.Member = member or ctx.author  # type: ignore
         embed = discord.Embed(title=f"Showing user info : {member}", color=discord.Color.random())
         embed.set_thumbnail(url=target.display_avatar.url)
         # Support for nitro users
+        created_at_string = target.created_at.strftime('%d %B, %Y')
+        created_ago = humanize.precisedelta((discord.utils.utcnow() - target.created_at).total_seconds(), minimum_unit="minutes", format="%i")
         embed.set_footer(
             text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url)
         embed.add_field(name="Discord User ID", value=target.id, inline=False)
         embed.add_field(name="Account Created at",
-                        value=target.created_at, inline=False)
+                        value=f"{created_at_string} ({created_ago} ago)", inline=False)
         embed.add_field(name="Discord Joined at",
                         value=target.joined_at, inline=False)
 
         await self.bot.reply(ctx,embed=embed)
+
+    @commands.hybrid_command(name="delete")
+    @commands.has_permissions(manage_messages=True)
+    async def delete(
+        self, 
+        ctx: commands.Context[CodingBot],
+        channel: Optional[discord.TextChannel] = None,
+        message: int = None
+    ) -> None:
+        if not message and not ctx.message.reference:
+            return await ctx.send("Please specify a message to delete.")
+        elif not message and ctx.message.reference:
+            message = ctx.message.reference.resolved
+            await message.delete()
+        else:
+            channel = channel or ctx.channel
+            try:
+                message = await channel.fetch_message(message)
+                await message.delete()
+            except discord.Forbidden:
+                return await ctx.send("Something went wrong.")
+            except discord.HTTPException:
+                return await ctx.send("Message not found.")
+        await self.bot.reply(ctx, f"{message.content} ||({message.id} was deleted by {ctx.author})||")
+
+    @commands.hybrid_command(name="slowmode")
+    @commands.has_permissions(manage_messages=True)
+    async def slowmode(
+        self, 
+        ctx: commands.Context[CodingBot], 
+        seconds: int, 
+        channel: Optional[discord.TextChannel] = None
+    ) -> None:
+        channel = channel or ctx.channel
+        try:
+            await channel.edit(slowmode_delay=seconds)
+        except discord.HTTPException:
+            await ctx.send("You passed in an integer that is too big.")
+        await self.bot.reply(ctx, f"Slowmode set to {seconds} seconds")
 
 
 async def setup(bot: CodingBot):

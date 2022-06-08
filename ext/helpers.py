@@ -357,3 +357,19 @@ class UrbanDictionary:
                text = await resp.text()
         result = await self.parse(text, results)
         return result
+
+
+async def get_rock(self):
+    rock = await self.http.api["rock"]["random"]()
+    name = rock["name"]
+    desc = rock["desc"]
+    image = rock["image"]
+    rating = rock["rating"]
+    embed = await self.bot.embed(
+        title=f"🪨   {name}",
+        url=image or "https://www.youtube.com/watch?v=o-YBDTqX_ZU",
+        description=f"```yaml\n{desc}```",
+    )
+    if image is not None and image != "none" and image != "":
+        embed.set_thumbnail(url=image)
+    return (embed, rating)
