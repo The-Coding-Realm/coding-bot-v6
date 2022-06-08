@@ -34,12 +34,12 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
     hidden = False
     def __init__(self, bot: CodingBot):
         self.bot = bot
-        self.guild = consts.TCR_GUILD_ID
-        categories = self.guild.by_category()
-        for _category in categories:
-            if _category[0].id == consts.TICKET_CATEGORY_ID: # need to make a category for tickets and add it here
-                self.category = _category[0]
-                break
+        # self.guild = consts.TCR_GUILD_ID
+        # categories = self.guild.by_category()
+        # for _category in categories:
+        #     if _category[0].id == consts.TICKET_CATEGORY_ID: # need to make a category for tickets and add it here
+        #         self.category = _category[0]
+        #         break
 
     def check_member_permission(self, ctx: commands.Context[CodingBot], member: Union[discord.User, discord.Member]):
         if isinstance(member, discord.User):
