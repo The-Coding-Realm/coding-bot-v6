@@ -11,6 +11,7 @@ from discord.ext import commands
 from ext.errors import InsufficientPrivilegeError
 from ext.models import CodingBot, TimeConverter
 from ext.ui.view import ConfirmButton
+from ext import consts
 
 if TYPE_CHECKING:
     from ext.models import CodingBot
@@ -33,6 +34,12 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
     hidden = False
     def __init__(self, bot: CodingBot):
         self.bot = bot
+        self.guild = consts.TCR_GUILD_ID
+        categories = self.guild.by_category()
+        for _category in categories:
+            if _category[0].id == consts.TICKET_CATEGORY_ID: # need to make a category for tickets and add it here
+                self.category = _category[0]
+                break
 
     def check_member_permission(self, ctx: commands.Context[CodingBot], member: Union[discord.User, discord.Member]):
         if isinstance(member, discord.User):
@@ -448,7 +455,75 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
         except discord.HTTPException:
             await ctx.send("You passed in an integer that is too big.")
         await self.bot.reply(ctx, f"Slowmode set to {seconds} seconds")
+    
 
+    #//////////////////////////////////////////////////////////////////////////////////
+    # support
+    #//////////////////////////////////////////////////////////////////////////////////
+
+    async def send_as_webhook(
+        self,
+        author: discord.Member,
+        channel: discord.TextChannel,
+        content: str = None,
+        files: list[discord.File] = None,
+    ):
+        # webhook = discord.Webhook.from_url(
+        #     config.webhook("support"),
+        #     adapter=discord.AsyncWebhookAdapter(self.bot.session),
+        # )
+        webhook = await channel.create_webhook(name=author.name)
+        await webhook.send(
+            content=content,
+            username=author.name,
+            avatar_url=author.avatar.url,
+            files=files,
+        )
+        await webhook.delete()
+
+    @commands.Cog.listener()
+    async def on_dm(self, msg):
+        channel = discord.utils.get(
+            self.guild.channels,
+            name=f"🎫{msg.author.name}{msg.author.discriminator}",
+        ) or (
+            await self.guild.create_text_channel(
+                f"🎫{msg.author.name}{msg.author.discriminator}",
+                category=self.category,
+                topic=str(msg.author.id),
+            )
+        )
+        files = []
+        for attachment in msg.attachments:
+            files.append(
+                await attachment.to_file(
+                    use_cached=True, spoiler=attachment.is_spoiler()
+                )
+            )
+        await self.send_as_webhook(msg.author, channel, msg.content, files)
+        # await channel.send(msg.content, files=files)
+
+    @commands.Cog.listener()
+    async def on_message(self, msg):
+        if msg.author.bot:
+            return
+        if msg.guild is None:
+            return
+        if msg.channel.category != self.category:
+            return
+        ids = [int(i) for i in msg.channel.topic.split()]
+        for _id in ids:
+            user = self.guild.get_member(_id)
+            files = []
+            for attachment in msg.attachments:
+                files.append(
+                    await attachment.to_file(
+                        use_cached=True, spoiler=attachment.is_spoiler()
+                    )
+                )
+            await user.send(msg.content or None, files=files)
+
+    # TODO: command to add members to a ticket
 
 async def setup(bot: CodingBot):
     await bot.add_cog(Moderation(bot))
