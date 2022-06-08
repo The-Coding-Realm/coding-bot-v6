@@ -253,8 +253,8 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
                 mention_author=False,
                 allowed_mentions=discord.AllowedMentions(users=False)
             )
-        embed, file = embed
-        await self.bot.send(ctx, embed=embed, file=file)
+        embed, file, view = embed
+        await self.bot.send(ctx, embed=embed, file=file, view=view)
 
             
 async def setup(bot: CodingBot):

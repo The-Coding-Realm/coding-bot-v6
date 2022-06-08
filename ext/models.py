@@ -21,7 +21,7 @@ from .consts import (AFK_CONFIG_SCHEMA, COMMANDS_CONFIG_SCHEMA, HELP_COMMAND,
                      MESSAGE_METRIC_SCHEMA, PREFIX_CONFIG_SCHEMA,
                      THANK_DATA_CONFIG_SCHEMA, THANK_INFO_CONFIG_SCHEMA,
                      WARNINGS_CONFIG_SCHEMA)
-from .helpers import WelcomeBanner, log_error
+from .helpers import AntiRaid, WelcomeBanner, log_error
 
 load_dotenv('.env')
 class Record:
@@ -270,6 +270,35 @@ class CodingHelp(commands.HelpCommand):
         destination = self.get_destination()
         await destination.send(embed=embed)
 
+    async def send_group_help(self, group: commands.Group[Any, ..., Any], /) -> None:
+        embed = discord.Embed(title=f"{group.qualified_name} Commands",
+                                description=group.help)
+
+        for command in group.commands:
+            if not command.hidden:
+                embed.description += f"\n`{command.qualified_name} - {command.brief or 'Not documented yet'}`"
+
+        destination = self.get_destination()
+        await destination.send(embed=embed)
+
+    async def send_command_help(self, command: commands.Command[Any, ..., Any], /) -> None:
+        embed = discord.Embed(title=f"{command.qualified_name} Command",
+                              description=command.help)
+
+        destination = self.get_destination()
+        await destination.send(embed=embed)
+    
+    async def send_cog_help(self, cog: commands.Cog[Any, ..., Any], /) -> None:
+        embed = discord.Embed(title=f"{cog.qualified_name} Commands",
+                              description=cog.help)
+
+        for command in cog.get_commands():
+            if not command.hidden:
+                embed.description += f"\n`{command.qualified_name} {command.brief or 'Not documented yet'}`"
+
+        destination = self.get_destination()
+        await destination.send(embed=embed)
+
 
 class CodingBot(commands.Bot):
     def __init__(self) -> None:
@@ -296,9 +325,13 @@ class CodingBot(commands.Bot):
         self.spotify_session: Optional[tuple] = None
         self.spotify_client_id: str = os.environ["SPOTIFY_CLIENT_ID"]
         self.spotify_client_secret: str = os.environ["SPOTIFY_CLIENT_SECRET"]
-
+        self.welcomer_enabled = True
+        self.welcomer_channel_id = 743817386792058971
+        self.raid_mode_enabled = False
+        self.raid_checker = AntiRaid(self)
 
     async def setup_hook(self) -> None:
+        self.raid_checker.check_for_raid.start()
         for filename in os.listdir("./cogs"):
             if filename.endswith(".py"):
                 await self.load_extension(f"cogs.{filename[:-3]}")
@@ -326,6 +359,13 @@ class CodingBot(commands.Bot):
         await self.tracker.remove_guild_cache(guild)
 
     async def on_member_join(self, member: discord.Member) -> None:
+        if not self.welcomer_enabled:
+            return
+
+        banned = await self.raid_checker.cache_insert_or_ban(member)
+        if banned:
+            return
+
         rules = member.guild.rules_channel
         if rules:
             rules_channel = rules.mention
@@ -343,7 +383,7 @@ class CodingBot(commands.Bot):
             timestamp=dt.datetime.now(dt.timezone.utc)
         )
         file = await self.welcomer.construct_image(member=member)
-        channel = member.guild.get_channel(743817386792058971)
+        channel = member.guild.get_channel(self.welcomer_channel_id)
         verify_here = member.guild.get_channel(759220767711297566)
 
         # Assertions for narrowing types

@@ -167,6 +167,15 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
     @commands.hybrid_command(name="kick")
     @commands.has_permissions(kick_members=True)
     async def kick(self, ctx: commands.Context[CodingBot], member: discord.Member, *, reason: Optional[str] = None):
+        """
+        Kicks a member from the server
+
+        Usage:
+        {prefix}kick <member> [reason]
+
+        Example:
+        {prefix}kick {user} Because I don't like them
+        """
         assert ctx.guild is not None
         check_made = self.check_member_permission(ctx, member)
         if check_made:
@@ -186,6 +195,12 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
     @commands.hybrid_command(name="ban")
     @commands.has_permissions(ban_members=True)
     async def ban(self, ctx: commands.Context[CodingBot], member: discord.Member, *, reason: Optional[str] = None):
+        """
+        Bans a member from the server
+
+        Usage:
+        {prefix}ban {user} spamming
+        """
         assert ctx.guild is not None
         check_made = self.check_member_permission(ctx, member)
         if check_made:
@@ -205,6 +220,15 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
     @commands.hybrid_command(name="unban")
     @commands.has_permissions(ban_members=True)
     async def unban(self, ctx: commands.Context[CodingBot], user: discord.User, *, reason: Optional[str] = None):
+        """
+        Unbans a member from the server
+
+        Usage:
+        {prefix}unban <user> [reason]
+
+        Example:
+        {prefix}unban {user} I am feeling generous
+        """
         assert ctx.guild is not None
         try:
             await ctx.guild.unban(user)
@@ -218,6 +242,12 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
     @commands.hybrid_command(name="mute", aliases=['timeout'])
     @commands.has_permissions(manage_roles=True)
     async def mute(self, ctx: commands.Context[CodingBot], member: discord.Member, duration: TimeConverter, *, reason: Optional[str] = None):
+        """
+        Timeouts a member from the server
+
+        Usage:
+        {prefix}mute <member> <duration> [reason]
+        """
         assert ctx.guild is not None
         check_made = self.check_member_permission(ctx, member)
         if check_made:
@@ -239,6 +269,15 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
     @commands.hybrid_command(name="unmute")
     @commands.has_permissions(manage_roles=True)
     async def unmute(self, ctx: commands.Context[CodingBot], member: discord.Member, *, reason: Optional[str] = None):
+        """
+        Unmutes/removes timeout of a member from the server
+
+        Usage:
+        {prefix}unmute <member> [reason]
+
+        Example:
+        {prefix}unmute {user} I am feeling generous
+        """
         check_made = self.check_member_permission(ctx, member)
         if check_made:
             return await self.bot.reply(ctx,check_made)
@@ -253,6 +292,15 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
     @trainee_check()
     @commands.hybrid_command()
     async def massban(self, ctx: commands.Context[CodingBot], users: commands.Greedy[Union[discord.Member, discord.User]]):
+        """
+        Mass bans multiple users from the server
+
+        Usage:
+        {prefix}massban <user1> <user2> <user3> ...
+
+        Example:
+        {prefix}massban @user1 @user2 @user3
+        """
         if not users:
             return await self.bot.reply(ctx,'Please provide at least one user to ban.')
         users = set(users)  # type: ignore
@@ -281,6 +329,15 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
     @trainee_check()
     @commands.hybrid_command()
     async def warn(self, ctx: commands.Context[CodingBot], member: discord.Member, *, reason: Optional[str] = None):
+        """
+        Warns a member from the server
+
+        Usage:
+        {prefix}warn <member> [reason]
+
+        Example:
+        {prefix}warn {user} broke rules
+        """
         assert ctx.guild is not None
         if not reason:
             return await self.bot.reply(ctx,"Please provide a reason for the warning.")
@@ -299,12 +356,30 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
     @commands.hybrid_command(name="purge")
     @commands.has_permissions(manage_messages=True)
     async def purge(self, ctx: commands.Context[CodingBot], amount: int = 1):
+        """
+        Purges a number of messages from the current channel
+
+        Usage:
+        {prefix}purge [amount]
+
+        Example:
+        {prefix}purge 10
+        """
         purged_amt = len(await ctx.channel.purge(limit=amount + 1))  # type: ignore
         await self.bot.reply(ctx,f'Purged {purged_amt} messages in {ctx.channel.mention}')  # type: ignore
 
     @trainee_check()
     @commands.hybrid_command(name="warnings")
     async def warnings(self, ctx: commands.Context[CodingBot], member: discord.Member):
+        """
+        Lists all warnings of a member
+
+        Usage:
+        {prefix}warnings <member>
+
+        Example:
+        {prefix}warnings {user}
+        """
         assert ctx.guild is not None
         embed = discord.Embed(
             title=f"{member} Warnings List", color=discord.Color.red())
@@ -336,7 +411,23 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
     @trainee_check()
     @commands.hybrid_command(name="clearwarning")
     @commands.has_permissions(manage_messages=True)
-    async def clearwarning(self, ctx: commands.Context[CodingBot], member: Optional[discord.Member] = None, index: Optional[int] = None):
+    async def clearwarning(
+        self, 
+        ctx: commands.Context[CodingBot], 
+        member: Optional[discord.Member] = None, 
+        index: Optional[int] = None
+    ) -> None:
+        """
+        Clears a certain warning of a member.
+        If no index is provided, it will clear all warnings of a member.
+
+        Usage:
+        {prefix}clearwarning [member] [index]
+
+        Example:
+        {prefix}clearwarning {user} 1
+        {prefix}clearwarning {user}
+        """
         assert ctx.guild is not None
         target: discord.Member = member or ctx.author  # type: ignore
         if index is None:
@@ -376,6 +467,15 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
     @commands.hybrid_command(name="verify")
     @commands.has_permissions(manage_roles=True) # Luz : I don't know what permission is required for this command
     async def verify_member(self, ctx: commands.Context[CodingBot], target: discord.Member):
+        """
+        Verifies a member in the server
+
+        Usage:
+        {prefix}verify <member>
+
+        Example:
+        {prefix}verify {user}
+        """
         member = ctx.guild.get_role(744403871262179430)
         if member in target.roles:
             embed = discord.Embed(title="ERROR!", description=f"{target.mention} is already verified")
@@ -394,6 +494,16 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
         ctx: commands.Context[CodingBot], 
         member: Optional[discord.Member] = None
     ) -> None:
+
+        """
+        Give information about a member
+
+        Usage:
+        {prefix}whois [member]
+
+        Example:
+        {prefix}whois {user}
+        """
         target: discord.Member = member or ctx.author  # type: ignore
         embed = discord.Embed(title=f"Showing user info : {member}", color=discord.Color.random())
         embed.set_thumbnail(url=target.display_avatar.url)
@@ -418,6 +528,17 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
         channel: Optional[discord.TextChannel] = None,
         message: int = None
     ) -> None:
+        """
+        Deletes a message
+        Either the message ID can be provided or user can reply to the message.
+
+        Usage:
+        {prefix}delete [channel] [message]
+
+        Example:
+        {prefix}delete #general 123456789
+        {prefix}delete 123456789
+        """
         if not message and not ctx.message.reference:
             return await ctx.send("Please specify a message to delete.")
         elif not message and ctx.message.reference:
@@ -442,6 +563,15 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
         seconds: int, 
         channel: Optional[discord.TextChannel] = None
     ) -> None:
+        """
+        Sets the slowmode of a channel
+
+        Usage:
+        {prefix}slowmode <seconds> [channel]
+
+        Example:
+        {prefix}slowmode 10 #general
+        """
         channel = channel or ctx.channel
         try:
             await channel.edit(slowmode_delay=seconds)
@@ -449,6 +579,84 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
             await ctx.send("You passed in an integer that is too big.")
         await self.bot.reply(ctx, f"Slowmode set to {seconds} seconds")
 
+    @commands.hybrid_group(name="welcomer")
+    @commands.has_permissions(manage_messages=True)
+    async def welcomer(
+        self,
+        ctx: commands.Context[CodingBot]
+    ) -> None:
+        """
+        Welcomer commands
+
+        Commands:
+        """
+        await ctx.send_help('welcomer')
+
+    @welcomer.command(name="enable")
+    async def welcomer_enable(self, ctx: commands.Context[CodingBot]) -> None:
+        if not self.bot.welcomer_enabled:
+            self.bot.welcomer_enabled = True
+            await self.bot.reply(ctx, "Welcomer is now enabled.")
+        else:
+            await self.bot.reply(ctx, "Welcomer is already enabled.")
+
+    @welcomer.command(name="disable")
+    async def welcomer_disable(self, ctx: commands.Context[CodingBot]) -> None:
+        if self.bot.welcomer_enabled:
+            self.bot.welcomer_enabled = False
+            await self.bot.reply(ctx, "Welcomer is now disabled.")
+        else:
+            await self.bot.reply(ctx, "Welcomer is already disabled.")
+
+    @welcomer.command(name="redirect")
+    async def welcomer_redirect(
+        self,
+        ctx: commands.Context[CodingBot],
+        channel: Optional[discord.TextChannel]
+    ) -> None:
+
+        channel = channel or ctx.channel
+
+        if not self.bot.welcomer_enabled:
+            return await self.bot.reply(ctx, "Welcomer is not enabled.")
+        
+        if self.bot.welcomer_channel_id == channel.id:
+            return await self.bot.reply(ctx, "Welcomer is already set to this channel.")
+        self.bot.welcomer_channel_id = channel.id
+        await self.bot.reply(ctx, f"Welcomer will now redirect to {channel.mention}")
+
+
+    @commands.hybrid_group(name="raid-mode")
+    @commands.has_permissions(manage_messages=True)
+    async def raid_mode(self, ctx: commands.Context[CodingBot]) -> None:
+        """
+        Raid mode commands
+
+        Commands:
+        """
+        await ctx.send_help('raid-mode')
+
+    @raid_mode.command(name="enable")
+    async def raid_mode_enable(self, ctx: commands.Context[CodingBot]) -> None:
+        if not self.bot.raid_mode_enabled:
+            if self.bot.raid_checker.possible_raid:
+                self.bot.raid_mode_enabled = True
+                await self.bot.reply(ctx, "Raid mode is now enabled.")
+                for member in self.bot.raid_checker.cache:
+                    if self.bot.raid_checker.check(member):
+                        await member.ban(reason="Raid mode enabled and met raid criteria.")
+            else:
+                await self.bot.reply(ctx, "There is no raid that has been detected yet.")
+        else:
+            await self.bot.reply(ctx, "Raid mode is already enabled.")
+
+    @raid_mode.command(name="disable")
+    async def raid_mode_disable(self, ctx: commands.Context[CodingBot]) -> None:
+        if self.bot.raid_mode_enabled:
+            self.bot.raid_mode_enabled = False
+            await self.bot.reply(ctx, "Raid mode is now disabled.")
+        else:
+            await self.bot.reply(ctx, "Raid mode is already disabled.")
 
 async def setup(bot: CodingBot):
     await bot.add_cog(Moderation(bot))

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 import sys
 import traceback
 from datetime import datetime
@@ -216,6 +217,40 @@ class ListenerCog(commands.Cog, command_attrs=dict(hidden=True)):
             where=['user_id', 'guild_id'],
             values=values,
         )
+
+    @commands.Cog.listener('on_message')
+    async def repo_mention(self, message: discord.Message):
+        """
+        Responsible for tracking member joins.
+        """
+        if message.author.bot or not message.guild:
+            return
+        if message.channel.id not in (
+            754992725480439809, 794965266542100488, 727029474767667322
+        ) or message.channel.category.id in (
+            725745640503771167, 757433318865371166, 785455069574856744, 
+            742010777367740466, 796705048419106816, 729537101498155118
+        ):
+            invite_regex = "(?:https?://)?discord(?:app)?\.(?:com/invite|gg)/[a-zA-Z0-9]+/?"
+            if re.search(invite_regex, message.content):
+                await message.delete()
+                return await message.channel.send("Please don't send invite links in this server!")
+
+        if 'discord.py' in message.content:
+            regex = re.search(r'Rapptz/discord.py(#\d+)?', message.content)
+            if regex:
+                base_link = "https://github.com/Rapptz/discord.py"
+                group = regex.group(0)
+                if '#' in group:
+                    group = group.split('#')[1]
+                    base_link += f"/pull/{group}"
+                resp = await self.bot.session.get(base_link)
+                if resp.ok:
+                    await message.channel.send(base_link)
+
+
+                
+
 
 
 

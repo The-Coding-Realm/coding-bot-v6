@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import base64
+from dataclasses import dataclass
 import datetime as dt
 import functools
 import itertools
@@ -17,7 +18,10 @@ import discord
 import humanize
 from bs4 import BeautifulSoup
 from colorthief import ColorThief
+from discord.ext import tasks
 from PIL import Image, ImageDraw, ImageFilter, ImageFont
+
+from ext.consts import TCR_STAFF_ROLE_ID
 
 if TYPE_CHECKING:
     from ext.models import CodingBot
@@ -516,7 +520,7 @@ class Spotify:
         pic = BytesIO(await rad.read())
         return await self.pil_process(pic, name, artists, time, time_at, track)
 
-    async def get_embed(self) -> Tuple[discord.Embed, discord.File]:
+    async def get_embed(self) -> Tuple[discord.Embed, discord.File, discord.ui.View]:
         """
         Creates the Embed object
         
@@ -536,7 +540,9 @@ class Spotify:
         image = await self.get_from_local(self.bot, activity)
         self.embed.description = f"**Artists**: {final_string}\n**Album**: [{activity.album}]({url})"
         self.embed.set_image(url="attachment://spotify.png")
-        return (self.embed, image)
+        view = discord.ui.View()
+        view.add_item(discord.ui.Button(url=url, style=discord.ButtonStyle.green, label="\u2007Open in Spotify", emoji="<:spotify:983984483755765790>"))
+        return (self.embed, image, view)
 
 async def get_rock(self):
     rock = await self.http.api["rock"]["random"]()
@@ -552,3 +558,86 @@ async def get_rock(self):
     if image is not None and image != "none" and image != "":
         embed.set_thumbnail(url=image)
     return (embed, rating)
+
+class AntiRaid:
+    """
+    AntiRaid class
+    """
+
+    def __init__(self, bot):
+        self.possible_raid = False
+        self.possible_raid_enabled_at = None
+        self.bot: CodingBot = bot
+        self.cache: set[discord.Member] = set()
+        self.raid_mode_criteria: int = None
+
+    def check(self, member: discord.Member):
+        """
+        Checks if the member is in the cache
+        
+        Parameters:
+
+        """
+        if (discord.utils.utcnow() - member.created_at).days in range(self.raid_mode_criteria - 1, self.raid_mode_criteria + 1):
+            return True
+
+    async def cache_insert_or_ban(self, member: discord.Member) -> bool:
+        """
+        Checks if the member is in the cache
+        
+        Parameters:
+        ----------------
+        member : discord.Member
+            member to check
+        """
+        if not self.bot.raid_mode_enabled:
+            self.cache.add(member)
+            return False
+        else:
+            if self.check(member):
+                await member.ban(reason="Raid mode checks met")
+                return True
+            else:
+                channel = self.bot.get_channel(725747917494812715)
+                assert channel is not None
+
+                await channel.send(f"{member.mention} is highly unlikely to be part of the raid, skipping user.\nReason: Failed the raid mode checks")
+                return False
+    
+    async def notify_staff(self) -> None:
+        """
+        Notifies the staff about the raid mode
+        """
+        channel = self.bot.get_channel(735864475994816576) # actual: 735864475994816576 test: 964165082437263361
+        embed = discord.Embed(title="A possible raid has been detected!", color=discord.Color.gold())
+        embed.description += f"""\nThe criteria is detected to be `{self.raid_mode_criteria} ± 1` days
+            Use `{self.bot.command_prefix[0]}raid-mode enable` after making sure this is not a false positive to enable raid mode!
+            Upon usage of the command, the bot will automatically ban users who have been created within this time.
+        """
+        await channel.send(
+            f"<@&{TCR_STAFF_ROLE_ID}>",
+            embed=embed,
+
+        )
+            
+    @tasks.loop(seconds=5)
+    async def check_for_raid(self):
+        """
+        Checks if the member is in the cache
+        
+        Parameters:
+        ----------------
+        member : discord.Member
+            member to check
+        """
+        if not self.bot.raid_mode_enabled:
+            if self.possible_raid or not self.cache:
+                return
+            time_join_day = [(discord.utils.utcnow() - member.created_at).days for member in self.cache]
+            min_days = min(time_join_day)
+            if len([x for x in time_join_day if x in range(min_days - 1, min_days + 1)]) >= 4:
+                self.raid_mode_criteria = min_days
+                self.possible_raid = True
+                return await self.notify_staff()
+            self.cache.clear()
+
