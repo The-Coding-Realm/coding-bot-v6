@@ -395,7 +395,7 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
         member: Optional[discord.Member] = None
     ) -> None:
         target: discord.Member = member or ctx.author  # type: ignore
-        embed = discord.Embed(title=f"Showing user info : {member}")
+        embed = discord.Embed(title=f"Showing user info : {member}", color=discord.Color.random())
         embed.set_thumbnail(url=target.display_avatar.url)
         # Support for nitro users
         created_at_string = target.created_at.strftime('%d %B, %Y')

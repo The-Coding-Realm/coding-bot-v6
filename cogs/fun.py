@@ -140,7 +140,7 @@ class Fun(commands.Cog, command_attrs=dict(hidden=False)):
 
     @commands.hybrid_group(invoke_without_command=True)
     async def binary(self, ctx: commands.Context[CodingBot]):
-        embed = discord.Embed(title="Binary command", description="Available methods: `encode`, `decode`")
+        embed = discord.Embed(title="Binary command", description="Available methods: `encode`, `decode`", color=discord.Color.random())
         embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url)
         await self.bot.reply(ctx,embed=embed)
 
@@ -201,7 +201,77 @@ class Fun(commands.Cog, command_attrs=dict(hidden=False)):
         embed = discord.Embed(title=f"Owofied Text", description=text.replace("o", "OwO"), color=discord.Color.random())
         embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url)
         await self.bot.reply(ctx,embed=embed)
-    
+
+    # Filters command
+    @commands.hybrid_group(invoke_without_command=True)
+    async def filter(self, ctx: commands.Context[CodingBot]):
+        embed = discord.Embed(title="Filter command", description="Available methods: `invert`, `greyscale`, `colour [hex]`", color=discord.Color.random())
+        embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url)
+        await self.bot.reply(ctx,embed=embed)
+
+    @filter.command(name="invert")
+    async def filter_invert(self, ctx: commands.Context[CodingBot], member: discord.Member = None):
+        if not member:
+            member = ctx.author
+        pfp = member.display_avatar.url
+        response = await self.http.api["some-random-api"]["filters"]["invert"](pfp)
+
+        embed = discord.Embed(title="Filter command - Invert", color=discord.Color.random())
+        embed.set_image(url=response)
+        embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url)
+        await self.bot.reply(ctx,embed=embed)
+
+    @filter.command(name="greyscale")
+    async def filter_greyscale(self, ctx: commands.Context[CodingBot], member: discord.Member = None):
+        if not member:
+            member = ctx.author
+        pfp = member.display_avatar.url
+        response = await self.http.api["some-random-api"]["filters"]["greyscale"](pfp)
+
+        embed = discord.Embed(title="Filter command - Greyscale", color=discord.Color.random())
+        embed.set_image(url=response)
+        embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url)
+        await self.bot.reply(ctx,embed=embed)
+
+    @filter.command(name="colour")
+    async def filter_colour(self, ctx: commands.Context[CodingBot], member: discord.Member = None, hex_code: str = None):
+        if not member:
+            member = ctx.author
+        if not hex_code:
+            embed = discord.Embed(title="ERROR!",  description="No Hex? Hex colour code is required")
+            embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url)
+        hex_code = hex_code.replace('#', '')
+        pfp = member.display_avatar.url
+        response = await self.http.api["some-random-api"]["filters"]["greyscale"](pfp, hex_code)
+
+        embed = discord.Embed(title="Filter command - Colour", color=discord.Color.random())
+        embed.set_image(url=response)
+        embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url)
+        await self.bot.reply(ctx,embed=embed)
+
+    @filter.command(name="brightness")
+    async def filter_brightness(self, ctx: commands.Context[CodingBot], member: discord.Member = None):
+        if not member:
+            member = ctx.author
+        pfp = member.display_avatar.url
+        response = await self.http.api["some-random-api"]["filters"]["brightness"](pfp)
+
+        embed = discord.Embed(title="Filter command - Brightness", color=discord.Color.random())
+        embed.set_image(url=response)
+        embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url)
+        await self.bot.reply(ctx,embed=embed)
+
+    @filter.command(name="threshold")
+    async def filter_threshold(self, ctx: commands.Context[CodingBot], member: discord.Member = None):
+        if not member:
+            member = ctx.author
+        pfp = member.display_avatar.url
+        response = await self.http.api["some-random-api"]["filters"]["threshold"](pfp)
+
+        embed = discord.Embed(title="Filter command - Threshold", color=discord.Color.random())
+        embed.set_image(url=response)
+        embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url)
+        await self.bot.reply(ctx,embed=embed)
 
 async def setup(bot: CodingBot):
     await bot.add_cog(Fun(bot))
