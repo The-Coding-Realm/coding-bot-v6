@@ -13,6 +13,7 @@ import discord
 import sr_api
 from discord.ext import commands
 from DiscordUtils import InviteTracker
+from dotenv import load_dotenv
 from pytimeparse import parse
 
 from .consts import (AFK_CONFIG_SCHEMA, COMMANDS_CONFIG_SCHEMA, HELP_COMMAND,
@@ -22,7 +23,7 @@ from .consts import (AFK_CONFIG_SCHEMA, COMMANDS_CONFIG_SCHEMA, HELP_COMMAND,
                      WARNINGS_CONFIG_SCHEMA)
 from .helpers import WelcomeBanner, log_error
 
-
+load_dotenv('.env')
 class Record:
     __slots__ = ("arguments",)
 
@@ -292,6 +293,10 @@ class CodingBot(commands.Bot):
         self.processing_commands = 0
         self.message_cache = {}
         self.sr_api = sr_api.Client()
+        self.spotify_session: Optional[tuple] = None
+        self.spotify_client_id: str = os.environ["SPOTIFY_CLIENT_ID"]
+        self.spotify_client_secret: str = os.environ["SPOTIFY_CLIENT_SECRET"]
+
 
     async def setup_hook(self) -> None:
         for filename in os.listdir("./cogs"):

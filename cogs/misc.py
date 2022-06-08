@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Optional
 import discord
 import button_paginator as pg
 from discord.ext import commands
-from ext.helpers import grouper, ordinal_suffix_of
+from ext.helpers import grouper, ordinal_suffix_of, Spotify
 from ext.http import Http
 from ext.ui.view import Piston
 
@@ -237,6 +237,24 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
             color=discord.Color.blue()
         )
         await self.bot.reply(embed=embed)
+
+    @commands.hybrid_command(aliases=['sp'])
+    @commands.cooldown(5, 60.0, type=commands.BucketType.user)
+    async def spotify(self, ctx: commands.Context, member: discord.Member = None):
+        member = member or ctx.author
+        spotify = Spotify(bot=self.bot, member=member)
+        embed = await spotify.get_embed()
+        if not embed:
+            if member == ctx.author:
+                return await ctx.reply(f"You are currently not listening to spotify!", mention_author=False)
+            return await self.bot.reply(
+                ctx,
+                f"{member.mention} is not listening to Spotify", 
+                mention_author=False,
+                allowed_mentions=discord.AllowedMentions(users=False)
+            )
+        embed, file = embed
+        await self.bot.send(ctx, embed=embed, file=file)
 
             
 async def setup(bot: CodingBot):
