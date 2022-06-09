@@ -84,6 +84,7 @@ THANK_DATA_CONFIG_SCHEMA = """CREATE TABLE IF NOT EXISTS thanks_data (
                             guild_id BIGINT,
                             message_id BIGINT,
                             channel_id BIGINT,
+                            thank_id TEXT,
                             reason TEXT DEFAULT "No reason given",
                             is_staff BOOLEAN CHECK(is_staff IN (0, 1)) DEFAULT 0,
                             thank_revoked BOOLEAN CHECK(is_staff IN (0, 1)) DEFAULT 0
@@ -119,3 +120,5 @@ HELP_BAN_ROLE_ID = 903133405317857300
 READ_HELP_RULES_ROLE_ID = 903133599715459153
 TCR_STAFF_ROLE_ID = 795145820210462771
 
+# mods pls fill this up
+TICKET_CATEGORY_ID = 0

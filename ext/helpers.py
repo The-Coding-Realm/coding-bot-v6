@@ -1,19 +1,27 @@
 from __future__ import annotations
 
 import asyncio
+import base64
+from dataclasses import dataclass
 import datetime as dt
 import functools
 import itertools
+import string
 import sys
 import traceback
+import urllib
 from io import BytesIO
-from typing import TYPE_CHECKING, Any, Callable, List, Optional
+from typing import TYPE_CHECKING, Any, Callable, List, Optional, Tuple
 
 import aiohttp
 import discord
 import humanize
 from bs4 import BeautifulSoup
+from colorthief import ColorThief
+from discord.ext import tasks
 from PIL import Image, ImageDraw, ImageFilter, ImageFont
+
+from ext.consts import TCR_STAFF_ROLE_ID
 
 if TYPE_CHECKING:
     from ext.models import CodingBot
@@ -357,3 +365,279 @@ class UrbanDictionary:
                text = await resp.text()
         result = await self.parse(text, results)
         return result
+
+class Spotify:
+    __slots__ = ('member', 'bot', 'embed', 'regex', 'headers', 'counter')
+    
+    def __init__(self, *, bot, member) -> None:
+        """
+        Class that represents a Spotify object, used for creating listening embeds
+        Parameters:
+        ----------------
+        bot : commands.Bot
+            represents the Bot object
+        member : discord.Member
+            represents the Member object whose spotify listening is to be handled
+        """
+        self.member = member
+        self.bot = bot
+        self.embed = discord.Embed(
+            title=f"{member.display_name} is Listening to Spotify", 
+            color=discord.Color.green()
+        )
+        self.counter = 0
+
+    async def request_pass(self, *, track_id: str):
+        """
+        Requests for a list of artists from the spotify API
+        Parameters:
+        ----------------
+            track_id : str
+                Spotify track's id
+        Returns
+        ----------------
+        list
+            A list of artist details
+        Raises
+        ----------------
+        Exception
+            If Spotify API is down
+        """
+        try:
+            headers = {"Authorization":
+                           f'Basic {base64.urlsafe_b64encode(f"{self.bot.spotify_client_id.strip()}:{self.bot.spotify_client_secret.strip()}".encode()).decode()}',
+                       "Content-Type":
+                           "application/x-www-form-urlencoded", }
+            params = {"grant_type": "client_credentials"}
+            if not self.bot.spotify_session or dt.datetime.utcnow() > self.bot.spotify_session[1]:
+                resp = await self.bot.session.post("https://accounts.spotify.com/api/token",
+                                                   params=params, headers=headers)
+                auth_js = await resp.json()
+                timenow = dt.datetime.utcnow() + dt.timedelta(seconds=auth_js['expires_in'])
+                type_token = auth_js['token_type']
+                token = auth_js['access_token']
+                auth_token = f"{type_token} {token}"
+                self.bot.spotify_session = (auth_token, timenow)
+            else:
+                auth_token = self.bot.spotify_session[0]
+        except Exception:
+            raise Exception("Something went wrong!")
+        else:
+            try:
+                resp = await self.bot.session.get(
+                    f"https://api.spotify.com/v1/tracks/{urllib.parse.quote(track_id)}",
+                    params={"market": "US"},
+                    headers={"Authorization": auth_token},
+                )
+                json = await resp.json()
+                return json
+            except Exception:
+                if self.counter == 4:
+                    raise Exception("Something went wrong!")
+                else:
+                    self.counter += 1
+                    await self.request_pass(track_id=track_id)
+
+    @staticmethod
+    @executor()
+    def pil_process(pic, name, artists, time, time_at, track) -> discord.File:
+        """
+        Makes an image with spotify album cover with Pillow
+        
+        Parameters:
+        ----------------
+        pic : BytesIO
+            BytesIO object of the album cover
+        name : str
+            Name of the song
+        artists : list
+            Name(s) of the Artists
+        time : int
+            Total duration of song in seconds
+        time_at : int
+            Total duration into the song in seconds
+        track : int
+            Offset for covering the played bar portion
+        Returns
+        ----------------
+        discord.File
+            contains the spotify image
+        """
+        s = ColorThief(pic)
+        color = s.get_palette(color_count=2)
+        result = Image.new('RGBA', (575, 170))
+        draw = ImageDraw.Draw(result)
+        color_font = "white" if sum(color[0]) < 450 else "black"
+        draw.rounded_rectangle(((0, 0), (575, 170)), 20, fill=color[0])
+        s = Image.open(pic)
+        s = s.resize((128, 128))
+        result1 = Image.new('RGBA', (129, 128))
+        Image.Image.paste(result, result1, (29, 23))
+        Image.Image.paste(result, s, (27, 20))
+        font = ImageFont.truetype("storage/fonts/spotify.ttf", 28)
+        font2 = ImageFont.truetype("storage/fonts/spotify.ttf", 18)
+        draw.text((170, 20), name, color_font, font=font)
+        draw.text((170, 55), artists, color_font, font=font2)
+        draw.text((500, 120), time, color_font, font=font2)
+        draw.text((170, 120), time_at, color_font, font=font2)
+        draw.rectangle(((230, 130), (490, 127)), fill="grey")  # play bar
+        draw.rectangle(((230, 130), (230 + track, 127)), fill=color_font)
+        draw.ellipse((230 + track - 5, 122, 230 + track + 5, 134), fill=color_font, outline=color_font)
+        draw.ellipse((230 + track - 6, 122, 230 + track + 6, 134), fill=color_font, outline=color_font)
+        output = BytesIO()
+        result.save(output, "png")
+        output.seek(0)
+        return discord.File(fp=output, filename="spotify.png")
+
+    async def get_from_local(self, bot, act: discord.Spotify) -> discord.File:
+        """
+        Makes an image with spotify album cover with Pillow
+        
+        Parameters:
+        ----------------
+        bot : commands.Bot
+            represents our Bot object
+        act : discord.Spotify
+            activity object to get information from
+        Returns
+        ----------------
+        discord.File
+            contains the spotify image
+        """
+        s = tuple(f"{string.ascii_letters}{string.digits}{string.punctuation} ")
+        artists = ', '.join(act.artists)
+        artists = ''.join([x for x in artists if x in s])
+        artists = artists[0:36] + "..." if len(artists) > 36 else artists
+        time = act.duration.seconds
+        time_at = (dt.datetime.utcnow().replace(tzinfo=dt.timezone.utc) - act.start).total_seconds()
+        track = (time_at / time) * 260
+        time = f"{time // 60:02d}:{time % 60:02d}"
+        time_at = f"{int((time_at if time_at > 0 else 0) // 60):02d}:{int((time_at if time_at > 0 else 0) % 60):02d}"
+        pog = act.album_cover_url
+        name = ''.join([x for x in act.title if x in s])
+        name = name[0:21] + "..." if len(name) > 21 else name
+        rad = await bot.session.get(pog)
+        pic = BytesIO(await rad.read())
+        return await self.pil_process(pic, name, artists, time, time_at, track)
+
+    async def get_embed(self) -> Tuple[discord.Embed, discord.File, discord.ui.View]:
+        """
+        Creates the Embed object
+        
+        Returns
+        ----------------
+        Tuple[discord.Embed, discord.File]
+            the embed object and the file with spotify image
+        """
+        activity = discord.utils.find(lambda activity: isinstance(activity, discord.Spotify), self.member.activities)
+        if not activity:
+            return False
+        result = await self.request_pass(track_id=activity.track_id)
+        final_string = ', '.join(
+            [f"[{resp['name']}]({resp['external_urls']['spotify']})" for resp in result['artists']]
+        )
+        url = activity.track_url
+        image = await self.get_from_local(self.bot, activity)
+        self.embed.description = f"**Artists**: {final_string}\n**Album**: [{activity.album}]({url})"
+        self.embed.set_image(url="attachment://spotify.png")
+        view = discord.ui.View()
+        view.add_item(discord.ui.Button(url=url, style=discord.ButtonStyle.green, label="\u2007Open in Spotify", emoji="<:spotify:983984483755765790>"))
+        return (self.embed, image, view)
+
+async def get_rock(self):
+    rock = await self.http.api["rock"]["random"]()
+    name = rock["name"]
+    desc = rock["desc"]
+    image = rock["image"]
+    rating = rock["rating"]
+    embed = await self.bot.embed(
+        title=f"🪨   {name}",
+        url=image or "https://www.youtube.com/watch?v=o-YBDTqX_ZU",
+        description=f"```yaml\n{desc}```",
+    )
+    if image is not None and image != "none" and image != "":
+        embed.set_thumbnail(url=image)
+    return (embed, rating)
+
+class AntiRaid:
+    """
+    AntiRaid class
+    """
+
+    def __init__(self, bot):
+        self.possible_raid = False
+        self.possible_raid_enabled_at = None
+        self.bot: CodingBot = bot
+        self.cache: set[discord.Member] = set()
+        self.raid_mode_criteria: int = None
+
+    def check(self, member: discord.Member):
+        """
+        Checks if the member is in the cache
+        
+        Parameters:
+
+        """
+        if (discord.utils.utcnow() - member.created_at).days in range(self.raid_mode_criteria - 1, self.raid_mode_criteria + 1):
+            return True
+
+    async def cache_insert_or_ban(self, member: discord.Member) -> bool:
+        """
+        Checks if the member is in the cache
+        
+        Parameters:
+        ----------------
+        member : discord.Member
+            member to check
+        """
+        if not self.bot.raid_mode_enabled:
+            self.cache.add(member)
+            return False
+        else:
+            if self.check(member):
+                await member.ban(reason="Raid mode checks met")
+                return True
+            else:
+                channel = self.bot.get_channel(725747917494812715)
+                assert channel is not None
+
+                await channel.send(f"{member.mention} is highly unlikely to be part of the raid, skipping user.\nReason: Failed the raid mode checks")
+                return False
+    
+    async def notify_staff(self) -> None:
+        """
+        Notifies the staff about the raid mode
+        """
+        channel = self.bot.get_channel(735864475994816576) # actual: 735864475994816576 test: 964165082437263361
+        embed = discord.Embed(title="A possible raid has been detected!", color=discord.Color.gold())
+        embed.description += f"""\nThe criteria is detected to be `{self.raid_mode_criteria} ± 1` days
+            Use `{self.bot.command_prefix[0]}raid-mode enable` after making sure this is not a false positive to enable raid mode!
+            Upon usage of the command, the bot will automatically ban users who have been created within this time.
+        """
+        await channel.send(
+            f"<@&{TCR_STAFF_ROLE_ID}>",
+            embed=embed,
+
+        )
+            
+    @tasks.loop(seconds=5)
+    async def check_for_raid(self):
+        """
+        Checks if the member is in the cache
+        
+        Parameters:
+        ----------------
+        member : discord.Member
+            member to check
+        """
+        if not self.bot.raid_mode_enabled:
+            if self.possible_raid or not self.cache:
+                return
+            time_join_day = [(discord.utils.utcnow() - member.created_at).days for member in self.cache]
+            min_days = min(time_join_day)
+            if len([x for x in time_join_day if x in range(min_days - 1, min_days + 1)]) >= 4:
+                self.raid_mode_criteria = min_days
+                self.possible_raid = True
+                return await self.notify_staff()
+            self.cache.clear()
+

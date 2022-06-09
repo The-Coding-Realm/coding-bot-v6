@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Optional
 import discord
 import button_paginator as pg
 from discord.ext import commands
-from ext.helpers import grouper, ordinal_suffix_of
+from ext.helpers import grouper, ordinal_suffix_of, Spotify
 from ext.http import Http
 from ext.ui.view import Piston
 
@@ -124,7 +124,23 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
 
     @commands.hybrid_group(name="thanks", invoke_without_command=True)
     @commands.cooldown(1, 10, commands.BucketType.member)
-    async def thanks(self, ctx: commands.Context[CodingBot], member: discord.Member, *, reason: Optional[str] = None):
+    async def thanks(self, ctx: commands.Context[CodingBot], member: discord.Member):
+        record = await self.bot.conn.select_record(
+            'thanks',
+            table='thanks_info',
+            arguments=('thanks_count',),
+            where=['guild_id', 'user_id'],
+            values=[ctx.guild.id, member.id]
+        )
+        if not record:
+            return await ctx.send(f"{member.display_name} does not have any thanks")
+        thanks = record[0]
+        await ctx.send(f"{member.display_name} has `{thanks}` thanks")
+
+
+    @commands.hybrid_group(name="thank", invoke_without_command=True)
+    @commands.cooldown(1, 10, commands.BucketType.member)
+    async def thank(self, ctx: commands.Context[CodingBot], member: discord.Member, *, reason: Optional[str] = None):
         """
         Thanks someone.
 
@@ -207,6 +223,54 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
             paginator.add_button("next", emoji="▶️")
             await paginator.start()
 
+    @commands.hybrid_group(invoke_without_command=True)
+    async def trainee(self, ctx: commands.Context[CodingBot]):
+        await ctx.send_help('trainee')
+
+    @trainee.command(name="list")
+    @commands.cooldown(1, 10, commands.BucketType.member)
+    async def trainee_list(self, ctx: commands.Context[CodingBot]):
+        """
+        Lists all the trainees in the server.
+
+        Usage:
+        ------
+        `{prefix}list trainees`: *will list all the trainees in the server*
+        """
+
+        trainee_role = ctx.guild.get_role(729537643951554583)  # type: ignore
+        members = trainee_role.members
+        
+        if not members:
+            trainees = "No trainees yet."
+        else:
+            trainees = "\n".join(
+                f"{i}. {member.mention}" for i, member in enumerate(members, 1)
+            )
+        embed = discord.Embed(
+            title=f"Trainees list",
+            description=trainees,
+            color=discord.Color.blue()
+        )
+        await self.bot.reply(embed=embed)
+
+    @commands.hybrid_command(aliases=['sp'])
+    @commands.cooldown(5, 60.0, type=commands.BucketType.user)
+    async def spotify(self, ctx: commands.Context, member: discord.Member = None):
+        member = member or ctx.author
+        spotify = Spotify(bot=self.bot, member=member)
+        embed = await spotify.get_embed()
+        if not embed:
+            if member == ctx.author:
+                return await ctx.reply(f"You are currently not listening to spotify!", mention_author=False)
+            return await self.bot.reply(
+                ctx,
+                f"{member.mention} is not listening to Spotify", 
+                mention_author=False,
+                allowed_mentions=discord.AllowedMentions(users=False)
+            )
+        embed, file, view = embed
+        await self.bot.send(ctx, embed=embed, file=file, view=view)
 
             
 async def setup(bot: CodingBot):

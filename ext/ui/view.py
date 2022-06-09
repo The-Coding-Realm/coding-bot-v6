@@ -9,6 +9,11 @@ from discord import ui
 from discord.ext import commands, tasks
 from more_itertools import sliced
 
+if TYPE_CHECKING:
+    from typing_extensions import Self
+
+    from ext.models import CodingBot
+
 
 class Rocks(discord.ui.View):
     def __init__(self, *, cog, embed_gen, stars, embed):
@@ -193,12 +198,6 @@ class Piston(discord.ui.View):
         except IndexError:
             self.page -= 1
         return
-
-
-if TYPE_CHECKING:
-    from typing_extensions import Self
-
-    from ext.models import CodingBot
 
 
 class ConfirmButton(ui.View):
