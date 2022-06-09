@@ -223,6 +223,7 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
             paginator.add_button("next", emoji="▶️")
             await paginator.start()
 
+
     @commands.hybrid_group(invoke_without_command=True)
     async def trainee(self, ctx: commands.Context[CodingBot]):
         await ctx.send_help('trainee')
