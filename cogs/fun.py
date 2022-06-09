@@ -13,6 +13,18 @@ from ext.helpers import get_rock
 
 if TYPE_CHECKING:
     from ext.models import CodingBot
+    
+# For this cog's utility
+def make_embed(ctx, *, title=Optional[Any], description=Optional[Any], image_url=Optional[Any]):
+    embed = discord.Embed(title=title, description=desc, color=discord.Color.random())
+    embed.set_image(url=image_url)
+    embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url)
+    return embed
+
+def error_embed(ctx, *, error_msg=Optional[Any]):
+    embed = discord.Embed(title="ERROR!",  description=error_msg)
+    embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url)
+    return embed
 
 
 class Fun(commands.Cog, command_attrs=dict(hidden=False)):
@@ -72,11 +84,8 @@ class Fun(commands.Cog, command_attrs=dict(hidden=False)):
         meme_name = meme_json['title']
         meme_poster = meme_json['author']
         meme_sub = meme_json['subreddit']
-
-        embed = discord.Embed(title=meme_name, description=f"Meme by {meme_poster} from subreddit {meme_sub}", color=discord.Color.random())
-        embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url)
-        embed.set_image(url=meme_url)
-
+        
+        embed = make_embed(title=meme_name, description=f"Meme by {meme_poster} from subreddit {meme_sub}", image_url=meme_url)
         await self.bot.reply(ctx, embed=embed)
 
     @commands.hybrid_command(name="joke")
@@ -84,8 +93,7 @@ class Fun(commands.Cog, command_attrs=dict(hidden=False)):
         response = await self.http.api["some-random-api"]["joke"]()
         joke = response['joke']
 
-        embed = discord.Embed(title="He're a joke", description=joke)
-        embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url)
+        embed = make_embed(title="He're a joke", description=joke)
 
         await self.bot.reply(ctx, embed=embed)
 
@@ -97,13 +105,8 @@ class Fun(commands.Cog, command_attrs=dict(hidden=False)):
                     "Yes.", "Yes, definitely.", "You may rely on it."]
         response = random.choice(responses)
         
-        embed = discord.Embed(
-            title="8ball is answering", 
-            description=f"{question}\nAnswer : {response}", 
-            color=discord.Color.random()
-        )
-        embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url) # Support for nitro users
-        await self.bot.reply(ctx,embed=embed)
+        embed = make_embed(title="8ball is answering", description=f"{question}\nAnswer : {response}", )
+        await self.bot.reply(ctx, embed=embed)
 
     @commands.hybrid_command(name="token")
     async def token(self, ctx: commands.Context[CodingBot]):
@@ -112,8 +115,7 @@ class Fun(commands.Cog, command_attrs=dict(hidden=False)):
 
         bottoken = json['token']
 
-        embed = discord.Embed(title="Ha ha ha, I grabbed your bot token.", description=bottoken, color=discord.Color.random())
-        embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url)
+        embed = make_embed(title="Ha ha ha, I grabbed your bot token.", description=bottoken)
         await self.bot.reply(ctx, embed=embed)
 
     @commands.hybrid_command(name="animal")
@@ -129,29 +131,24 @@ class Fun(commands.Cog, command_attrs=dict(hidden=False)):
             image = json["image"]
             fact = json["fact"]
 
-            embed = discord.Embed(title="Here's the animal image you asked.", color=discord.Color.random())
-            embed.set_image(url=image)
-            embed.set_footer(text=fact)
+            embed = make_embed(title=f"Here's the {animal.capitalize()} you asked.", description=fact, image_url=image)
         else:
-            embed = discord.Embed(title="ERROR!",  description=f"Received a bad status code of {response.status}")
-            embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url)
+            embed = error_embed(error_msg=f"Received a bad status code of {response.status}")
         
-        await self.bot.reply(ctx,embed=embed)
+        await self.bot.reply(ctx, embed=embed)
 
     @commands.hybrid_group(invoke_without_command=True)
     async def binary(self, ctx: commands.Context[CodingBot]):
-        embed = discord.Embed(title="Binary command", description="Available methods: `encode`, `decode`", color=discord.Color.random())
-        embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url)
-        await self.bot.reply(ctx,embed=embed)
+        embed = make_embed(title="Binary command", description="Available methods: `encode`, `decode`")
+        await self.bot.reply(ctx, embed=embed)
 
     @binary.command(name="encode")
     async def binary_encode(self, ctx: commands.Context[CodingBot], *, string: str):
         binary_string = " ".join((map(lambda x: f"{ord(x):08b}", string)))
 
-        embed = discord.Embed(title="Encoded to binary", description=binary_string, color=discord.Color.random())
-        embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url)
+        embed = make_embed(title="Encoded to Binary", description=binary_string)
 
-        await self.bot.reply(ctx,embed=embed)
+        await self.bot.reply(ctx, embed=embed)
 
     @binary.command(name="decode")
     async def binary_decode(self, ctx: commands.Context[CodingBot], binary: str):
@@ -159,10 +156,9 @@ class Fun(commands.Cog, command_attrs=dict(hidden=False)):
             return await self.bot.reply(ctx, "The binary is an invalid length.")
         binary = binary.replace(" ", "")
         string = "".join(chr(int(binary[i:i+8], 2)) for i in range(0, len(binary), 8))
-        embed = discord.Embed(title="Encoded to binary", description=string, color=discord.Color.random())
-        embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url)
+        embed = make_embed(title="Decoded from Binary", description=string)
             
-        await self.bot.reply(ctx,embed=embed)
+        await self.bot.reply(ctx, embed=embed)
 
     @commands.hybrid_command(name="lyrics")
     async def lyrics(self, ctx: commands.Context[CodingBot], *, query: str = None):
@@ -188,26 +184,23 @@ class Fun(commands.Cog, command_attrs=dict(hidden=False)):
             embed = discord.Embed(title="ERROR!",  description=f"Received a bad status code of {response.status}")
             embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url)
 
-        await self.bot.reply(ctx,embed=embed)
+        await self.bot.reply(ctx, embed=embed)
         
     @commands.hybrid_command(name="reverse")
     async def reverse(self, ctx: commands.Context[CodingBot], *, text: str):
-        embed = discord.Embed(title="Reversed Text", description=f"{text[::-1]}", color=discord.Color.random())
-        embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url)
+        embed = make_embed(title="Reversed Text", description=f"{text[::-1]}")
         await ctx.send(embed=embed)
 
     @commands.hybrid_command(name="owofy")
     async def owofy(self, ctx: commands.Context[CodingBot], *, text: str):
-        embed = discord.Embed(title=f"Owofied Text", description=text.replace("o", "OwO"), color=discord.Color.random())
-        embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url)
-        await self.bot.reply(ctx,embed=embed)
+        embed = make_embed(title=f"Owofied Text", description=text.replace("o", "OwO"))
+        await self.bot.reply(ctx, embed=embed)
 
     # Filters command
     @commands.hybrid_group(invoke_without_command=True)
     async def filter(self, ctx: commands.Context[CodingBot]):
-        embed = discord.Embed(title="Filter command", description="Available methods: `invert`, `greyscale`, `colour [hex]`", color=discord.Color.random())
-        embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url)
-        await self.bot.reply(ctx,embed=embed)
+        embed = make_embed(title="Filter command", description="Available methods: `invert`, `greyscale`, `colour [hex]`")
+        await self.bot.reply(ctx, embed=embed)
 
     @filter.command(name="invert")
     async def filter_invert(self, ctx: commands.Context[CodingBot], member: discord.Member = None):
@@ -216,10 +209,8 @@ class Fun(commands.Cog, command_attrs=dict(hidden=False)):
         pfp = member.display_avatar.url
         response = await self.http.api["some-random-api"]["filters"]["invert"](pfp)
 
-        embed = discord.Embed(title="Filter command - Invert", color=discord.Color.random())
-        embed.set_image(url=response)
-        embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url)
-        await self.bot.reply(ctx,embed=embed)
+        embed = make_embed(title="Filter command - Invert", image_url=response)
+        await self.bot.reply(ctx, embed=embed)
 
     @filter.command(name="greyscale")
     async def filter_greyscale(self, ctx: commands.Context[CodingBot], member: discord.Member = None):
@@ -228,10 +219,8 @@ class Fun(commands.Cog, command_attrs=dict(hidden=False)):
         pfp = member.display_avatar.url
         response = await self.http.api["some-random-api"]["filters"]["greyscale"](pfp)
 
-        embed = discord.Embed(title="Filter command - Greyscale", color=discord.Color.random())
-        embed.set_image(url=response)
-        embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url)
-        await self.bot.reply(ctx,embed=embed)
+        embed = make_embed(title="Filter command - Greyscale", image_url=response)
+        await self.bot.reply(ctx, embed=embed)
 
     @filter.command(name="colour")
     async def filter_colour(self, ctx: commands.Context[CodingBot], member: discord.Member = None, hex_code: str = None):
@@ -244,10 +233,8 @@ class Fun(commands.Cog, command_attrs=dict(hidden=False)):
         pfp = member.display_avatar.url
         response = await self.http.api["some-random-api"]["filters"]["greyscale"](pfp, hex_code)
 
-        embed = discord.Embed(title="Filter command - Colour", color=discord.Color.random())
-        embed.set_image(url=response)
-        embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url)
-        await self.bot.reply(ctx,embed=embed)
+        embed = make_embed(title="Filter command - Colour", image_url=response)
+        await self.bot.reply(ctx, embed=embed)
 
     @filter.command(name="brightness")
     async def filter_brightness(self, ctx: commands.Context[CodingBot], member: discord.Member = None):
@@ -256,10 +243,8 @@ class Fun(commands.Cog, command_attrs=dict(hidden=False)):
         pfp = member.display_avatar.url
         response = await self.http.api["some-random-api"]["filters"]["brightness"](pfp)
 
-        embed = discord.Embed(title="Filter command - Brightness", color=discord.Color.random())
-        embed.set_image(url=response)
-        embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url)
-        await self.bot.reply(ctx,embed=embed)
+        embed = make_embed(title="Filter command - Brightness", image_url=response)
+        await self.bot.reply(ctx, embed=embed)
 
     @filter.command(name="threshold")
     async def filter_threshold(self, ctx: commands.Context[CodingBot], member: discord.Member = None):
@@ -268,10 +253,8 @@ class Fun(commands.Cog, command_attrs=dict(hidden=False)):
         pfp = member.display_avatar.url
         response = await self.http.api["some-random-api"]["filters"]["threshold"](pfp)
 
-        embed = discord.Embed(title="Filter command - Threshold", color=discord.Color.random())
-        embed.set_image(url=response)
-        embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url)
-        await self.bot.reply(ctx,embed=embed)
+        embed = make_embed(title="Filter command - Invert", image_url=threshold)
+        await self.bot.reply(ctx, embed=embed)
 
 async def setup(bot: CodingBot):
     await bot.add_cog(Fun(bot))

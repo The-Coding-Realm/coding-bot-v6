@@ -198,7 +198,7 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
             evidence = await self.capture_evidence(ctx)
             await self.log(action='kick', moderator=ctx.author, member=member, reason=reason, evidence=evidence)  # type: ignore
 
-#    @trainee_check()
+    @trainee_check()
     @commands.hybrid_command(name="ban")
     @commands.has_permissions(ban_members=True)
     async def ban(self, ctx: commands.Context[CodingBot], member: discord.Member, *, reason: Optional[str] = None):
@@ -374,6 +374,22 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
         """
         purged_amt = len(await ctx.channel.purge(limit=amount + 1))  # type: ignore
         await self.bot.reply(ctx,f'Purged {purged_amt} messages in {ctx.channel.mention}')  # type: ignore
+        
+    @trainee_check()
+    @commands.hybrid_command(name="nick")
+    @commands.has_permission(manage_nicknames=True)
+    async def change_nick(self, ctx: commands.Context[CodingBot], member: discord.Member = None, *, newnick = None):
+        """
+        Change a member's nickname
+        
+        Usage:
+        {prefix}nick [newnick]
+        
+        Example:
+        {prefix}nick @Luziaf#9464 Moderated Nickname
+        """
+        await member.edit(nick=newnick)
+        embed = discord.Embed(title="Updated Nickname", description=f"Updated the nickname of {member.mention} to {newnick}" if nick else f"Removed the nickname of {member.mention}")
 
     @trainee_check()
     @commands.hybrid_command(name="warnings")
