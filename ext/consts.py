@@ -84,6 +84,7 @@ THANK_DATA_CONFIG_SCHEMA = """CREATE TABLE IF NOT EXISTS thanks_data (
                             guild_id BIGINT,
                             message_id BIGINT,
                             channel_id BIGINT,
+                            thank_id TEXT,
                             reason TEXT DEFAULT "No reason given",
                             is_staff BOOLEAN CHECK(is_staff IN (0, 1)) DEFAULT 0,
                             thank_revoked BOOLEAN CHECK(is_staff IN (0, 1)) DEFAULT 0

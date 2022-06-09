@@ -124,7 +124,23 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
 
     @commands.hybrid_group(name="thanks", invoke_without_command=True)
     @commands.cooldown(1, 10, commands.BucketType.member)
-    async def thanks(self, ctx: commands.Context[CodingBot], member: discord.Member, *, reason: Optional[str] = None):
+    async def thanks(self, ctx: commands.Context[CodingBot], member: discord.Member):
+        record = await self.bot.conn.select_record(
+            'thanks',
+            table='thanks_info',
+            arguments=('thanks_count',),
+            where=['guild_id', 'user_id'],
+            values=[ctx.guild.id, member.id]
+        )
+        if not record:
+            return await ctx.send(f"{member.display_name} does not have any thanks")
+        thanks = record[0]
+        await ctx.send(f"{member.display_name} has `{thanks}` thanks")
+
+
+    @commands.hybrid_group(name="thank", invoke_without_command=True)
+    @commands.cooldown(1, 10, commands.BucketType.member)
+    async def thank(self, ctx: commands.Context[CodingBot], member: discord.Member, *, reason: Optional[str] = None):
         """
         Thanks someone.
 
@@ -206,6 +222,7 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
             paginator.add_button("goto", style=discord.ButtonStyle.primary)
             paginator.add_button("next", emoji="▶️")
             await paginator.start()
+
 
     @commands.hybrid_group(invoke_without_command=True)
     async def trainee(self, ctx: commands.Context[CodingBot]):
