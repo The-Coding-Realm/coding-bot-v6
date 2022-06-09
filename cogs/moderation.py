@@ -611,47 +611,47 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
         )
         await webhook.delete()
 
-    @commands.Cog.listener()
-    async def on_dm(self, msg):
-        channel = discord.utils.get(
-            self.guild.channels,
-            name=f"🎫{msg.author.name}{msg.author.discriminator}",
-        ) or (
-            await self.guild.create_text_channel(
-                f"🎫{msg.author.name}{msg.author.discriminator}",
-                category=self.category,
-                topic=str(msg.author.id),
-            )
-        )
-        files = []
-        for attachment in msg.attachments:
-            files.append(
-                await attachment.to_file(
-                    use_cached=True, spoiler=attachment.is_spoiler()
-                )
-            )
-        await self.send_as_webhook(msg.author, channel, msg.content, files)
-        # await channel.send(msg.content, files=files)
+    # @commands.Cog.listener()
+    # async def on_dm(self, msg):
+    #     channel = discord.utils.get(
+    #         self.guild.channels,
+    #         name=f"🎫{msg.author.name}{msg.author.discriminator}",
+    #     ) or (
+    #         await self.guild.create_text_channel(
+    #             f"🎫{msg.author.name}{msg.author.discriminator}",
+    #             category=self.category,
+    #             topic=str(msg.author.id),
+    #         )
+    #     )
+    #     files = []
+    #     for attachment in msg.attachments:
+    #         files.append(
+    #             await attachment.to_file(
+    #                 use_cached=True, spoiler=attachment.is_spoiler()
+    #             )
+    #         )
+    #     await self.send_as_webhook(msg.author, channel, msg.content, files)
+    #     # await channel.send(msg.content, files=files)
 
-    @commands.Cog.listener()
-    async def on_message(self, msg):
-        if msg.author.bot:
-            return
-        if msg.guild is None:
-            return
-        if msg.channel.category != self.category:
-            return
-        ids = [int(i) for i in msg.channel.topic.split()]
-        for _id in ids:
-            user = self.guild.get_member(_id)
-            files = []
-            for attachment in msg.attachments:
-                files.append(
-                    await attachment.to_file(
-                        use_cached=True, spoiler=attachment.is_spoiler()
-                    )
-                )
-            await user.send(msg.content or None, files=files)
+    # @commands.Cog.listener()
+    # async def on_message(self, msg):
+    #     if msg.author.bot:
+    #         return
+    #     if msg.guild is None:
+    #         return
+    #     if msg.channel.category != self.category:
+    #         return
+    #     ids = [int(i) for i in msg.channel.topic.split()]
+    #     for _id in ids:
+    #         user = self.guild.get_member(_id)
+    #         files = []
+    #         for attachment in msg.attachments:
+    #             files.append(
+    #                 await attachment.to_file(
+    #                     use_cached=True, spoiler=attachment.is_spoiler()
+    #                 )
+    #             )
+    #         await user.send(msg.content or None, files=files)
 
     # TODO: command to add members to a ticket
 

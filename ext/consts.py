@@ -91,7 +91,7 @@ THANK_DATA_CONFIG_SCHEMA = """CREATE TABLE IF NOT EXISTS thanks_data (
                       """
 
 MESSAGE_METRIC_SCHEMA = """CREATE TABLE IF NOT EXISTS message_metric (
-                            user_id BIGINT UNIQUE,
+                            user_id BIGINT,
                             guild_id BIGINT,
                             message_count INT,
                             deleted_message_count INT DEFAULT 0,
@@ -99,7 +99,8 @@ MESSAGE_METRIC_SCHEMA = """CREATE TABLE IF NOT EXISTS message_metric (
                             online INT DEFAULT 0,
                             dnd INT DEFAULT 0,
                             idle INT DEFAULT 0,
-                            is_staff BOOLEAN CHECK(is_staff IN (0, 1)) DEFAULT 0
+                            is_staff BOOLEAN CHECK(is_staff IN (0, 1)) DEFAULT 0,
+                            UNIQUE(user_id, guild_id)
                         );"""
 
 HELP_COMMAND = """
