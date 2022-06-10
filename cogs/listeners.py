@@ -194,7 +194,7 @@ class ListenerCog(commands.Cog, command_attrs=dict(hidden=True)):
             table='message_metric',
             columns=columns,
             values=values,
-            extras=[f'ON CONFLICT (user_id) DO UPDATE SET message_count = message_count + 1, {status} = {status} + 1'],
+            extras=[f'ON CONFLICT (user_id, guild_id) DO UPDATE SET message_count = message_count + 1, {status} = {status} + 1'],
         )
 
     @commands.Cog.listener('on_message_delete')
@@ -225,12 +225,13 @@ class ListenerCog(commands.Cog, command_attrs=dict(hidden=True)):
         """
         if message.author.bot or not message.guild:
             return
+        mod_role = message.guild.get_role(681895900070543411)
         if message.channel.id not in (
             754992725480439809, 794965266542100488, 727029474767667322
         ) or message.channel.category.id in (
             725745640503771167, 757433318865371166, 785455069574856744, 
             742010777367740466, 796705048419106816, 729537101498155118
-        ):
+        ) or message.author.top_role.position < mod_role.position:
             invite_regex = "(?:https?://)?discord(?:app)?\.(?:com/invite|gg)/[a-zA-Z0-9]+/?"
             if re.search(invite_regex, message.content):
                 await message.delete()
