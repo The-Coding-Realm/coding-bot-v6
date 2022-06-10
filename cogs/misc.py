@@ -2,6 +2,8 @@ from __future__ import annotations
 import asyncio
 from datetime import datetime
 
+import string
+import random
 import re
 from typing import TYPE_CHECKING, Optional
 
@@ -142,11 +144,34 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
     @commands.cooldown(1, 10, commands.BucketType.member)
     async def thank(self, ctx: commands.Context[CodingBot], member: discord.Member, *, reason: Optional[str] = None):
         """
-        Thanks someone.
+        Check someone's thanks.
 
         Usage:
         ------
-        `{prefix}thanks {user} {reason}`: *will thank user*
+        `{prefix}thanks {user}
+        """
+        record = await self.bot.conn.select_record(
+            'thanks',
+            table='thanks_info',
+            arguments=('thanks_count',),
+            where=['guild_id', 'user_id'],
+            values=[ctx.guild.id, member.id]
+        )
+        if not record:
+            return await ctx.send(f"{member.display_name} does not have any thanks")
+        thanks = record[0]
+        await ctx.send(f"{member.display_name} has `{thanks}` thanks")
+
+
+    @commands.hybrid_group(name="thank", invoke_without_command=True)
+    @commands.cooldown(1, 10, commands.BucketType.member)
+    async def thank(self, ctx: commands.Context[CodingBot], member: discord.Member, *, reason: str):
+        """
+        Thank someone.
+
+        Usage:
+        ------
+        `{prefix}thank {user} {reason}`: *will thank user*
         """
 
         if member.id == ctx.author.id:
@@ -164,21 +189,101 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
         )
         staff_role = ctx.guild.get_role(795145820210462771)
         member_is_staff = 1 if staff_role and staff_role in member.roles else 0
+        characters = string.ascii_letters + string.digits
         await self.bot.conn.insert_record(
             'thanks',
             table='thanks_data',
             columns=(
                 'is_staff', 'user_id', 'giver_id', 'guild_id', 
-                'message_id', 'channel_id', 'reason'
+                'message_id', 'channel_id', 'reason', 'thank_id'
             ),
             values=(member_is_staff, member.id, ctx.author.id, ctx.guild.id, 
-                ctx.message.id, ctx.channel.id, reason or "No reason given"
+                ctx.message.id, ctx.channel.id, reason or "No reason given", 
+                "". join(random.choice(characters) for _ in range(7))
             )
         )
         await ctx.reply(f"{ctx.author.mention} you thanked {member.mention}!", ephemeral=True)
 
-    @thanks.command(name="leaderboard")
-    async def thanks_leaderboard(self, ctx: commands.Context[CodingBot]):
+    # NOTE: add check which allows only head helpers and admins to use this command
+    @thank.command(name="show")
+    async def thank_show(self, ctx: commands.Context[CodingBot], member: discord.Member):
+        records = await self.bot.conn.select_record(
+            'thanks',
+            table='thanks_data',
+            arguments=(
+                'giver_id', 'message_id','channel_id','reason','thank_id',
+                ),
+            where=['user_id'],
+            values=[member.id]
+            )
+
+        if not records:
+            return await ctx.reply(f"{member.mention} does not have any thanks.", ephemeral=True)
+
+        information = tuple(grouper(5, records))
+
+        embeds = []
+        for info in information:
+            embed = discord.Embed(title=f'Showing {member.display_name}\'s data')
+            for data in info:
+                giver_id = data.giver_id
+                msg_id = data.message_id
+                channel_id = data.channel_id
+                reason = data.reason
+                thank_id = data.thank_id
+
+                channel = ctx.guild.get_channel(channel_id)
+                msg_link = f'https://discord.com/channels/{ctx.guild.id}/{channel.id}/{msg_id}'
+
+                giver = ctx.guild.get_member(giver_id)
+
+                embed.add_field(name=f'Thank: {thank_id}', value=f"Thank giver: {giver.mention}\nReason: {reason}\nThank given in: {channel.mention}\nMessage link: [Click here!]({msg_link})", inline=False)
+            embeds.append(embed)
+
+        if len(embeds) == 1:
+            await self.bot.reply(ctx, embed=embeds[0])
+        else:
+            paginator = pg.Paginator(self.bot, embeds, ctx)
+            paginator.add_button("back", emoji="◀️")
+            paginator.add_button("goto", style=discord.ButtonStyle.primary)
+            paginator.add_button("next", emoji="▶️")
+            await paginator.start()
+
+
+    # NOTE: add check which allows only head helpers and admins to use this command
+    @thank.command(name="delete")
+    async def thank_delete(self, ctx: commands.Context[CodingBot], thank_id: str):
+        record = await self.bot.conn.select_record(
+            'thanks',
+            table='thanks_data',
+            arguments=('user_id'),
+            where=('thank_id'),
+            values=(thank_id)
+        )
+        if not record:
+            return await ctx.send("No thank with that id")
+
+        user_id = record[0].user_id
+
+        await self.bot.conn.delete_record(
+            'thanks',
+            table='thanks_data',
+            arguments=('*'),
+            where=('thank_id'),
+            values=(thank_id)
+        )
+
+        await self.bot.conn.insert_record(
+            'thanks',
+            table='thanks_info',
+            values=(user_id, ctx.guild.id, -1),
+            columns=['user_id', 'guild_id', 'thanks_count'],
+            extras=['ON CONFLICT (user_id) DO UPDATE SET thanks_count = thanks_count - 1']
+        )
+        await ctx.send(f"Remove thank from <@{user_id}> with id {thank_id}")
+
+    @thank.command(name="leaderboard")
+    async def thank_leaderboard(self, ctx: commands.Context[CodingBot]):
         """
         Shows the thanks leaderboard.
 
@@ -276,4 +381,3 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
             
 async def setup(bot: CodingBot):
     await bot.add_cog(Miscellaneous(bot))
-    
