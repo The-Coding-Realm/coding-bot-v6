@@ -272,6 +272,15 @@ class Fun(commands.Cog, command_attrs=dict(hidden=False)):
         embed.set_image(url=response)
         embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url)
         await self.bot.reply(ctx,embed=embed)
+        
+    @commands.hybrid_command(name="fake")
+    async def fake(self, ctx: commands.Context[CodingBot]):
+        response = await self.http.api["fake"]
+        
+        embed = discord.Embed(title="This person isn't exist", color=discord.Color.random())
+        embed.set_image(url=response)
+        embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url)
+        await self.bot.reply(ctx,embed=embed)
 
 async def setup(bot: CodingBot):
     await bot.add_cog(Fun(bot))

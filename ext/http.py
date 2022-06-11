@@ -55,7 +55,8 @@ class Http:
                     "brightness": lambda pfp: f"https://some-random-api.ml/canvas/brightness?avatar={pfp}",
                     "threshold": lambda pfp: f"https://some-random-api.ml/canvas/threshold?avatar={pfp}",
                 }
-            }
+            },
+            "fake": self.get("https://thispersondoesnotexist.com/image")
         }
 
         # self.update_data.start()
