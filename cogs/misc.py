@@ -1,16 +1,15 @@
 from __future__ import annotations
-import asyncio
-from datetime import datetime
 
-import string
 import random
 import re
+import string
+from datetime import datetime, timedelta
 from typing import TYPE_CHECKING, Optional
 
-import discord
 import button_paginator as pg
+import discord
 from discord.ext import commands
-from ext.helpers import grouper, ordinal_suffix_of, Spotify
+from ext.helpers import Spotify, grouper, ordinal_suffix_of, find_anime_source
 from ext.http import Http
 from ext.ui.view import Piston
 
@@ -25,10 +24,15 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
     def __init__(self, bot: CodingBot) -> None:
         self.bot = bot
         self.http = Http(bot.session)
-        self.bot = bot
         self.regex = {
             "codeblock": re.compile(r"(\w*)\s*(?:```)(\w*)?([\s\S]*)(?:```$)")
         }
+
+    async def cog_check(self, ctx: commands.Context[CodingBot]) -> bool:
+        if ctx.guild:
+            return True
+        await ctx.send("Please use commands in the server instead of dms")
+        return False
 
     @commands.hybrid_command(name="afk", aliases = ["afk-set", "set-afk"], help = "Sets your afk")
     @commands.cooldown(1, 10, commands.BucketType.member)
@@ -55,14 +59,9 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
                 await member.remove_roles(on_pat_staff)  # type: ignore
             except (discord.Forbidden, discord.HTTPException):
                 pass
-        record = await self.bot.conn.select_record(
-                'afk',
-                table='afk',
-                arguments=('afk_time', 'reason'),
-                where=('user_id',),
-                values=(member.id,),
-            )
-        if not record:
+        if ctx.guild.id not in self.bot.afk_cache:
+            self.bot.afk_cache[ctx.guild.id] = {}
+        if member.id not in self.bot.afk_cache.get(ctx.guild.id):
             await self.bot.conn.insert_record(
                 'afk',
                 table='afk',
@@ -73,7 +72,10 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
                 await member.edit(nick=f"[AFK] {member.display_name}")
             except:
                 pass
-
+            try:
+                self.bot.afk_cache[ctx.guild.id][member.id] = (reason, int(ctx.message.created_at.timestamp()))
+            except KeyError:
+                self.bot.afk_cache[ctx.guild.id] = {member.id: (reason, int(ctx.message.created_at.timestamp()))}
             embed = discord.Embed(
                 description=f"{ctx.author.mention} I set your AFK: {reason}",
                 color=discord.Color.blue()
@@ -86,7 +88,6 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
             )
             await ctx.reply(embed=embed, ephemeral=True)
 
-    
 
     @commands.command()
     async def run(self, ctx, *, codeblock: str):
@@ -237,7 +238,12 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
 
                 giver = ctx.guild.get_member(giver_id)
 
-                embed.add_field(name=f'Thank: {thank_id}', value=f"Thank giver: {giver.mention}\nReason: {reason}\nThank given in: {channel.mention}\nMessage link: [Click here!]({msg_link})", inline=False)
+                embed.add_field(
+                    name=f'Thank: {thank_id}', 
+                    value=f"Thank giver: {giver.mention}\nReason: {reason}\nThank given in: {channel.mention}"
+                        f"\nMessage link: [Click here!]({msg_link})", 
+                    inline=False
+                )
             embeds.append(embed)
 
         if len(embeds) == 1:
@@ -256,9 +262,9 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
         record = await self.bot.conn.select_record(
             'thanks',
             table='thanks_data',
-            arguments=('user_id'),
-            where=('thank_id'),
-            values=(thank_id)
+            arguments=['user_id'],
+            where=['thank_id'],
+            values=[thank_id]
         )
         if not record:
             return await ctx.send("No thank with that id")
@@ -268,16 +274,15 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
         await self.bot.conn.delete_record(
             'thanks',
             table='thanks_data',
-            arguments=('*'),
-            where=('thank_id'),
-            values=(thank_id)
+            where=['thank_id'],
+            values=[thank_id]
         )
 
         await self.bot.conn.insert_record(
             'thanks',
             table='thanks_info',
-            values=(user_id, ctx.guild.id, -1),
-            columns=['user_id', 'guild_id', 'thanks_count'],
+            values=(user_id, ctx.guild.id),
+            columns=['user_id', 'guild_id'],
             extras=['ON CONFLICT (user_id) DO UPDATE SET thanks_count = thanks_count - 1']
         )
         await ctx.send(f"Remove thank from <@{user_id}> with id {thank_id}")
@@ -377,6 +382,82 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
             )
         embed, file, view = embed
         await self.bot.send(ctx, embed=embed, file=file, view=view)
+
+    @commands.command(name='sauce')
+    async def sauce(self, ctx: commands.Context[CodingBot], source: Optional[str] = None):
+        """
+        Get the sauce of a source.
+        Example: {prefix}sauce <source>
+        """
+        source = source or ctx.message.attachments[0].url if ctx.message.attachments else None
+        if not source:
+            return await ctx.send(
+                'Please provide image/video url, '
+                'reply to another message or upload the image/video along with the command. '
+                f'Please use {ctx.prefix}help saucefor more information.')
+        
+        anime_information = await find_anime_source(self.bot.session, source)
+
+        result = anime_information['result']
+        if not result:
+            return await ctx.send(
+                'Could not find any anime source for this image/video.'
+            )
+        else:
+            result = result[0]
+            
+        print(ctx.channel.is_nsfw())
+        print(result['anilist'].get('isAdult'))
+
+        if result['anilist'].get('isAdult') and not ctx.channel.is_nsfw():
+            await ctx.send(
+                'This source is marked as adult content and can only be used in NSFW channels. I Will try to DM you instead.'
+            )
+            ctx = ctx.author
+    
+        browser = "https://trace.moe/?url={}".format(source)
+
+        anilist_id = result['anilist']['id']
+        mal_id = result['anilist']['idMal']
+
+        anilist_url = f'https://anilist.co/anime/{anilist_id}'
+        anilist_banner = f"https://img.anili.st/media/{anilist_id}"
+        mal_url = f'https://myanimelist.net/anime/{mal_id}'
+
+        native = result['anilist']['title'].get('native')
+        english = result['anilist']['title'].get('english')
+        romaji = result['anilist']['title'].get('romaji')
+
+        filename = result['filename']
+        similarity = round(result['similarity'] * 100, 2)
+
+        from_timestamp = timedelta(seconds=int(result['from']))
+        to_timestamp = timedelta(seconds=int(result['to']))
+        
+        embed = discord.Embed(timestamp=discord.utils.utcnow())
+        embed.add_field(
+            name="Anime Title", 
+            value=f"Native: {native}\nEnglish: {english}\nRomaji: {romaji}", 
+            inline=False
+        )
+        embed.add_field(
+            name="Scene Details",
+            value=f"**Filename:** {filename}\n**From:** {from_timestamp}\n**To:** {to_timestamp}\n**Similarity:** {similarity}%",
+            inline=False
+        )
+        embed.add_field(
+            name="Links",
+            value="[Open In Browser]({}) | [AniList]({}) | [MyAnimeList]({})".format(
+                browser, anilist_url, mal_url
+            ),
+            inline=False
+
+        )
+        embed.set_image(url=anilist_banner)
+        try:
+            await ctx.send(embed=embed)
+        except (discord.HTTPException, discord.Forbidden):
+            pass
 
             
 async def setup(bot: CodingBot):

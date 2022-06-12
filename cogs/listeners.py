@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 import discord
 from discord.ext import commands
 from ext.consts import TCR_STAFF_ROLE_ID
-
+from ext.helpers import check_invite
 from ext.errors import InsufficientPrivilegeError
 
 if TYPE_CHECKING:
@@ -21,6 +21,7 @@ class ListenerCog(commands.Cog, command_attrs=dict(hidden=True)):
     hidden = True
     def __init__(self, bot: CodingBot) -> None:
         self.bot = bot
+        
 
 
     @commands.Cog.listener("on_message")
@@ -37,21 +38,11 @@ class ListenerCog(commands.Cog, command_attrs=dict(hidden=True)):
         """
         if message.author.bot or not message.guild:
             return
-        record = await self.bot.conn.select_record(
-            "afk",
-            table="afk",
-            arguments=["afk_time"],
-            where=["user_id"],
-            values=[message.author.id],
-        )
+        record = self.bot.afk_cache.get(message.guild.id)
         if record:
-            record = record[0]
-            time_spent = datetime.utcnow() - datetime.utcfromtimestamp(
-                record.afk_time
-            )
-            if time_spent.total_seconds() < 30:
-                pass
-            else:
+            record = record.get(message.author.id)
+            if record:
+                _, time = record
                 await self.bot.conn.delete_record(
                     'afk',
                     table='afk',
@@ -73,6 +64,7 @@ class ListenerCog(commands.Cog, command_attrs=dict(hidden=True)):
                         await message.author.add_roles(on_pat_staff)
                     except (discord.Forbidden, discord.HTTPException):
                         pass
+                del self.bot.afk_cache[message.guild.id][message.author.id]
                 em = discord.Embed(
                     description=f"{message.author.mention} Welcome back, I removed your AFK!",
                     color=discord.Color.dark_gold(),
@@ -94,22 +86,16 @@ class ListenerCog(commands.Cog, command_attrs=dict(hidden=True)):
             return
         if message.mentions:
             for member in message.mentions:
-                record = await self.bot.conn.select_record(
-                    "afk",
-                    table="afk",
-                    arguments=["afk_time", "reason"],
-                    where=["user_id"],
-                    values=[message.author.id],
-                )
+                record = self.bot.afk_cache.get(message.guild.id)
                 if record:
-                    record = record[0]
-                    time_ = int(record.afk_time)
-                    em = discord.Embed(
-                        description=f"{member.mention} is AFK: {record.reason} (<t:{time_}:R>)",
-                        color=discord.Color.dark_blue(),
-                    )
-                    await message.reply(embed=em)
-                    break
+                    record = record.get(message.author.id)
+                    if record:
+                        reason, time_ = record
+                        em = discord.Embed(
+                            description=f"{member.mention} is AFK: {reason} (<t:{time_}:R>)",
+                            color=discord.Color.dark_blue(),
+                        )
+                        await message.reply(embed=em)
 
     @commands.Cog.listener()
     async def on_message_edit(
@@ -169,7 +155,7 @@ class ListenerCog(commands.Cog, command_attrs=dict(hidden=True)):
             )
 
     @commands.Cog.listener('on_message')
-    async def track_staff_message(self, message: discord.Message):
+    async def track_sent_message(self, message: discord.Message):
         """
         Responsible for tracking staff messages.
         """
@@ -198,7 +184,7 @@ class ListenerCog(commands.Cog, command_attrs=dict(hidden=True)):
         )
 
     @commands.Cog.listener('on_message_delete')
-    async def track_user_message(self, message: discord.Message):
+    async def track_deleted_message(self, message: discord.Message):
         """
         Responsible for tracking user messages.
         """
@@ -219,24 +205,21 @@ class ListenerCog(commands.Cog, command_attrs=dict(hidden=True)):
         )
 
     @commands.Cog.listener('on_message')
-    async def repo_mention(self, message: discord.Message):
+    async def invite_in_message(self, message: discord.Message):
         """
         Responsible for tracking member joins.
         """
         if message.author.bot or not message.guild:
             return
-        mod_role = message.guild.get_role(681895900070543411)
-        if message.channel.id not in (
-            754992725480439809, 794965266542100488, 727029474767667322
-        ) or message.channel.category.id in (
-            725745640503771167, 757433318865371166, 785455069574856744, 
-            742010777367740466, 796705048419106816, 729537101498155118
-        ) or message.author.top_role.position < mod_role.position:
+        perms = message.channel.permissions_for(message.author).manage_guild
+        if (await check_invite(self.bot, message.content, message.channel)) or (perms):
             invite_regex = "(?:https?://)?discord(?:app)?\.(?:com/invite|gg)/[a-zA-Z0-9]+/?"
             if re.search(invite_regex, message.content):
                 await message.delete()
                 return await message.channel.send("Please don't send invite links in this server!")
 
+    @commands.Cog.listener('on_message')
+    async def repo_mention(self, message: discord.Message):
         if 'discord.py' in message.content:
             regex = re.search(r'Rapptz/discord.py(#\d+)?', message.content)
             if regex:
@@ -248,11 +231,6 @@ class ListenerCog(commands.Cog, command_attrs=dict(hidden=True)):
                 resp = await self.bot.session.get(base_link)
                 if resp.ok:
                     await message.channel.send(base_link)
-
-
-                
-
-
 
 
 
