@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import string
+
 import random
 import re
 import string
@@ -138,31 +140,7 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
         if not record:
             return await ctx.send(f"{member.display_name} does not have any thanks")
         thanks = record[0]
-        await ctx.send(f"{member.display_name} has `{thanks}` thanks")
-
-
-    @commands.hybrid_group(name="thank", invoke_without_command=True)
-    @commands.cooldown(1, 10, commands.BucketType.member)
-    async def thank(self, ctx: commands.Context[CodingBot], member: discord.Member, *, reason: Optional[str] = None):
-        """
-        Check someone's thanks.
-
-        Usage:
-        ------
-        `{prefix}thanks {user}
-        """
-        record = await self.bot.conn.select_record(
-            'thanks',
-            table='thanks_info',
-            arguments=('thanks_count',),
-            where=['guild_id', 'user_id'],
-            values=[ctx.guild.id, member.id]
-        )
-        if not record:
-            return await ctx.send(f"{member.display_name} does not have any thanks")
-        thanks = record[0]
-        await ctx.send(f"{member.display_name} has `{thanks}` thanks")
-
+        await ctx.send(f"{member.display_name} has `{thanks.thanks_count}` thanks")
 
     @commands.hybrid_group(name="thank", invoke_without_command=True)
     @commands.cooldown(1, 10, commands.BucketType.member)
@@ -196,11 +174,13 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
             table='thanks_data',
             columns=(
                 'is_staff', 'user_id', 'giver_id', 'guild_id', 
-                'message_id', 'channel_id', 'reason', 'thank_id'
+                'message_id', 'channel_id', 'reason', 'thank_id',
+                'date'
             ),
             values=(member_is_staff, member.id, ctx.author.id, ctx.guild.id, 
                 ctx.message.id, ctx.channel.id, reason or "No reason given", 
-                "". join(random.choice(characters) for _ in range(7))
+                "". join(random.choice(characters) for _ in range(7)), 
+                int(ctx.message.created_at.timestamp())
             )
         )
         await ctx.reply(f"{ctx.author.mention} you thanked {member.mention}!", ephemeral=True)
@@ -213,6 +193,7 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
             table='thanks_data',
             arguments=(
                 'giver_id', 'message_id','channel_id','reason','thank_id',
+                'date'
                 ),
             where=['user_id'],
             values=[member.id]
@@ -232,18 +213,14 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
                 channel_id = data.channel_id
                 reason = data.reason
                 thank_id = data.thank_id
-
+                timestamp = data.date
                 channel = ctx.guild.get_channel(channel_id)
                 msg_link = f'https://discord.com/channels/{ctx.guild.id}/{channel.id}/{msg_id}'
 
                 giver = ctx.guild.get_member(giver_id)
 
-                embed.add_field(
-                    name=f'Thank: {thank_id}', 
-                    value=f"Thank giver: {giver.mention}\nReason: {reason}\nThank given in: {channel.mention}"
-                        f"\nMessage link: [Click here!]({msg_link})", 
-                    inline=False
-                )
+                embed.add_field(name=f'Thank: {thank_id}', value=f"Thank giver: {giver.mention}\nDate: <t:{date}:R>\nReason: {reason}\nThank given in: {channel.mention}\nMessage link: [Click here!]({msg_link})", inline=False)
+
             embeds.append(embed)
 
         if len(embeds) == 1:
@@ -281,8 +258,8 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
         await self.bot.conn.insert_record(
             'thanks',
             table='thanks_info',
-            values=(user_id, ctx.guild.id),
-            columns=['user_id', 'guild_id'],
+            values=(user_id, ctx.guild.id, -1),
+            columns=['user_id', 'guild_id', 'thanks_count'],
             extras=['ON CONFLICT (user_id) DO UPDATE SET thanks_count = thanks_count - 1']
         )
         await ctx.send(f"Remove thank from <@{user_id}> with id {thank_id}")
