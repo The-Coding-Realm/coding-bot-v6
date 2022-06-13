@@ -2,10 +2,10 @@ from __future__ import annotations
 
 import asyncio
 import base64
-from dataclasses import dataclass
 import datetime as dt
 import functools
 import itertools
+import re
 import string
 import sys
 import traceback
@@ -26,6 +26,48 @@ from ext.consts import TCR_STAFF_ROLE_ID
 if TYPE_CHECKING:
     from ext.models import CodingBot
 
+
+async def check_invite(bot, content, channel=None):
+    # content = discord.utils.remove_markdown(content)
+
+    whitelisted = [
+                    channel.guild.id if channel else None,
+                    681882711945641997,  # TCA
+                    782903894468198450,  # Swasville
+                    336642139381301249,  # Discord.py
+                    222078108977594368,  # Discord.js
+                    881207955029110855,  # Pycord
+                    267624335836053506,  # Python
+                    412754940885467146,  # Blurple
+                    613425648685547541,  # Discord Developers
+    ]
+    pattern = (
+        r'discord(?:(?:(?:app)?\.com)\/invite|\.gg)/([a-zA-z0-9\-]{2,})\b')
+    matches = re.findall(pattern, content, re.MULTILINE)
+    if channel.id in [
+        754992725480439809,
+        801641781028454420,
+        727029474767667322
+    ]:
+        return False
+    if len(matches) > 5:
+        return True
+    for code in matches:
+        try:
+            invite = await bot.fetch_invite(code)
+        except discord.errors.NotFound:
+            invite = None  # invite is fine
+        if invite:
+            if invite.guild.id not in whitelisted:
+                return True
+    return False
+
+
+async def find_anime_source(session, source_image: str):
+    base = "https://api.trace.moe/search?anilistInfo&url={}"
+    async with session.get(base.format(source_image)) as resp:
+        data = await resp.json()
+    return data
 
 def grouper(n, iterable):
     it = iter(iterable)

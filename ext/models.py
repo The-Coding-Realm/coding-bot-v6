@@ -23,7 +23,7 @@ from .consts import (AFK_CONFIG_SCHEMA, COMMANDS_CONFIG_SCHEMA, HELP_COMMAND,
                      WARNINGS_CONFIG_SCHEMA)
 from .helpers import AntiRaid, WelcomeBanner, log_error
 
-load_dotenv('.env')
+load_dotenv('.env', verbose=True)
 class Record:
     __slots__ = ("arguments",)
 
@@ -88,9 +88,11 @@ class Database:
         Whether the connections are closed
     """
 
-    def __init__(self):
+    def __init__(self, bot: CodingBot):
         self.conn: Dict[str, aiosqlite.Connection] = {}
         self.is_closed: bool = False
+        self.bot: CodingBot = bot
+        
 
     def __getattr__(self, __name: str) -> Any:
         if __name in self.conn:
@@ -107,6 +109,16 @@ class Database:
         self.conn["metrics"] = await aiosqlite.connect("./database/metrics.db")
         await self.init_dbs()
         return self
+
+    async def fill_cache(self):
+        record = await self.select_record(
+                'afk',
+                table='afk',
+                arguments=['user_id', 'reason', 'afk_time']
+            )
+
+        for row in record:
+            self.bot.afk_cache[row.user_id] = (row.reason, row.afk_time)
 
     async def init_dbs(self):
         async with self.cursor("config") as cursor:
@@ -312,12 +324,12 @@ class CodingBot(commands.Bot):
             }
         )
         super().__init__(
-            command_prefix=[","], intents=INTENTS, case_insensitive=True,
+            command_prefix=[')'], intents=INTENTS, case_insensitive=True,
             help_command=help_command
         )
         self.conn: Database = discord.utils.MISSING
         self.tracker = InviteTracker(self)
-        self.default_prefixes = [","]
+        self.default_prefixes = [")"]
         self.welcomer = WelcomeBanner(self)
         self.processing_commands = 0
         self.message_cache = {}
@@ -329,15 +341,21 @@ class CodingBot(commands.Bot):
         self.welcomer_channel_id = 743817386792058971
         self.raid_mode_enabled = False
         self.raid_checker = AntiRaid(self)
+        self.afk_cache: Dict[int, Dict[int, Tuple[str, int]]] = {}
 
     async def setup_hook(self) -> None:
         self.raid_checker.check_for_raid.start()
         for filename in os.listdir("./cogs"):
             if filename.endswith(".py"):
                 await self.load_extension(f"cogs.{filename[:-3]}")
+        os.environ['JISHAKU_NO_UNDERSCORE'] = "True"
+        await self.load_extension("jishaku")
+        jishaku = self.get_cog('Jishaku')
+        if jishaku:
+            jishaku.hidden = True
 
     async def start(self, token: str, *, reconnect: bool = True) -> None:
-        async with Database() as self.conn:
+        async with Database(self) as self.conn:
             async with aiohttp.ClientSession() as self.session:
                 return await super().start(token, reconnect=reconnect)
 

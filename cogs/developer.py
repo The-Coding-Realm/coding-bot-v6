@@ -5,13 +5,8 @@ import os
 import traceback
 
 import discord
-import ext.helpers as helpers
 from discord.ext import commands
 from typing import TYPE_CHECKING, Dict, List, Mapping
-from ext.helpers import executor
-
-import matplotlib.pyplot as plt
-import numpy as np
 
 if TYPE_CHECKING:
     from ext.models import CodingBot
