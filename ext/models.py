@@ -369,7 +369,7 @@ class CodingBot(commands.Bot):
         await self.tracker.remove_invite_cache(invite)
 
     async def on_guild_join(self, guild: discord.Guild) -> None:
-        await self.tracker.update_guild_cache(guild)
+        await self.tracker.add_guild_cache(guild)
 
     async def on_guild_remove(self, guild: discord.Guild) -> None:
         await self.tracker.remove_guild_cache(guild)
@@ -377,11 +377,9 @@ class CodingBot(commands.Bot):
     async def on_member_join(self, member: discord.Member) -> None:
         if not self.welcomer_enabled:
             return
-
         banned = await self.raid_checker.cache_insert_or_ban(member)
         if banned:
             return
-
         rules = member.guild.rules_channel
         if rules:
             rules_channel = rules.mention
