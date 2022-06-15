@@ -60,6 +60,15 @@ class Http:
 
         # self.update_data.start()
 
+    async def send_request(self, endpoint: str, random: bool, **kwargs):
+        base_url = "http://numbersapi.com/"
+        if random:
+            base_url += f"random/{endpoint}"
+        else:
+            base_url += endpoint.format(**kwargs)
+        await self.get(base_url)
+
+
     @tasks.loop(minutes=5)
     async def update_data(self):
         self.cache["piston"]["runtimes"] = await self.api["piston"]["runtimes"]()

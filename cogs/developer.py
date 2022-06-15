@@ -1,4 +1,5 @@
 from __future__ import annotations
+from email import message
 from io import BytesIO
 
 import os
@@ -18,6 +19,8 @@ class Developer(commands.Cog, command_attrs=dict(hidden=True)):
     hidden = True
     def __init__(self, bot: CodingBot) -> None:
         self.bot = bot
+        self.metrics = bot.database.metrics
+        self.thanks = bot.database.thanks
 
     @commands.command(name="sync")
     @commands.is_owner()
@@ -153,46 +156,52 @@ class Developer(commands.Cog, command_attrs=dict(hidden=True)):
     @commands.command(name='getusermetric', aliases=['gum'], hidden=True)
     @commands.is_owner()
     async def _getusermetric(self, ctx: commands.Context[CodingBot], member: discord.Member):
-        record = await self.bot.conn.select_record(
-            'thanks',
-            table='thanks_info',
-            arguments=['thanks_count'],
-            where=['guild_id', 'user_id'],
-            values=[ctx.guild.id, member.id]
-        )
-        total_thank_count = record[0].thanks_count if record else 0
-        revoked_thank_count = await self.bot.conn.select_record(
-            'thanks',
-            table='thanks_data',
-            arguments=['count(*)'],
-            where=['guild_id', 'user_id', 'thank_revoked'],
-            values=[ctx.guild.id, member.id, 1]
-        )
-        revoked_thank_count = revoked_thank_count[0].count
-        surviving_thank_count = total_thank_count - revoked_thank_count 
 
-        message_metric = await self.bot.conn.select_record(
-            'metrics',
-            table='message_metric',
-            arguments=['user_id', 'guild_id', 'message_count', 'deleted_message_count', 'offline', 'online', 'dnd', 'idle'],
-            where=['user_id', 'guild_id'],
-            values=[member.id, ctx.guild.id]
+        record = await self.metrics.message_metric.find_one({'u_id': member.id, 'g_id': ctx.guild.id})
+
+        thank_data = await self.thanks.thank_data.find_one({'u_id': member.id, 'g_id': ctx.guild.id})
+        total_thank_count = thank_data['thanks_count'] if thank_data else 0
+        revoked_thank_count = await self.thanks.thank_data.count_documents(
+            {'u_id': member.id, 'g_id': ctx.guild.id, 'revoked': True}
         )
-        record = message_metric[0] if message_metric else None
-        if record:
+
+        surviving_thank_count = total_thank_count - revoked_thank_count
+
+        message_metric = record
+        if message_metric:
+            message_count = message_metric.get('message_count', 0)
+
+            deleted_message_count = message_metric.get('deleted_message_count', 0)
+            deleted_message_count_percent = deleted_message_count / message_count * 100
+
+            actual_message_count = message_count - deleted_message_count
+            actual_message_count_percent = actual_message_count / message_count * 100
+
+            offline_message_count = message_metric.get('offline', 0)
+            offline_message_count_percent = offline_message_count / message_count * 100
+
+            online_message_count = message_metric.get('online', 0)
+            online_message_count_percent = online_message_count / message_count * 100
+
+            dnd_message_count = message_metric.get('dnd', 0)
+            dnd_message_count_percent = dnd_message_count / message_count * 100
+
+            idle_message_count = message_metric.get('idle', 0)
+            idle_message_count_percent = idle_message_count / message_count * 100
+
             formatted_message = f"""
             **__Message metrics__** For {member.mention}:
-            \u3164 • **__Total message count__**:            {record.message_count}
-            \u3164 • **__Deleted message count__**:          {record.deleted_message_count} (`{record.deleted_message_count / record.message_count * 100:.2f}%`)
-            \u3164 • **__Actual message count__**:           {record.message_count - record.deleted_message_count} (`{(record.message_count - record.deleted_message_count) / record.message_count * 100:.2f}%`)
-            \u3164 • **__Offline message count__**:          {record.offline} (`{record.offline / record.message_count * 100:.2f}%`)
-            \u3164 • **__Online message count__**:           {record.online} (`{record.online / record.message_count * 100:.2f}%`)
-            \u3164 • **__Dnd message count__**:              {record.dnd} (`{record.dnd / record.message_count * 100:.2f}%`)
-            \u3164 • **__Idle message count__**:             {record.idle} (`{record.idle / record.message_count * 100:.2f}%`)
+            \u3164 • **__Total message count__**:            {message_count}
+            \u3164 • **__Deleted message count__**:          {deleted_message_count} (`{deleted_message_count_percent:.2f}%`)
+            \u3164 • **__Actual message count__**:           {actual_message_count} (`{actual_message_count_percent:.2f}%`)
+            \u3164 • **__Offline message count__**:          {offline_message_count} (`{offline_message_count_percent:.2f}%`)
+            \u3164 • **__Online message count__**:           {online_message_count} (`{online_message_count_percent:.2f}%`)
+            \u3164 • **__Dnd message count__**:              {dnd_message_count} (`{dnd_message_count_percent:.2f}%`)
+            \u3164 • **__Idle message count__**:             {idle_message_count} (`{idle_message_count_percent:.2f}%`)
             """
 
         embed = discord.Embed(
-            title=f'{member.name}#{member.discriminator} Detailed anaylysis',
+            title=f'{member.name}#{member.discriminator} Detailed metrics',
             description=
             f'Total thanks this month: {total_thank_count}\n'
             f'Revoked thanks this month: {revoked_thank_count} (`{revoked_thank_count/total_thank_count*100 if total_thank_count > 0 else 0:.2f}%`)\n'

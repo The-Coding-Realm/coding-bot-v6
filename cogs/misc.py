@@ -5,7 +5,7 @@ import string
 import random
 import re
 import string
-from datetime import datetime, timedelta
+from datetime import timedelta
 from typing import TYPE_CHECKING, Optional
 
 import button_paginator as pg
@@ -14,6 +14,7 @@ from discord.ext import commands
 from ext.helpers import Spotify, grouper, ordinal_suffix_of, find_anime_source
 from ext.http import Http
 from ext.ui.view import Piston
+from pymongo import ASCENDING, DESCENDING
 
 if TYPE_CHECKING:
     from ext.models import CodingBot
@@ -29,6 +30,8 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
         self.regex = {
             "codeblock": re.compile(r"(\w*)\s*(?:```)(\w*)?([\s\S]*)(?:```$)")
         }
+        self.afk = bot.database.extras.afk
+        self.thanks_db = bot.database.thanks
 
     async def cog_check(self, ctx: commands.Context[CodingBot]) -> bool:
         if ctx.guild:
@@ -64,11 +67,8 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
         if ctx.guild.id not in self.bot.afk_cache:
             self.bot.afk_cache[ctx.guild.id] = {}
         if member.id not in self.bot.afk_cache.get(ctx.guild.id):
-            await self.bot.conn.insert_record(
-                'afk',
-                table='afk',
-                values=(member.id, reason, int(ctx.message.created_at.timestamp())),
-                columns=['user_id', 'reason', 'afk_time']
+            await self.afk.insert_one(
+                {'u_id': member.id, 'reason': reason, 'afk_time': int(ctx.message.created_at.timestamp())}
             )
             try:
                 await member.edit(nick=f"[AFK] {member.display_name}")
@@ -130,17 +130,16 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
     @commands.hybrid_group(name="thanks", invoke_without_command=True)
     @commands.cooldown(1, 10, commands.BucketType.member)
     async def thanks(self, ctx: commands.Context[CodingBot], member: discord.Member):
-        record = await self.bot.conn.select_record(
-            'thanks',
-            table='thanks_info',
-            arguments=('thanks_count',),
-            where=['guild_id', 'user_id'],
-            values=[ctx.guild.id, member.id]
+
+        record = await self.thanks_dn.thank_info.find_one(
+            {'g_id': ctx.guild.id, 'u_id': member.id}
         )
+
         if not record:
             return await ctx.send(f"{member.display_name} does not have any thanks")
-        thanks = record[0]
-        await ctx.send(f"{member.display_name} has `{thanks.thanks_count}` thanks")
+        thanks_count = record['thanks_count']
+
+        await ctx.send(f"{member.display_name} has `{thanks_count}` thanks")
 
     @commands.hybrid_group(name="thank", invoke_without_command=True)
     @commands.cooldown(1, 10, commands.BucketType.member)
@@ -159,61 +158,50 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
         elif member.id == self.bot.user.id:
             return await ctx.reply("You can't thank me.", ephemeral=True)
         
-        await self.bot.conn.insert_record(
-            'thanks',
-            table='thanks_info',
-            values=(member.id, ctx.guild.id, 1),
-            columns=['user_id', 'guild_id', 'thanks_count'],
-            extras=['ON CONFLICT (user_id) DO UPDATE SET thanks_count = thanks_count + 1']
+
+        await self.bot.database.thanks.thank_info.find_one_and_update(
+            {'g_id': ctx.guild.id, 'u_id': member.id},
+            {'$inc': {'thanks_count': 1}},
+            upsert=True
         )
         staff_role = ctx.guild.get_role(795145820210462771)
         member_is_staff = 1 if staff_role and staff_role in member.roles else 0
         characters = string.ascii_letters + string.digits
-        await self.bot.conn.insert_record(
-            'thanks',
-            table='thanks_data',
-            columns=(
-                'is_staff', 'user_id', 'giver_id', 'guild_id', 
-                'message_id', 'channel_id', 'reason', 'thank_id',
-                'date'
-            ),
-            values=(member_is_staff, member.id, ctx.author.id, ctx.guild.id, 
-                ctx.message.id, ctx.channel.id, reason or "No reason given", 
-                "". join(random.choice(characters) for _ in range(7)), 
-                int(ctx.message.created_at.timestamp())
-            )
+        await self.bot.database.thanks.thanks_data.insert_one(
+            {'g_id': ctx.guild.id, 'u_id': member.id, 'is_staff': member_is_staff, 
+            'giver_id': ctx.author.id, 'm_id': ctx.message.id, 'c_id': ctx.channel.id, 
+            'reason': reason, 'thank_id': "". join(random.choice(characters) for _ in range(7)),
+            'date': int(ctx.message.created_at.timestamp())},
         )
         await ctx.reply(f"{ctx.author.mention} you thanked {member.mention}!", ephemeral=True)
 
-    # NOTE: add check which allows only head helpers and admins to use this command
+   
     @thank.command(name="show")
+    @commands.is_owner()
     async def thank_show(self, ctx: commands.Context[CodingBot], member: discord.Member):
-        records = await self.bot.conn.select_record(
-            'thanks',
-            table='thanks_data',
-            arguments=(
-                'giver_id', 'message_id','channel_id','reason','thank_id',
-                'date'
-                ),
-            where=['user_id'],
-            values=[member.id]
-            )
 
-        if not records:
-            return await ctx.reply(f"{member.mention} does not have any thanks.", ephemeral=True)
+        records = self.bot.database.thanks.thank_data.find(
+            {'u_id': member.id, 'g_id': ctx.guild.id},
+            sort=[('date', DESCENDING)]
+        )
 
-        information = tuple(grouper(5, records))
 
         embeds = []
-        for info in information:
+
+        information = tuple(grouper(5, await records.to_list(None)))
+
+        if not information:
+            return await ctx.reply(f"{member.mention} does not have any thanks.", ephemeral=True)
+
+        for _ in information:
             embed = discord.Embed(title=f'Showing {member.display_name}\'s data')
-            for data in info:
-                giver_id = data.giver_id
-                msg_id = data.message_id
-                channel_id = data.channel_id
-                reason = data.reason
-                thank_id = data.thank_id
-                timestamp = data.date
+            for info in information:
+                giver_id = info['giver_id']
+                msg_id = info['d_id']
+                channel_id = info['c_id']
+                reason = info['reason']
+                thank_id = info['thank_id']
+                date = info['date']
                 channel = ctx.guild.get_channel(channel_id)
                 msg_link = f'https://discord.com/channels/{ctx.guild.id}/{channel.id}/{msg_id}'
 
@@ -236,31 +224,23 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
     # NOTE: add check which allows only head helpers and admins to use this command
     @thank.command(name="delete")
     async def thank_delete(self, ctx: commands.Context[CodingBot], thank_id: str):
-        record = await self.bot.conn.select_record(
-            'thanks',
-            table='thanks_data',
-            arguments=['user_id'],
-            where=['thank_id'],
-            values=[thank_id]
+
+        record = await self.bot.database.thanks.thank_data.find_one(
+            {'thank_id': thank_id, 'g_id': ctx.guild.id}
         )
+
         if not record:
-            return await ctx.send("No thank with that id")
+            return await ctx.reply(f"Thank with id `{thank_id}` does not exist.", ephemeral=True)
 
-        user_id = record[0].user_id
-
-        await self.bot.conn.delete_record(
-            'thanks',
-            table='thanks_data',
-            where=['thank_id'],
-            values=[thank_id]
+        user_id = record['u_id']
+        await self.bot.database.thanks.thank_data.find_one_and_delete(
+            {'g_id': ctx.guild.id, 'thank_id': thank_id, 'u_id': user_id}
         )
 
-        await self.bot.conn.insert_record(
-            'thanks',
-            table='thanks_info',
-            values=(user_id, ctx.guild.id, -1),
-            columns=['user_id', 'guild_id', 'thanks_count'],
-            extras=['ON CONFLICT (user_id) DO UPDATE SET thanks_count = thanks_count - 1']
+        await self.thanks_db.thanks_info.find_one_and_update(
+            {'g_id': ctx.guild.id, 'thank_id': thank_id},
+            {'$inc': {'thanks_count': -1}},
+            upsert=True
         )
         await ctx.send(f"Remove thank from <@{user_id}> with id {thank_id}")
 
@@ -274,15 +254,13 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
         `{prefix}thanks leaderboard`: *will show the thanks leaderboard*
         """
 
-
-        records = await self.bot.conn.select_record(
-            'thanks',
-            table='thanks_info',
-            arguments=('user_id', 'thanks_count'),
-            where=['guild_id'],
-            values=[ctx.guild.id],
-            extras=['ORDER BY thanks_count DESC, user_id ASC LIMIT 100'],
+        records = self.thanks_db.thanks_info.find(
+            {},
+            sort=[('thanks_count', DESCENDING), ('user_id', ASCENDING)]
         )
+
+        records = await records.to_list(None)
+
         if not records:
             return await ctx.reply("No thanks leaderboard yet.", ephemeral=True)
 
@@ -290,11 +268,11 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
 
         embeds = []
         for info in information:
-            user = [ctx.guild.get_member(i.user_id) for i in info]
+            user = [ctx.guild.get_member(i['u_id']) for i in info]
             embed = discord.Embed(
                 title=f"Thank points leaderboard",
                 description="\n\n".join(
-                    [f"`{i}{ordinal_suffix_of(i)}` is {user.mention} with `{thanks_count.thanks_count}` Thank point(s)" for i, (user, thanks_count) 
+                    [f"`{i}{ordinal_suffix_of(i)}` is {user.mention} with `{thanks_count['thamks_count']}` Thank point(s)" for i, (user, thanks_count) 
                     in enumerate(zip(user, info), 1)
                 ]
                 ),

@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, List
 
 import discord
 from discord.ext import commands
-from ext.helpers import UrbanDefinition, UrbanDictionary, find_anime_source
+from ext.helpers import UrbanDefinition, UrbanDictionary
 
 if TYPE_CHECKING:
     from ext.models import CodingBot

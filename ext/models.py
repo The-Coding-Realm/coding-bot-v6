@@ -2,63 +2,21 @@ from __future__ import annotations
 
 import datetime as dt
 import os
-import string
 from dataclasses import dataclass, field
-from typing import (Any, Dict, Iterable, List, Mapping, Optional, Set, Tuple,
-                    Union)
+from typing import Any, Dict, List, Mapping, Optional, Set, Tuple
 
 import aiohttp
-import aiosqlite
 import discord
-import sr_api
 from discord.ext import commands
 from DiscordUtils import InviteTracker
 from dotenv import load_dotenv
+from motor.motor_asyncio import AsyncIOMotorClient
 from pytimeparse import parse
 
-from .consts import (AFK_CONFIG_SCHEMA, COMMANDS_CONFIG_SCHEMA, HELP_COMMAND,
-                     HELP_WARNINGS_CONFIG_SCHEMA, INTENTS,
-                     MESSAGE_METRIC_SCHEMA, PREFIX_CONFIG_SCHEMA,
-                     THANK_DATA_CONFIG_SCHEMA, THANK_INFO_CONFIG_SCHEMA,
-                     WARNINGS_CONFIG_SCHEMA)
+from .consts import HELP_COMMAND, INTENTS
 from .helpers import AntiRaid, WelcomeBanner, log_error
 
 load_dotenv('.env', verbose=True)
-class Record:
-    __slots__ = ("arguments",)
-
-    def __init__(self, arguments: Dict[str, Any]) -> None:
-        self.arguments = arguments
-
-    def __getitem__(self, __item: Union[str, int]) -> Any:
-        if isinstance(__item, str):
-            if __item in self.arguments:
-                return self.arguments[__item]
-            raise AttributeError(
-                f'Dynamic object has no attribute \'{__item}\'')
-        elif isinstance(__item, int):  # type: ignore
-            return tuple(self.arguments.values())[__item]
-
-    def __getattr__(self, __item: str):
-        if __item in self.arguments:
-            return self.arguments[__item]
-        raise AttributeError(f"Dynamic object has no attribute '{__item}'")
-
-    def __len__(self):
-        return len(self.arguments.keys())
-
-    def __repr__(self) -> str:
-        argument = ", ".join(
-            f"{key}={value}" for key, value in self.arguments.items()
-        )
-        return f"<Record: {argument}>"
-
-    @classmethod
-    def from_tuple(cls, arguments: Iterable[Any], tuple_: Iterable[Any]) -> Record:
-        arguments = ["".join(map(lambda x: x if x in string.ascii_letters +
-                             string.digits + '_' else "", arg)) for arg in arguments]
-        return cls(dict(zip(arguments, tuple_)))
-
 
 @dataclass(slots=True, kw_only=True, repr=True)
 class Cache:
@@ -74,192 +32,6 @@ class Cache:
     """
     prefixes: List[str]
     commands: Set[str] = field(default_factory=set)
-
-
-class Database:
-    """
-    Database class for storing opened connections
-
-    Attributes
-    ----------
-    conn : Dict[str, aiosqlite.Connection]
-        A dictionary of connections
-    is_closed : bool
-        Whether the connections are closed
-    """
-
-    def __init__(self, bot: CodingBot):
-        self.conn: Dict[str, aiosqlite.Connection] = {}
-        self.is_closed: bool = False
-        self.bot: CodingBot = bot
-        
-
-    def __getattr__(self, __name: str) -> Any:
-        if __name in self.conn:
-            return self.conn[__name]
-        return super().__getattribute__(__name)
-
-    async def __aenter__(self) -> "Database":
-        self.conn["config"] = await aiosqlite.connect("./database/config.db")
-        self.conn["warnings"] = await aiosqlite.connect(
-            "./database/warnings.db"
-        )
-        self.conn["afk"] = await aiosqlite.connect("./database/afk.db")
-        self.conn["thanks"] = await aiosqlite.connect("./database/thanks.db")
-        self.conn["metrics"] = await aiosqlite.connect("./database/metrics.db")
-        await self.init_dbs()
-        return self
-
-    async def fill_cache(self):
-        record = await self.select_record(
-                'afk',
-                table='afk',
-                arguments=['user_id', 'reason', 'afk_time']
-            )
-
-        for row in record:
-            self.bot.afk_cache[row.user_id] = (row.reason, row.afk_time)
-
-    async def init_dbs(self):
-        async with self.cursor("config") as cursor:
-            await cursor.execute(PREFIX_CONFIG_SCHEMA)
-            await cursor.execute(COMMANDS_CONFIG_SCHEMA)
-
-        async with self.cursor("warnings") as cursor:
-            await cursor.execute(WARNINGS_CONFIG_SCHEMA)
-            await cursor.execute(HELP_WARNINGS_CONFIG_SCHEMA)
-
-        async with self.cursor("afk") as cursor:
-            await cursor.execute(AFK_CONFIG_SCHEMA)
-
-        async with self.cursor("thanks") as cursor:
-            await cursor.execute(THANK_DATA_CONFIG_SCHEMA)
-            await cursor.execute(THANK_INFO_CONFIG_SCHEMA)
-
-        async with self.cursor("metrics") as cursor:
-            await cursor.execute(MESSAGE_METRIC_SCHEMA)
-
-        await self.commit()
-
-    async def __aexit__(self, *args: Any) -> None:
-        await self.commit()
-        await self.close()
-
-    def cursor(self, conn: str) -> aiosqlite.Cursor:
-        return getattr(self, conn).cursor()
-
-    def __repr__(self) -> str:
-        return f"<Database: {self.conn}>"
-
-    async def select_record(
-        self,
-        connection: str,
-        /,
-        *,
-        arguments: Tuple[str, ...],
-        table: str,
-        where: Optional[Tuple[str, ...]] = None,
-        values: Optional[Tuple[Any, ...]] = None,
-        extras: Optional[List[str]] = None,
-    ) -> Optional[List[Record]]:
-        statement = """SELECT {} FROM {}""".format(
-            ", ".join(arguments), table
-        )
-        if where is not None:
-            assign_question = map(lambda x: f"{x} = ?", where)
-            statement += " WHERE {}".format(
-                " AND ".join(assign_question)
-            )
-        if extras:
-            for stuff in extras:
-                statement += f" {stuff}"
-        async with self.cursor(connection) as cursor:
-            await cursor.execute(statement, values or ())
-            # type: ignore # Type checker cries unnecessarily.
-            rows: List[aiosqlite.Row[Any]] = [i async for i in cursor]
-            if rows:
-                return [Record.from_tuple(arguments, row) for row in rows]
-            return None
-
-    async def delete_record(
-        self,
-        connection: str,
-        /,
-        *,
-        table: str,
-        where: Tuple[str, ...],
-        values: Optional[Tuple[Any, ...]] = None
-    ) -> None:
-        delete_statement = f"DELETE FROM {table}"
-        if where is not None:
-            assign_question = map(lambda x: f"{x} = ?", where)
-            delete_statement += " WHERE {}".format(
-                " AND ".join(assign_question))
-
-        async with self.cursor(connection) as cursor:
-            await cursor.execute(delete_statement, values or ())
-            await getattr(self, connection).commit()
-
-    async def insert_record(
-        self,
-        connection: str,
-        /,
-        *,
-        table: str,
-        values: Tuple[Any, ...],
-        columns: Tuple[str, ...],
-        extras: Optional[List[str]] = None
-    ) -> None:
-
-        insert_statement = """
-                           INSERT INTO {}({}) VALUES ({})
-                           """.format(
-            table, ", ".join(columns), ", ".join(["?"] * len(columns))
-        )
-        if extras:
-            for stuff in extras:
-                insert_statement += f" {stuff}"
-        async with self.cursor(connection) as cursor:
-            await cursor.execute(insert_statement, values)
-            await getattr(self, connection).commit()
-
-    async def update_record(
-        self,
-        connection: str,
-        /,
-        *,
-        table: str,
-        to_update: Tuple[str, ...],
-        where: Tuple[str, ...],
-        values: Tuple[Any, ...],
-        extras: Optional[List[str]] = None
-    ) -> None:
-        update_statement = """
-                           UPDATE {} SET {} WHERE {}
-                           """.format(
-            table, ", ".join(
-                map(lambda x: f"{x} = ?" if "=" not in x else x, to_update)),
-            " AND ".join(map(lambda x: f"{x} = ?", where))
-        )
-        if extras:
-            for stuff in extras:
-                update_statement += f" {stuff}"
-        async with self.cursor(connection) as cursor:
-            await cursor.execute(update_statement, values)
-            await getattr(self, connection).commit()
-
-    @property
-    def closed(self):
-        return self.is_closed
-
-    async def commit(self) -> None:
-        for conn in self.conn.values():
-            await conn.commit()
-
-    async def close(self) -> None:
-        self.is_closed = True
-        for conn in self.conn.values():
-            await conn.close()
 
 
 class CodingHelp(commands.HelpCommand):
@@ -327,16 +99,15 @@ class CodingBot(commands.Bot):
             command_prefix=[')'], intents=INTENTS, case_insensitive=True,
             help_command=help_command
         )
-        self.conn: Database = discord.utils.MISSING
+        self.database: AsyncIOMotorClient = None
         self.tracker = InviteTracker(self)
         self.default_prefixes = [")"]
         self.welcomer = WelcomeBanner(self)
         self.processing_commands = 0
         self.message_cache = {}
-        self.sr_api = sr_api.Client()
         self.spotify_session: Optional[tuple] = None
-        self.spotify_client_id: str = os.environ["SPOTIFY_CLIENT_ID"]
-        self.spotify_client_secret: str = os.environ["SPOTIFY_CLIENT_SECRET"]
+        self.spotify_client_id: str = os.environ.get("SPOTIFY_CLIENT_ID")
+        self.spotify_client_secret: str = os.environ.get("SPOTIFY_CLIENT_SECRET")
         self.welcomer_enabled = True
         self.welcomer_channel_id = 743817386792058971
         self.raid_mode_enabled = False
@@ -344,6 +115,7 @@ class CodingBot(commands.Bot):
         self.afk_cache: Dict[int, Dict[int, Tuple[str, int]]] = {}
 
     async def setup_hook(self) -> None:
+        self.database = AsyncIOMotorClient(os.environ.get("MONGO_DB_URI"))
         self.raid_checker.check_for_raid.start()
         for filename in os.listdir("./cogs"):
             if filename.endswith(".py"):
@@ -355,9 +127,8 @@ class CodingBot(commands.Bot):
             jishaku.hidden = True
 
     async def start(self, token: str, *, reconnect: bool = True) -> None:
-        async with Database(self) as self.conn:
-            async with aiohttp.ClientSession() as self.session:
-                return await super().start(token, reconnect=reconnect)
+        async with aiohttp.ClientSession() as self.session:
+            return await super().start(token, reconnect=reconnect)
 
     async def on_ready(self) -> None:
         await self.wait_until_ready()
@@ -371,7 +142,7 @@ class CodingBot(commands.Bot):
         await self.tracker.remove_invite_cache(invite)
 
     async def on_guild_join(self, guild: discord.Guild) -> None:
-        await self.tracker.update_guild_cache(guild)
+        await self.tracker.add_guild_cache(guild)
 
     async def on_guild_remove(self, guild: discord.Guild) -> None:
         await self.tracker.remove_guild_cache(guild)
@@ -379,11 +150,9 @@ class CodingBot(commands.Bot):
     async def on_member_join(self, member: discord.Member) -> None:
         if not self.welcomer_enabled:
             return
-
         banned = await self.raid_checker.cache_insert_or_ban(member)
         if banned:
             return
-
         rules = member.guild.rules_channel
         if rules:
             rules_channel = rules.mention
