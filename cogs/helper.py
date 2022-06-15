@@ -11,6 +11,7 @@ from discord.ext import commands
 from ext.consts import (HELP_BAN_ROLE_ID, OFFICIAL_HELPER_ROLE_ID,
                         READ_HELP_RULES_ROLE_ID, TCR_GUILD_ID)
 from ext.ui.view import ConfirmButton
+from pymongo import DESCENDING
 
 if TYPE_CHECKING:
     from ext.models import CodingBot
@@ -19,8 +20,10 @@ if TYPE_CHECKING:
 class Helper(commands.Cog, command_attrs=dict(hidden=False)):
 
     hidden = False
+
     def __init__(self, bot):
         self.bot = bot
+        self.help_warning = bot.database.warnings.help_warning
 
     async def cog_check(self, ctx: commands.Context[CodingBot]) -> bool:
         """
@@ -30,17 +33,17 @@ class Helper(commands.Cog, command_attrs=dict(hidden=False)):
         ----------
         ctx : commands.Context[CodingBot]
             The context of the command
-        
+
         Returns
         -------
         bool
             Whether the user has the required role
-        
+
         Raises
         ------
         commands.CheckFailure
             If the user doesn't have the required role
-        
+
         """
         if isinstance(ctx.channel, discord.DMChannel):
             return False
@@ -61,12 +64,12 @@ class Helper(commands.Cog, command_attrs=dict(hidden=False)):
         ----------
         ctx : commands.Context[CodingBot]
             The context of the command
-        
+
         Returns
         -------
         Optional[discord.Attachment]
             The evidence that was captured
-        
+
         """
         view = ConfirmButton(ctx)
         view.message = await ctx.author.send(f'Do you want to provide an evidence for your action?', view=view)
@@ -173,7 +176,6 @@ class Helper(commands.Cog, command_attrs=dict(hidden=False)):
         embed.set_thumbnail(url=member.display_avatar.url)
         logs = self.bot.get_channel(964165082437263361)  # 816512034228666419
         await logs.send(embed=embed, file=file)  # type: ignore
-        
 
     @commands.hybrid_group(name="helper")
     async def helper(self, ctx: commands.Context[CodingBot]) -> None:
@@ -192,7 +194,7 @@ class Helper(commands.Cog, command_attrs=dict(hidden=False)):
     ) -> None:
         """
         Warns a member breaking rules in help channels.
-        
+
         Usage:
         {prefix}helper warn <member> <reason>
 
@@ -200,107 +202,93 @@ class Helper(commands.Cog, command_attrs=dict(hidden=False)):
         {prefix}helper warn {member} "Breaking rules"
         """
         if len(reason) > 256:
-            return await self.bot.reply(ctx,"The reason must be less than 256 characters.")
+            return await self.bot.reply(ctx, "The reason must be less than 256 characters.")
 
-        await self.bot.conn.insert_record(
-            'warnings',
-            table='help_warns',
-            columns=('guild_id', 'user_id', 'helper_id', 'reason', 'date'),
-            values=(ctx.guild.id, member.id, ctx.author.id,
-                    reason, ctx.message.created_at.timestamp())
-        )
-        await self.bot.reply(ctx,f'Help-warned {member.mention}')
+        await self.help_warning.insert_one({
+            'g_id': ctx.guild.id, 'u_id': member.id, 'h_id': ctx.author.id, 
+            'reason': reason, 'date': ctx.message.created_at.timestamp()
+        })
+        await self.bot.reply(ctx, f'Help-warned {member.mention}')
         evidence = await self.capture_evidence(ctx)
         await self.log(
-            action='warn', 
-            member=member, 
-            helper=ctx.author, 
-            reason=reason, 
+            action='warn',
+            member=member,
+            helper=ctx.author,
+            reason=reason,
             evidence=evidence
         )
-        
-        
 
     @helper.command(name="warnings")
     async def help_warnings(
-        self, 
-        ctx: commands.Context[CodingBot], 
+        self,
+        ctx: commands.Context[CodingBot],
         member: discord.Member
     ) -> None:
-    
+
         embed = discord.Embed(
             title=f"{member} Help warnings List", color=discord.Color.red())
-        records = await self.bot.conn.select_record(
-            'warnings',
-            arguments=('reason', 'helper_id', 'date'),
-            table='help_warns',
-            where=('guild_id', 'user_id'),
-            values=(ctx.guild.id, member.id),
-            extras=['ORDER BY date DESC']
+        records = self.help_warning.find(
+            {'u_id': member.id, 'g_id': ctx.guild.id}, 
+            sort=[('date', DESCENDING)]
         )
         if not records:
-            return await self.bot.reply(ctx,f'{member.mention} has no help-warnings.')
+            return await self.bot.reply(ctx, f'{member.mention} has no help-warnings.')
 
-        for i, warning in enumerate(records, 1):
-            helper = ctx.guild.get_member(warning.helper_id)
+        i = 1
+        async for warning in records:
+            helper = ctx.guild.get_member(warning['helper_id'])
+            reason = warning['reason']
+            date = warning['date']
             if helper:
                 helper = helper.mention
             else:
                 helper = 'Unknown'
-            embed.add_field(name="`{}.` Reason: {}".format(
-                i, warning.reason), value=f"Issued by: {helper} - <t:{int(warning.date)}:f>", inline=False)
-
-        await self.bot.reply(ctx,embed=embed)
+            embed.add_field(
+                name="`{}.` Reason: {}".format(i, reason),
+                value=f"Issued by: {helper} - <t:{int(date)}:f>",
+                inline=False
+            )
+            i += 1
+        await self.bot.reply(ctx, embed=embed)
 
     @helper.command(name="clearwarning")
     async def help_clearwarning(
-        self, 
-        ctx: commands.Context[CodingBot], 
-        member: discord.Member, 
+        self,
+        ctx: commands.Context[CodingBot],
+        member: discord.Member,
         index: int = None
     ) -> None:
         warn = None
 
         target = member or ctx.author
         if index is None:
-            await self.bot.conn.delete_record(
-                'warnings',
-                table='help_warns',
-                where=('guild_id', 'user_id'),
-                values=(ctx.guild.id, target.id)
-            )
+            await self.help_warning.delete_many({'g_id': ctx.guild.id, 'u_id': target.id})
         else:
-            records = await self.bot.conn.select_record(
-                'warnings',
-                arguments=('date', 'reason'),
-                table='help_warns',
-                where=('guild_id', 'user_id'),
-                values=(ctx.guild.id, target.id),
-                extras=['ORDER BY date DESC']
+            records = self.help_warning.find(
+                {'g_id': ctx.guild.id, 'u_id': target.id},
+                sort=[('date', DESCENDING)]
             )
-
             if not records:
-                return await self.bot.reply(ctx,f'{target.mention} has no warnings.')
-
-            for i, sublist in enumerate(records, 1):
+                return await self.bot.reply(ctx, f'{target.mention} has no warnings.')
+            i = 1
+            async for sublist in records:
                 if index == i:
-                    warn = sublist.reason
-                    await self.bot.conn.delete_record(
-                        'warnings',
-                        table='help_warns',
-                        where=('guild_id', 'user_id', 'date'),
-                        values=(ctx.guild.id, target.id, sublist.date)
+                    warn = sublist['reason']
+                    date = sublist['date']
+                    await self.help_warning.delete_one(
+                        {'g_id': ctx.guild.id, 'u_id': target.id,
+                            'reason': warn, 'date': date}
                     )
                     break
-
-        await self.bot.reply(ctx,f'{target.mention}\'s warning was cleared.')
+                i += 1
+        await self.bot.reply(ctx, f'{target.mention}\'s warning was cleared.')
         await self.log(action='warn', undo=True, member=target, helper=ctx.author, warn=warn)
 
     @helper.command(name="ban")
     async def help_ban(
-        self, 
-        ctx: commands.Context[CodingBot], 
-        member:discord.Member, 
+        self,
+        ctx: commands.Context[CodingBot],
+        member: discord.Member,
         *,
         reason: str
     ) -> None:
@@ -308,61 +296,65 @@ class Helper(commands.Cog, command_attrs=dict(hidden=False)):
         help_ban_role = ctx.guild.get_role(HELP_BAN_ROLE_ID)
         read_help_rules_role = ctx.guild.get_role(READ_HELP_RULES_ROLE_ID)
         if help_ban_role in member.roles:
-            return await self.bot.reply(ctx,f'{member.mention} is already help-banned')
+            return await self.bot.reply(ctx, f'{member.mention} is already help-banned')
 
         if read_help_rules_role in member.roles:
             await member.remove_roles(read_help_rules_role)
         if not help_ban_role in member.roles:
             await member.add_roles(help_ban_role)
 
-        await self.bot.reply(ctx,f'help-banned {member.mention} with reason: {reason}')
+        await self.bot.reply(ctx, f'help-banned {member.mention} with reason: {reason}')
         try:
             await member.send(f"You have been help-banned with reason: {reason}")
         except discord.Forbidden:
             pass
+        await self.log(action='ban', member=member, helper=ctx.author, reason=reason)
 
     @helper.command(name="unban")
     async def help_unban(
-        self, 
-        ctx: commands.Context[CodingBot], 
+        self,
+        ctx: commands.Context[CodingBot],
         member: discord.Member
     ) -> None:
 
         help_ban_role = ctx.guild.get_role(HELP_BAN_ROLE_ID)
         read_help_rules_role = ctx.guild.get_role(READ_HELP_RULES_ROLE_ID)
         if not help_ban_role in member.roles:
-            return await self.bot.reply(ctx,f'{member.mention} is not help-banned')
-
+            return await self.bot.reply(ctx, f'{member.mention} is not help-banned')
         if not read_help_rules_role in member.roles:
             await member.add_roles(read_help_rules_role)
         if help_ban_role in member.roles:
             await member.remove_roles(help_ban_role)
-
-        await self.bot.reply(ctx,f'help-unbanned {member.mention}')
+        await self.bot.reply(ctx, f'help-unbanned {member.mention}')
         try:
-            await member.send(f"You have been help-unbanned")
-            await self.log(action='ban', undo=True, member=member, helper=ctx.author)
+            await member.send(f"You have been help-unbanned")   
         except discord.Forbidden:
             pass
+        await self.log(action='ban', undo=True, member=member, helper=ctx.author)
 
     @helper.command(name="verify")
     async def help_verify(
-        self, 
-        ctx: commands.Context[CodingBot], 
+        self,
+        ctx: commands.Context[CodingBot],
         target: discord.Member
     ) -> None:
 
         read_help_rules_role = ctx.guild.get_role(READ_HELP_RULES_ROLE_ID)
 
         if read_help_rules_role in target.roles:
-            embed = discord.Embed(title="ERROR!", description=f"{target.mention} is already verified")
-            embed.set_footer(text=f"Command executed by {ctx.author}", icon_url=ctx.author.display_avatar.url)
+            embed = discord.Embed(
+                title="ERROR!", description=f"{target.mention} is already verified")
+            embed.set_footer(
+                text=f"Command executed by {ctx.author}", icon_url=ctx.author.display_avatar.url)
         else:
-            embed = discord.Embed(title="Member verified", description=f"{target.mention} was successfully verified")
-            embed.set_footer(text=f"Command executed by {ctx.author}", icon_url=ctx.author.display_avatar.url)
+            embed = discord.Embed(
+                title="Member verified", description=f"{target.mention} was successfully verified")
+            embed.set_footer(
+                text=f"Command executed by {ctx.author}", icon_url=ctx.author.display_avatar.url)
             await target.add_roles(read_help_rules_role)
 
-        await self.bot.reply(ctx,embed=embed)
+        await self.bot.reply(ctx, embed=embed)
+
 
 async def setup(bot):
     await bot.add_cog(Helper(bot))
