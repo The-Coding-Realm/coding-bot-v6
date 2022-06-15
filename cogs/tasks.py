@@ -59,16 +59,24 @@ class TaskCog(commands.Cog, command_attrs=dict(hidden=True)):
             arguments=('date','user_id'),
             table='warnings',
             where=('guild_id',),
-            alues=(TCR_GUILD_ID,)
+            values=(TCR_GUILD_ID,)
         )
+
+        records = self.bot.database.warnings.warning.find(
+            {'g_id': TCR_GUILD_ID}
+        )
+
         now = datetime.datetime.utcnow().timestamp()
-        for record in records:
-            if record.date+(60*60*24*31) < now:
+        async for record in records:
+            if record['date'] + (60*60*24*31) < now:
                 await self.bot.conn.delete_record(
                     'warnings',
                     table='warnings',
                     where=('guild_id', 'user_id', 'date'),
                     values=(TCR_GUILD_ID, record.user_id, record.date)
+                )
+                await self.bot.database.warnings.warning.delete_one(
+                    {'g_id': TCR_GUILD_ID, 'user_id': record.user_id, 'date': record.date}
                 )
 
 async def setup(bot: CodingBot):
