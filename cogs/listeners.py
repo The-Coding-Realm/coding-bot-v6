@@ -21,6 +21,8 @@ class ListenerCog(commands.Cog, command_attrs=dict(hidden=True)):
     hidden = True
     def __init__(self, bot: CodingBot) -> None:
         self.bot = bot
+        self.afk = bot.database.extras.afk
+        self.message_metric = bot.database.metrics.message_metric
         
 
 
@@ -42,13 +44,7 @@ class ListenerCog(commands.Cog, command_attrs=dict(hidden=True)):
         if record:
             record = record.get(message.author.id)
             if record:
-                _, time = record
-                await self.bot.conn.delete_record(
-                    'afk',
-                    table='afk',
-                    where=('user_id',),
-                    values=(message.author.id,),
-                )
+                await self.afk.delete_one({'u_id': message.author.id})
                 try:
                     if "[AFK]" in message.author.display_name:
                         name = message.author.display_name.split(' ')[1:]
@@ -163,24 +159,18 @@ class ListenerCog(commands.Cog, command_attrs=dict(hidden=True)):
         if message.author.bot or not message.guild:
             return
 
-        values = [message.author.id, message.guild.id, 1, 1]
-        columns = ['user_id', 'guild_id', 'message_count']
-
-        columns.append(status := message.author.status.name)
-        
+        status = message.author.status.name
+        to_upsert = {'message_count': 1, status: 1}
         staff_role = message.guild.get_role(TCR_STAFF_ROLE_ID)
         if staff_role and staff_role in message.author.roles:  # type: ignore
-            columns.append('is_staff')
-            values.append(1)
+            to_upsert['is_staff'] = 1
         else:
             pass
             
-        return await self.bot.conn.insert_record(
-            'metrics',
-            table='message_metric',
-            columns=columns,
-            values=values,
-            extras=[f'ON CONFLICT (user_id, guild_id) DO UPDATE SET message_count = message_count + 1, {status} = {status} + 1'],
+        return await self.message_metric.find_one_and_update(
+            {'u_id': message.author.id, 'g_id': message.guild.id}, 
+            {'$inc': to_upsert},
+            upsert=True
         )
 
     @commands.Cog.listener('on_message_delete')
@@ -192,16 +182,9 @@ class ListenerCog(commands.Cog, command_attrs=dict(hidden=True)):
         if message.author.bot or not message.guild:
             return
         
-        values = [message.author.id, message.guild.id]
 
-        columns = ['deleted_message_count = deleted_message_count + 1']
-
-        await self.bot.conn.update_record(
-            'metrics',
-            table='message_metric',
-            to_update=columns,
-            where=['user_id', 'guild_id'],
-            values=values,
+        return await self.message_metric.update_one(
+            {'user_id': message.author.id, 'guild_id': message.guild.id}, {'$inc': {'deleted_message': 1}}
         )
 
     @commands.Cog.listener('on_message')

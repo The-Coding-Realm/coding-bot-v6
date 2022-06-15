@@ -25,36 +25,36 @@ class Helper(commands.Cog, command_attrs=dict(hidden=False)):
         self.bot = bot
         self.help_warning = bot.database.warnings.help_warning
 
-    async def cog_check(self, ctx: commands.Context[CodingBot]) -> bool:
-        """
-        Restricts the use of the cog to the official helper role
+    # async def cog_check(self, ctx: commands.Context[CodingBot]) -> bool:
+    #     """
+    #     Restricts the use of the cog to the official helper role
 
-        Parameters
-        ----------
-        ctx : commands.Context[CodingBot]
-            The context of the command
+    #     Parameters
+    #     ----------
+    #     ctx : commands.Context[CodingBot]
+    #         The context of the command
 
-        Returns
-        -------
-        bool
-            Whether the user has the required role
+    #     Returns
+    #     -------
+    #     bool
+    #         Whether the user has the required role
 
-        Raises
-        ------
-        commands.CheckFailure
-            If the user doesn't have the required role
+    #     Raises
+    #     ------
+    #     commands.CheckFailure
+    #         If the user doesn't have the required role
 
-        """
-        if isinstance(ctx.channel, discord.DMChannel):
-            return False
-        if ctx.guild.id != TCR_GUILD_ID:
-            return False
+    #     """
+    #     if isinstance(ctx.channel, discord.DMChannel):
+    #         return False
+    #     if ctx.guild.id != TCR_GUILD_ID:
+    #         return False
 
-        official_helper_role = ctx.guild.get_role(OFFICIAL_HELPER_ROLE_ID)
+    #     official_helper_role = ctx.guild.get_role(OFFICIAL_HELPER_ROLE_ID)
 
-        if official_helper_role not in ctx.author.roles:
-            return False
-        return True
+    #     if official_helper_role not in ctx.author.roles:
+    #         return False
+    #     return True
 
     async def capture_evidence(self, ctx: commands.Context[CodingBot]) -> Optional[discord.Attachment]:
         """
@@ -236,7 +236,7 @@ class Helper(commands.Cog, command_attrs=dict(hidden=False)):
 
         i = 1
         async for warning in records:
-            helper = ctx.guild.get_member(warning['helper_id'])
+            helper = ctx.guild.get_member(warning['h_id'])
             reason = warning['reason']
             date = warning['date']
             if helper:

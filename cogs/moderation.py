@@ -17,7 +17,6 @@ if TYPE_CHECKING:
     from ext.models import CodingBot
 
 
-
 def trainee_check():
     def wrapper(ctx: commands.Context[CodingBot]):
         trainee_role = ctx.guild.get_role(729537643951554583)  # type: ignore

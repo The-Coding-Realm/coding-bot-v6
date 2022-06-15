@@ -156,16 +156,11 @@ class Developer(commands.Cog, command_attrs=dict(hidden=True)):
     @commands.command(name='getusermetric', aliases=['gum'], hidden=True)
     @commands.is_owner()
     async def _getusermetric(self, ctx: commands.Context[CodingBot], member: discord.Member):
-        record = await self.bot.conn.select_record(
-            'thanks',
-            table='thanks_info',
-            arguments=['thanks_count'],
-            where=['guild_id', 'user_id'],
-            values=[ctx.guild.id, member.id]
-        )
 
         record = await self.metrics.message_metric.find_one({'u_id': member.id, 'g_id': ctx.guild.id})
-        total_thank_count = record['thanks_count'] if record else 0
+
+        thank_data = await self.thanks.thank_data.find_one({'u_id': member.id, 'g_id': ctx.guild.id})
+        total_thank_count = thank_data['thanks_count'] if thank_data else 0
         revoked_thank_count = await self.thanks.thank_data.count_documents(
             {'u_id': member.id, 'g_id': ctx.guild.id, 'revoked': True}
         )
@@ -174,24 +169,24 @@ class Developer(commands.Cog, command_attrs=dict(hidden=True)):
 
         message_metric = record
         if message_metric:
-            message_count = message_metric['message_count']
+            message_count = message_metric.get('message_count', 0)
 
-            deleted_message_count = record['deleted_message_count']
+            deleted_message_count = message_metric.get('deleted_message_count', 0)
             deleted_message_count_percent = deleted_message_count / message_count * 100
 
             actual_message_count = message_count - deleted_message_count
             actual_message_count_percent = actual_message_count / message_count * 100
 
-            offline_message_count = message_metric['offline']
+            offline_message_count = message_metric.get('offline', 0)
             offline_message_count_percent = offline_message_count / message_count * 100
 
-            online_message_count = message_metric['online']
+            online_message_count = message_metric.get('online', 0)
             online_message_count_percent = online_message_count / message_count * 100
 
-            dnd_message_count = message_metric['dnd']
+            dnd_message_count = message_metric.get('dnd', 0)
             dnd_message_count_percent = dnd_message_count / message_count * 100
 
-            idle_message_count = message_metric['idle']
+            idle_message_count = message_metric.get('idle', 0)
             idle_message_count_percent = idle_message_count / message_count * 100
 
             formatted_message = f"""
