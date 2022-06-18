@@ -634,13 +634,14 @@ class AntiRaid:
         """
         if not self.bot.raid_mode_enabled:
             self.cache.add(member)
+            print(self.cache)
             return False
         else:
             if self.check(member):
                 await member.ban(reason="Raid mode checks met")
                 return True
             else:
-                channel = self.bot.get_channel(725747917494812715)
+                channel = self.bot.get_channel(984420447401676811)
                 assert channel is not None
 
                 await channel.send(f"{member.mention} is highly unlikely to be part of the raid, skipping user.\nReason: Failed the raid mode checks")
@@ -650,8 +651,8 @@ class AntiRaid:
         """
         Notifies the staff about the raid mode
         """
-        channel = self.bot.get_channel(735864475994816576) # actual: 735864475994816576 test: 964165082437263361
-        embed = discord.Embed(title="A possible raid has been detected!", color=discord.Color.gold())
+        channel = self.bot.get_channel(984420447401676811) # actual: 735864475994816576 test: 964165082437263361
+        embed = discord.Embed(description="", title="A possible raid has been detected!", color=discord.Color.gold())
         embed.description += f"""\nThe criteria is detected to be `{self.raid_mode_criteria} ± 1` days
             Use `{self.bot.command_prefix[0]}raid-mode enable` after making sure this is not a false positive to enable raid mode!
             Upon usage of the command, the bot will automatically ban users who have been created within this time.
@@ -662,7 +663,7 @@ class AntiRaid:
 
         )
             
-    @tasks.loop(seconds=5)
+    @tasks.loop(seconds=20)
     async def check_for_raid(self):
         """
         Checks if the member is in the cache

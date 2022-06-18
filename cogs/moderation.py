@@ -11,7 +11,7 @@ from discord.ext import commands
 from ext.errors import InsufficientPrivilegeError
 from ext.models import CodingBot, TimeConverter
 from ext.ui.view import ConfirmButton
-from ext import consts
+
 
 if TYPE_CHECKING:
     from ext.models import CodingBot
