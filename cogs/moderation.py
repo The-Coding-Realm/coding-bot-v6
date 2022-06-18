@@ -198,7 +198,6 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
             evidence = await self.capture_evidence(ctx)
             await self.log(action='kick', moderator=ctx.author, member=member, reason=reason, evidence=evidence)  # type: ignore
 
-#    @trainee_check()
     @commands.hybrid_command(name="ban")
     @commands.has_permissions(ban_members=True)
     async def ban(self, ctx: commands.Context[CodingBot], member: discord.Member, *, reason: Optional[str] = None):
@@ -223,7 +222,6 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
             evidence = await self.capture_evidence(ctx)
             await self.log(action='ban', moderator=ctx.author, member=member, undo=False, reason=reason, duration=None, evidence=evidence)  # type: ignore
 
-    @trainee_check()
     @commands.hybrid_command(name="unban")
     @commands.has_permissions(ban_members=True)
     async def unban(self, ctx: commands.Context[CodingBot], user: discord.User, *, reason: Optional[str] = None):
@@ -472,7 +470,7 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
 
     @trainee_check()
     @commands.hybrid_command(name="verify")
-    @commands.has_permissions(manage_roles=True) # Luz : I don't know what permission is required for this command
+    @commands.has_permissions(manage_roles=True)
     async def verify_member(self, ctx: commands.Context[CodingBot], target: discord.Member):
         """
         Verifies a member in the server
@@ -492,8 +490,6 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
             embed.set_footer(text=f"Command executed by {ctx.author}", icon_url=ctx.author.display_avatar.url)
             await target.add_roles(member)
         await self.bot.reply(ctx,embed=embed)
-
-    # FEEL FREE TO MOVE THIS TO ANY COGS (IF YOU ADD ONE)
 
     @commands.hybrid_command(name="whois")
     async def whois(
@@ -585,6 +581,25 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
         except discord.HTTPException:
             await ctx.send("You passed in an integer that is too big.")
         await self.bot.reply(ctx, f"Slowmode set to {seconds} seconds")
+        
+    # Suggestion #1001 - Lockdown command
+    @commands.hybrid_command(name="lockdown")
+    @commands.has_permissions(administrator=True)
+    async def lockdown(
+        self,
+        ctx: commands.Context[CodingBot],
+    ) -> None:
+        """
+        Lock down the server, requires administrator permissions
+        ONLY USE IT WHEN RAID HAPPENS
+        
+        Usage:
+        {prefix}lockdown
+        """
+        member_role = ctx.guild.get_role(TCR_MEMBER_ROLE_ID)
+        for channel in ctx.guild.channels:
+            await channel.set_permissions(member_role, send_messages=False)
+        await self.bot.reply(ctx, "Locked down the server")
     
 
     #//////////////////////////////////////////////////////////////////////////////////
