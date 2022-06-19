@@ -582,9 +582,9 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
             await ctx.send("You passed in an integer that is too big.")
         await self.bot.reply(ctx, f"Slowmode set to {seconds} seconds")
         
-    # Suggestion #1001 - Lockdown command
+    # Suggestion #1001 - Lockdown command. Ayu wanted me to also add perms to head mod
     @commands.hybrid_command(name="lockdown")
-    @commands.has_permissions(administrator=True)
+    @commands.has_any_role(795136568805294097, 797688360806121522)
     async def lockdown(
         self,
         ctx: commands.Context[CodingBot],
@@ -600,7 +600,6 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
         for channel in ctx.guild.channels:
             await channel.set_permissions(member_role, send_messages=False)
         await self.bot.reply(ctx, "Locked down the server")
-    
 
     #//////////////////////////////////////////////////////////////////////////////////
     # support
