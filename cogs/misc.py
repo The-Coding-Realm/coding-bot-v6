@@ -197,7 +197,7 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
                 ),
             where=['user_id'],
             values=[member.id]
-            )
+        )
 
         if not records:
             return await ctx.reply(f"{member.mention} does not have any thanks.", ephemeral=True)
@@ -219,7 +219,7 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
 
                 giver = ctx.guild.get_member(giver_id)
 
-                embed.add_field(name=f'Thank: {thank_id}', value=f"Thank giver: {giver.mention}\nDate: <t:{date}:R>\nReason: {reason}\nThank given in: {channel.mention}\nMessage link: [Click here!]({msg_link})", inline=False)
+                embed.add_field(name=f'Thank: {thank_id}', value=f"Thank giver: {giver.mention}\nDate: <t:{timestamp}:R>\nReason: {reason}\nThank given in: {channel.mention}\nMessage link: [Click here!]({msg_link})", inline=False)
 
             embeds.append(embed)
 
@@ -340,7 +340,7 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
             description=trainees,
             color=discord.Color.blue()
         )
-        await self.bot.reply(embed=embed)
+        await self.bot.reply(ctx, embed=embed)
 
     @commands.hybrid_command(aliases=['sp'])
     @commands.cooldown(5, 60.0, type=commands.BucketType.user)

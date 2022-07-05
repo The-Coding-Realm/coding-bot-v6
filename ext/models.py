@@ -1,16 +1,16 @@
 from __future__ import annotations
 
 import datetime as dt
+import logging
 import os
 import string
 from dataclasses import dataclass, field
-from typing import (Any, Dict, Iterable, List, Mapping, Optional, Set, Tuple,
-                    Union)
+from typing import (Any, Dict, Iterable, List, Mapping, NamedTuple, Optional,
+                    Set, Tuple, Union)
 
 import aiohttp
 import aiosqlite
 import discord
-import sr_api
 from discord.ext import commands
 from DiscordUtils import InviteTracker
 from dotenv import load_dotenv
@@ -20,10 +20,13 @@ from .consts import (AFK_CONFIG_SCHEMA, COMMANDS_CONFIG_SCHEMA, HELP_COMMAND,
                      HELP_WARNINGS_CONFIG_SCHEMA, INTENTS,
                      MESSAGE_METRIC_SCHEMA, PREFIX_CONFIG_SCHEMA,
                      THANK_DATA_CONFIG_SCHEMA, THANK_INFO_CONFIG_SCHEMA,
-                     WARNINGS_CONFIG_SCHEMA)
+                     WARNINGS_CONFIG_SCHEMA, VERSION, Version)
 from .helpers import AntiRaid, WelcomeBanner, log_error
+from .logger import create_logger
 
 load_dotenv('.env', verbose=True)
+
+
 class Record:
     __slots__ = ("arguments",)
 
@@ -99,18 +102,20 @@ class Database:
             return self.conn[__name]
         return super().__getattribute__(__name)
 
+
     async def __aenter__(self) -> "Database":
+        self.bot.logger.info(f"Making connections to databases")
         self.conn["config"] = await aiosqlite.connect("./database/config.db")
-        self.conn["warnings"] = await aiosqlite.connect(
-            "./database/warnings.db"
-        )
+        self.conn["warnings"] = await aiosqlite.connect("./database/warnings.db")
         self.conn["afk"] = await aiosqlite.connect("./database/afk.db")
         self.conn["thanks"] = await aiosqlite.connect("./database/thanks.db")
         self.conn["metrics"] = await aiosqlite.connect("./database/metrics.db")
         await self.init_dbs()
+        self.bot.logger.info("Finished creating all connections")
         return self
 
     async def fill_cache(self):
+        self.bot.logger.info(f"Filling stored cache data before startup")
         record = await self.select_record(
                 'afk',
                 table='afk',
@@ -284,7 +289,7 @@ class CodingHelp(commands.HelpCommand):
 
     async def send_group_help(self, group: commands.Group[Any, ..., Any], /) -> None:
         embed = discord.Embed(title=f"{group.qualified_name} Commands",
-                                description=group.help)
+                                description=group.help or "")
 
         for command in group.commands:
             if not command.hidden:
@@ -295,7 +300,12 @@ class CodingHelp(commands.HelpCommand):
 
     async def send_command_help(self, command: commands.Command[Any, ..., Any], /) -> None:
         embed = discord.Embed(title=f"{command.qualified_name} Command",
-                              description=command.help)
+                              description=command.help.format(
+                                prefix=self.context.prefix, 
+                                user=self.context.author.mention, 
+                                member=self.context.author.mention 
+                            ) if command.help else "No help available for this command."
+                        )
 
         destination = self.get_destination()
         await destination.send(embed=embed)
@@ -329,11 +339,10 @@ class CodingBot(commands.Bot):
         )
         self.conn: Database = discord.utils.MISSING
         self.tracker = InviteTracker(self)
-        self.default_prefixes = [")"]
+        self.default_prefixes = [')']
         self.welcomer = WelcomeBanner(self)
         self.processing_commands = 0
         self.message_cache = {}
-        self.sr_api = sr_api.Client()
         self.spotify_session: Optional[tuple] = None
         self.spotify_client_id: str = os.environ["SPOTIFY_CLIENT_ID"]
         self.spotify_client_secret: str = os.environ["SPOTIFY_CLIENT_SECRET"]
@@ -342,14 +351,18 @@ class CodingBot(commands.Bot):
         self.raid_mode_enabled = False
         self.raid_checker = AntiRaid(self)
         self.afk_cache: Dict[int, Dict[int, Tuple[str, int]]] = {}
+        self.version: Version = VERSION
+        self.logger: logging.Logger = create_logger("CodingBot")
 
     async def setup_hook(self) -> None:
         self.raid_checker.check_for_raid.start()
         for filename in os.listdir("./cogs"):
             if filename.endswith(".py"):
                 await self.load_extension(f"cogs.{filename[:-3]}")
+                self.logger.info(f"Loaded {filename.title()} Cog")
         os.environ['JISHAKU_NO_UNDERSCORE'] = "True"
         await self.load_extension("jishaku")
+        self.logger.info("Loaded Jishaku Cog")
         jishaku = self.get_cog('Jishaku')
         if jishaku:
             jishaku.hidden = True
@@ -362,7 +375,7 @@ class CodingBot(commands.Bot):
     async def on_ready(self) -> None:
         await self.wait_until_ready()
         await self.tracker.cache_invites()
-        print("Ready")
+        self.logger.info(f"Coding Bot V6 is ready for action!")
 
     async def on_invite_create(self, invite: discord.Invite) -> None:
         await self.tracker.update_invite_cache(invite)

@@ -1,15 +1,15 @@
 from __future__ import annotations
 
 import random
+from io import BytesIO
 from textwrap import wrap
-
-import discord
-from ext.http import Http
-from ext.ui.view import *
-from discord.ext import commands
 from typing import TYPE_CHECKING, Optional
 
-from ext.helpers import get_rock
+import discord
+from discord.ext import commands
+from ext.helpers import create_trash_meme, get_rock
+from ext.http import Http
+from ext.ui.view import *
 
 if TYPE_CHECKING:
     from ext.models import CodingBot
@@ -21,6 +21,26 @@ class Fun(commands.Cog, command_attrs=dict(hidden=False)):
     def __init__(self, bot: CodingBot) -> None:
         self.http = Http(bot.session)
         self.bot = bot
+
+    @commands.command(name='trash')
+    async def trash(
+        self,
+        ctx: commands.Context[CodingBot],
+        *,
+        user: discord.Member
+    ):
+        """
+        See your or mentioned user's pp
+        Example: {prefix}pp @user
+        Example: {prefix}pp
+        """
+        resp1 = await ctx.author.display_avatar.read()
+        resp2 = await user.display_avatar.read()
+
+        avatar_one = BytesIO(resp1)
+        avatar_two = BytesIO(resp2)
+        file = await create_trash_meme(avatar_one, avatar_two)
+        await self.bot.send(ctx, file=file)
     
     @commands.hybrid_command()
     async def rock(self, ctx: commands.Context[CodingBot], *, query: Optional[str] = None):

@@ -62,7 +62,7 @@ class Http:
 
     @tasks.loop(minutes=5)
     async def update_data(self):
-        self.cache["piston"]["runtimes"] = await self.api["piston"]["runtimes"]()
+        self.cache["piston"]["runtimes"] = await self.get("https://emkc.org/api/v2/piston/runtimes", _json=True)
 
     # #/////////////////////////////////////////////////////////////////////////
     # # some-random-api

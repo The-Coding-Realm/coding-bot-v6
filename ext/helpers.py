@@ -56,7 +56,7 @@ async def check_invite(bot, content, channel=None):
         try:
             invite = await bot.fetch_invite(code)
         except discord.errors.NotFound:
-            invite = None  # invite is fine
+            invite = None
         if invite:
             if invite.guild.id not in whitelisted:
                 return True
@@ -113,6 +113,33 @@ def executor() -> Callable[[Callable[..., Any]], Any]:
             return loop.run_in_executor(None, thing)
         return inner
     return outer
+
+
+@executor()
+def create_trash_meme(
+    member_avatar: BytesIO,
+    author_avatar: BytesIO
+) -> discord.File:
+    image = Image.open('./storage/Trash.png')
+    background = Image.new('RGBA', image.size, color=(255, 255, 255, 0))
+
+    avatar_one = author_avatar
+    avatar_two = member_avatar
+
+    avatar_one_image = Image.open(avatar_one).resize((180, 180))
+    avatar_two_image = Image.open(avatar_two).resize(
+        (180, 180)).rotate(5, expand=True)
+
+    background.paste(avatar_one_image, (100, 190))
+    background.paste(avatar_two_image, (372, 77))
+    background.paste(image, (0, 0), image)
+
+    buffer = BytesIO()
+    background.save(buffer, format='PNG')
+    buffer.seek(0)
+    file = discord.File(buffer, filename='Trash.png')
+
+    return file
 
 
 class WelcomeBanner:

@@ -1,4 +1,8 @@
+from typing import NamedTuple
+
 import discord
+
+
 
 __all__ = (
     'INTENTS',
@@ -16,6 +20,28 @@ __all__ = (
     'THANK_DATA_CONFIG_SCHEMA',
     'MESSAGE_METRIC_SCHEMA',
     'TCR_STAFF_ROLE_ID',
+    'VERSION'
+)
+
+class Version(NamedTuple):
+    major: int
+    submajor: int
+    minor: int
+    release: str
+
+    def __str__(self) -> str:
+        return f"v{self.major}.{self.submajor}.{self.minor} [{self.release}]"
+    
+    def release_format(self):
+        return f"Version: `{self.major}.{self.submajor}.{self.minor}`\nPatch: `{self.release}`"
+
+
+
+VERSION = Version(
+    major=0,
+    submajor=0,
+    minor=1,
+    release="alpha"
 )
 
 INTENTS = discord.Intents(

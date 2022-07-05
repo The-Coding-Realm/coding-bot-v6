@@ -17,7 +17,6 @@ if TYPE_CHECKING:
     from ext.models import CodingBot
 
 
-
 def trainee_check():
     def wrapper(ctx: commands.Context[CodingBot]):
         trainee_role = ctx.guild.get_role(729537643951554583)  # type: ignore
@@ -41,19 +40,20 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
         #         self.category = _category[0]
         #         break
 
-    def check_member_permission(self, ctx: commands.Context[CodingBot], member: Union[discord.User, discord.Member]):
+    def check_member_permission(self, ctx: commands.Context[CodingBot], member: Union[discord.User, discord.Member], priv_level: int = 1):
         if isinstance(member, discord.User):
             return False
+
         assert ctx.guild is not None
         assert ctx.command is not None
 
-        if ctx.author.top_role.position <= member.top_role.position and ctx.author != ctx.guild.owner:
-            return f"You can't {ctx.command.name} this member. They have a higher or equal role than you."
-        elif member == ctx.author:
+        if member == ctx.author:
             return f"You can't {ctx.command.name} yourself."
         elif member == ctx.guild.owner:
             return f"You can't {ctx.command.name} the server owner."
-        elif ctx.guild.me.top_role.position <= member.top_role.position:
+        elif ctx.author.top_role.position <= member.top_role.position and ctx.author != ctx.guild.owner:
+            return f"You can't {ctx.command.name} this member. They have a higher or equal role than you."
+        elif ctx.guild.me.top_role.position <= member.top_role.position and priv_level:
             return f"I can't {ctx.command.name} this member. They have a higher or equal role than me."
 
         return False
@@ -186,7 +186,7 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
         assert ctx.guild is not None
         check_made = self.check_member_permission(ctx, member)
         if check_made:
-            return await self.bot.reply(ctx,check_made)
+            return await self.bot.reply(ctx, check_made)
         try:
             await member.send('You have been :boot: **Kicked** :boot: from '
                               f'**{ctx.guild.name}**. \nReason: {reason}')
@@ -211,7 +211,7 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
         assert ctx.guild is not None
         check_made = self.check_member_permission(ctx, member)
         if check_made:
-            return await self.bot.reply(ctx,check_made)
+            return await self.bot.reply(ctx, check_made)
         else:
             try:
                 await member.send('You have been :hammer: **Banned** :hammer: from '
@@ -287,7 +287,7 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
         """
         check_made = self.check_member_permission(ctx, member)
         if check_made:
-            return await self.bot.reply(ctx,check_made)
+            return await self.bot.reply(ctx, check_made)
         try:
             await member.timeout(None)
         except (discord.Forbidden, discord.HTTPException):
@@ -345,6 +345,9 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
         Example:
         {prefix}warn {user} broke rules
         """
+        check = self.check_member_permission(ctx, member, priv_level=0)
+        if check:
+            return await self.bot.reply(ctx, check)
         assert ctx.guild is not None
         if not reason:
             return await self.bot.reply(ctx,"Please provide a reason for the warning.")
@@ -390,17 +393,14 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
         assert ctx.guild is not None
         embed = discord.Embed(
             title=f"{member} Warnings List", color=discord.Color.red())
-        records = await self.bot.conn.select_record('warnings',
-                                                    arguments=(
-                                                        'reason', 'moderator_id', 'date'),
-                                                    table='warnings',
-                                                    where=(
-                                                        'guild_id', 'user_id'),
-                                                    values=(
-                                                        ctx.guild.id, member.id),  # type: ignore
-                                                    extras=[
-                                                        'ORDER BY date DESC']
-                                                    )
+        records = await self.bot.conn.select_record(
+            'warnings',
+            arguments=('reason', 'moderator_id', 'date'),
+            table='warnings',
+            where=('guild_id', 'user_id'),
+            values=(ctx.guild.id, member.id),  # type: ignore
+            extras=['ORDER BY date DESC']
+        )
         if not records:
             return await self.bot.reply(ctx,f'{member.mention} has no warnings.')
 
@@ -491,7 +491,7 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
             embed = discord.Embed(title="Member verified", description=f"{target.mention} was successfully verified")
             embed.set_footer(text=f"Command executed by {ctx.author}", icon_url=ctx.author.display_avatar.url)
             await target.add_roles(member)
-        await self.bot.reply(ctx,embed=embed)
+        await self.bot.reply(ctx, embed=embed)
 
     # FEEL FREE TO MOVE THIS TO ANY COGS (IF YOU ADD ONE)
 
@@ -525,7 +525,7 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
         embed.add_field(name="Discord Joined at",
                         value=target.joined_at, inline=False)
 
-        await self.bot.reply(ctx,embed=embed)
+        await self.bot.reply(ctx, embed=embed)
 
     @commands.hybrid_command(name="delete")
     @commands.has_permissions(manage_messages=True)
