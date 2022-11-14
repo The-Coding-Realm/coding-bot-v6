@@ -26,5 +26,5 @@ async def check_processing_commands(ctx: commands.Context[CodingBot]):
     return True
 
 
-TOKEN = 'ODYzODAxNzIxNzI0MzM4MTg3.G6Fknl.Kc0Oq1WYJhcOQwWFwNkLJsTlAoMxgh37iS8iVQ'
+TOKEN = os.getenv("TOKEN")
 bot.run(TOKEN)
