@@ -137,7 +137,7 @@ class ListenerCog(commands.Cog, command_attrs=dict(hidden=True)):
                 description=error.message,
                 color=discord.Color.red(),
             )
-            return await ctx.send(ctx,embed=embed, ephemeral=True)
+            return await ctx.send(embed=embed, ephemeral=True)
         elif isinstance(error, commands.CommandOnCooldown):
             embed = discord.Embed(
                 title="Command on Cooldown",

@@ -20,6 +20,7 @@ class TaskCog(commands.Cog, command_attrs=dict(hidden=True)):
 
     async def cog_load(self) -> None:
         self.status_change.start()
+        self.remove_inactive_warns.start()
 
     @tasks.loop(minutes=2)
     async def status_change(self):
@@ -49,6 +50,7 @@ class TaskCog(commands.Cog, command_attrs=dict(hidden=True)):
     @status_change.before_loop
     async def before_status_change(self):
         await self.bot.wait_until_ready()
+        self.bot.logger.info('Started task loop for Status Change')
 
     @tasks.loop(hours=24)
     async def remove_inactive_warns(self):
@@ -59,17 +61,23 @@ class TaskCog(commands.Cog, command_attrs=dict(hidden=True)):
             arguments=('date','user_id'),
             table='warnings',
             where=('guild_id',),
-            alues=(TCR_GUILD_ID,)
+            values=(TCR_GUILD_ID,)
         )
         now = datetime.datetime.utcnow().timestamp()
-        for record in records:
-            if record.date+(60*60*24*31) < now:
-                await self.bot.conn.delete_record(
-                    'warnings',
-                    table='warnings',
-                    where=('guild_id', 'user_id', 'date'),
-                    values=(TCR_GUILD_ID, record.user_id, record.date)
-                )
+        if records:
+            for record in records:
+                if record.date + (60*60*24*31) < now:
+                    await self.bot.conn.delete_record(
+                        'warnings',
+                        table='warnings',
+                        where=('guild_id', 'user_id', 'date'),
+                        values=(TCR_GUILD_ID, record.user_id, record.date)
+                    )
+
+    @remove_inactive_warns.before_loop
+    async def before_remove_inactive_warns(self):
+        await self.bot.wait_until_ready()
+        self.bot.logger.info('Started task loop for Remove Inactive Warns')
 
 async def setup(bot: CodingBot):
     await bot.add_cog(TaskCog(bot))

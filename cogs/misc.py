@@ -185,8 +185,8 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
         )
         await ctx.reply(f"{ctx.author.mention} you thanked {member.mention}!", ephemeral=True)
 
-    # NOTE: add check which allows only head helpers and admins to use this command
     @thank.command(name="show")
+    @commands.has_any_role(783909939311280129, 797688360806121522)
     async def thank_show(self, ctx: commands.Context[CodingBot], member: discord.Member):
         records = await self.bot.conn.select_record(
             'thanks',
@@ -197,7 +197,7 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
                 ),
             where=['user_id'],
             values=[member.id]
-            )
+        )
 
         if not records:
             return await ctx.reply(f"{member.mention} does not have any thanks.", ephemeral=True)
@@ -219,7 +219,7 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
 
                 giver = ctx.guild.get_member(giver_id)
 
-                embed.add_field(name=f'Thank: {thank_id}', value=f"Thank giver: {giver.mention}\nDate: <t:{date}:R>\nReason: {reason}\nThank given in: {channel.mention}\nMessage link: [Click here!]({msg_link})", inline=False)
+                embed.add_field(name=f'Thank: {thank_id}', value=f"Thank giver: {giver.mention}\nDate: <t:{timestamp}:R>\nReason: {reason}\nThank given in: {channel.mention}\nMessage link: [Click here!]({msg_link})", inline=False)
 
             embeds.append(embed)
 
@@ -233,8 +233,8 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
             await paginator.start()
 
 
-    # NOTE: add check which allows only head helpers and admins to use this command
     @thank.command(name="delete")
+    @commands.has_any_role(783909939311280129, 797688360806121522) 
     async def thank_delete(self, ctx: commands.Context[CodingBot], thank_id: str):
         record = await self.bot.conn.select_record(
             'thanks',
@@ -340,101 +340,101 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
             description=trainees,
             color=discord.Color.blue()
         )
-        await self.bot.reply(embed=embed)
+        await self.bot.reply(ctx, embed=embed)
 
-    @commands.hybrid_command(aliases=['sp'])
-    @commands.cooldown(5, 60.0, type=commands.BucketType.user)
-    async def spotify(self, ctx: commands.Context, member: discord.Member = None):
-        member = member or ctx.author
-        spotify = Spotify(bot=self.bot, member=member)
-        embed = await spotify.get_embed()
-        if not embed:
-            if member == ctx.author:
-                return await ctx.reply(f"You are currently not listening to spotify!", mention_author=False)
-            return await self.bot.reply(
-                ctx,
-                f"{member.mention} is not listening to Spotify", 
-                mention_author=False,
-                allowed_mentions=discord.AllowedMentions(users=False)
-            )
-        embed, file, view = embed
-        await self.bot.send(ctx, embed=embed, file=file, view=view)
+    # @commands.hybrid_command(aliases=['sp'])
+    # @commands.cooldown(5, 60.0, type=commands.BucketType.user)
+    # async def spotify(self, ctx: commands.Context, member: discord.Member = None):
+    #     member = member or ctx.author
+    #     spotify = Spotify(bot=self.bot, member=member)
+    #     embed = await spotify.get_embed()
+    #     if not embed:
+    #         if member == ctx.author:
+    #             return await ctx.reply(f"You are currently not listening to spotify!", mention_author=False)
+    #         return await self.bot.reply(
+    #             ctx,
+    #             f"{member.mention} is not listening to Spotify", 
+    #             mention_author=False,
+    #             allowed_mentions=discord.AllowedMentions(users=False)
+    #         )
+    #     embed, file, view = embed
+    #     await self.bot.send(ctx, embed=embed, file=file, view=view)
 
-    @commands.command(name='sauce')
-    async def sauce(self, ctx: commands.Context[CodingBot], source: Optional[str] = None):
-        """
-        Get the sauce of a source.
-        Example: {prefix}sauce <source>
-        """
-        source = source or ctx.message.attachments[0].url if ctx.message.attachments else None
-        if not source:
-            return await ctx.send(
-                'Please provide image/video url, '
-                'reply to another message or upload the image/video along with the command. '
-                f'Please use {ctx.prefix}help saucefor more information.')
+    # @commands.command(name='sauce')
+    # async def sauce(self, ctx: commands.Context[CodingBot], source: Optional[str] = None):
+    #     """
+    #     Get the sauce of a source.
+    #     Example: {prefix}sauce <source>
+    #     """
+    #     source = source or ctx.message.attachments[0].url if ctx.message.attachments else None
+    #     if not source:
+    #         return await ctx.send(
+    #             'Please provide image/video url, '
+    #             'reply to another message or upload the image/video along with the command. '
+    #             f'Please use {ctx.prefix}help saucefor more information.')
         
-        anime_information = await find_anime_source(self.bot.session, source)
+    #     anime_information = await find_anime_source(self.bot.session, source)
 
-        result = anime_information['result']
-        if not result:
-            return await ctx.send(
-                'Could not find any anime source for this image/video.'
-            )
-        else:
-            result = result[0]
+    #     result = anime_information['result']
+    #     if not result:
+    #         return await ctx.send(
+    #             'Could not find any anime source for this image/video.'
+    #         )
+    #     else:
+    #         result = result[0]
             
-        print(ctx.channel.is_nsfw())
-        print(result['anilist'].get('isAdult'))
+    #     print(ctx.channel.is_nsfw())
+    #     print(result['anilist'].get('isAdult'))
 
-        if result['anilist'].get('isAdult') and not ctx.channel.is_nsfw():
-            await ctx.send(
-                'This source is marked as adult content and can only be used in NSFW channels. I Will try to DM you instead.'
-            )
-            ctx = ctx.author
+    #     if result['anilist'].get('isAdult') and not ctx.channel.is_nsfw():
+    #         await ctx.send(
+    #             'This source is marked as adult content and can only be used in NSFW channels. I Will try to DM you instead.'
+    #         )
+    #         ctx = ctx.author
     
-        browser = "https://trace.moe/?url={}".format(source)
+    #     browser = "https://trace.moe/?url={}".format(source)
 
-        anilist_id = result['anilist']['id']
-        mal_id = result['anilist']['idMal']
+    #     anilist_id = result['anilist']['id']
+    #     mal_id = result['anilist']['idMal']
 
-        anilist_url = f'https://anilist.co/anime/{anilist_id}'
-        anilist_banner = f"https://img.anili.st/media/{anilist_id}"
-        mal_url = f'https://myanimelist.net/anime/{mal_id}'
+    #     anilist_url = f'https://anilist.co/anime/{anilist_id}'
+    #     anilist_banner = f"https://img.anili.st/media/{anilist_id}"
+    #     mal_url = f'https://myanimelist.net/anime/{mal_id}'
 
-        native = result['anilist']['title'].get('native')
-        english = result['anilist']['title'].get('english')
-        romaji = result['anilist']['title'].get('romaji')
+    #     native = result['anilist']['title'].get('native')
+    #     english = result['anilist']['title'].get('english')
+    #     romaji = result['anilist']['title'].get('romaji')
 
-        filename = result['filename']
-        similarity = round(result['similarity'] * 100, 2)
+    #     filename = result['filename']
+    #     similarity = round(result['similarity'] * 100, 2)
 
-        from_timestamp = timedelta(seconds=int(result['from']))
-        to_timestamp = timedelta(seconds=int(result['to']))
+    #     from_timestamp = timedelta(seconds=int(result['from']))
+    #     to_timestamp = timedelta(seconds=int(result['to']))
         
-        embed = discord.Embed(timestamp=discord.utils.utcnow())
-        embed.add_field(
-            name="Anime Title", 
-            value=f"Native: {native}\nEnglish: {english}\nRomaji: {romaji}", 
-            inline=False
-        )
-        embed.add_field(
-            name="Scene Details",
-            value=f"**Filename:** {filename}\n**From:** {from_timestamp}\n**To:** {to_timestamp}\n**Similarity:** {similarity}%",
-            inline=False
-        )
-        embed.add_field(
-            name="Links",
-            value="[Open In Browser]({}) | [AniList]({}) | [MyAnimeList]({})".format(
-                browser, anilist_url, mal_url
-            ),
-            inline=False
+    #     embed = discord.Embed(timestamp=discord.utils.utcnow())
+    #     embed.add_field(
+    #         name="Anime Title", 
+    #         value=f"Native: {native}\nEnglish: {english}\nRomaji: {romaji}", 
+    #         inline=False
+    #     )
+    #     embed.add_field(
+    #         name="Scene Details",
+    #         value=f"**Filename:** {filename}\n**From:** {from_timestamp}\n**To:** {to_timestamp}\n**Similarity:** {similarity}%",
+    #         inline=False
+    #     )
+    #     embed.add_field(
+    #         name="Links",
+    #         value="[Open In Browser]({}) | [AniList]({}) | [MyAnimeList]({})".format(
+    #             browser, anilist_url, mal_url
+    #         ),
+    #         inline=False
 
-        )
-        embed.set_image(url=anilist_banner)
-        try:
-            await ctx.send(embed=embed)
-        except (discord.HTTPException, discord.Forbidden):
-            pass
+    #     )
+    #     embed.set_image(url=anilist_banner)
+    #     try:
+    #         await ctx.send(embed=embed)
+    #     except (discord.HTTPException, discord.Forbidden):
+    #         pass
 
             
 async def setup(bot: CodingBot):
