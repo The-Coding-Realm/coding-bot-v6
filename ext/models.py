@@ -397,36 +397,36 @@ class CodingBot(commands.Bot):
         if banned:
             return
 
-        # rules = member.guild.rules_channel
-        # if rules:
-        #     rules_channel = rules.mention
-        # else:
-        #     rules_channel = "No official rule channel set yet."
-        # embed = discord.Embed(
-        #     title=f"Welcome to {member.guild.name}!",
-        #     description=(
+        rules = member.guild.rules_channel
+        if rules:
+            rules_channel = rules.mention
+        else:
+            rules_channel = "No official rule channel set yet."
+        embed = discord.Embed(
+            title=f"Welcome to {member.guild.name}!",
+            description=(
 
-        #         f'Welcome {member.mention}, we\'re glad you joined! Before you get'
-        #         ' started, here are some things to check out: \n**Read the Rules:'
-        #         f'** {rules_channel} \n**Get roles:** <#726074137168183356> and '
-        #         '<#806909970482069556> \n**Want help? Read here:** '
-        #         '<#799527165863395338> and <#754712400757784709>'),
-        #     timestamp=dt.datetime.now(dt.timezone.utc)
-        # )
-        # file = await self.welcomer.construct_image(member=member)
-        # channel = member.guild.get_channel(self.welcomer_channel_id)
-        # verify_here = member.guild.get_channel(759220767711297566)
+                f'Welcome {member.mention}, we\'re glad you joined! Before you get'
+                ' started, here are some things to check out: \n**Read the Rules:'
+                f'** {rules_channel} \n**Get roles:** <#726074137168183356> and '
+                '<#806909970482069556> \n**Want help? Read here:** '
+                '<#799527165863395338> and <#754712400757784709>'),
+            timestamp=dt.datetime.now(dt.timezone.utc)
+        )
+        file = await self.welcomer.construct_image(member=member)
+        channel = member.guild.get_channel(self.welcomer_channel_id)
+        verify_here = member.guild.get_channel(759220767711297566)
 
-        # # Assertions for narrowing types
-        # assert channel is not None
-        # assert verify_here is not None
+        # Assertions for narrowing types
+        assert channel is not None
+        assert verify_here is not None
 
-        # # type: ignore  # Always a Messageable
-        # await channel.send(content=member.mention, file=file)
-        # await verify_here.send(  # type: ignore  # Always a Messageable
-        #     f'Welcome {member.mention}! Follow the instructions in other channels to get verified. :)',
-        #     embed=embed
-        # )
+        # type: ignore  # Always a Messageable
+        await channel.send(content=member.mention, file=file)
+        await verify_here.send(  # type: ignore  # Always a Messageable
+            f'Welcome {member.mention}! Follow the instructions in other channels to get verified. :)',
+            embed=embed
+        )
 
     async def on_error(self, event_method: str, *args: Any, **kwargs: Any):
         await log_error(self, event_method, *args, **kwargs)

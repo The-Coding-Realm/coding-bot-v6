@@ -229,7 +229,7 @@ class WelcomeBanner:
             except:
                 pass
         ago = dt.datetime.now(dt.timezone.utc) - member.created_at
-        img = BytesIO(await member.avatar.with_format("png").with_size(128).read())
+        img = BytesIO(await member.display_avatar.with_format("png").with_size(128).read())
         try:
             banner = BytesIO(await member.guild.banner.with_format("png").with_size(512).read())
         except AttributeError:
