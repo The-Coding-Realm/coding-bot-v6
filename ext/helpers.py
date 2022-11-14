@@ -56,7 +56,7 @@ async def check_invite(bot, content, channel=None):
         try:
             invite = await bot.fetch_invite(code)
         except discord.errors.NotFound:
-            invite = None  # invite is fine
+            invite = None
         if invite:
             if invite.guild.id not in whitelisted:
                 return True
@@ -113,6 +113,33 @@ def executor() -> Callable[[Callable[..., Any]], Any]:
             return loop.run_in_executor(None, thing)
         return inner
     return outer
+
+
+@executor()
+def create_trash_meme(
+    member_avatar: BytesIO,
+    author_avatar: BytesIO
+) -> discord.File:
+    image = Image.open('./storage/Trash.png')
+    background = Image.new('RGBA', image.size, color=(255, 255, 255, 0))
+
+    avatar_one = author_avatar
+    avatar_two = member_avatar
+
+    avatar_one_image = Image.open(avatar_one).resize((180, 180))
+    avatar_two_image = Image.open(avatar_two).resize(
+        (180, 180)).rotate(5, expand=True)
+
+    background.paste(avatar_one_image, (100, 190))
+    background.paste(avatar_two_image, (372, 77))
+    background.paste(image, (0, 0), image)
+
+    buffer = BytesIO()
+    background.save(buffer, format='PNG')
+    buffer.seek(0)
+    file = discord.File(buffer, filename='Trash.png')
+
+    return file
 
 
 class WelcomeBanner:
@@ -634,13 +661,14 @@ class AntiRaid:
         """
         if not self.bot.raid_mode_enabled:
             self.cache.add(member)
+            print(self.cache)
             return False
         else:
             if self.check(member):
                 await member.ban(reason="Raid mode checks met")
                 return True
             else:
-                channel = self.bot.get_channel(725747917494812715)
+                channel = self.bot.get_channel(984420447401676811)
                 assert channel is not None
 
                 await channel.send(f"{member.mention} is highly unlikely to be part of the raid, skipping user.\nReason: Failed the raid mode checks")
@@ -650,8 +678,8 @@ class AntiRaid:
         """
         Notifies the staff about the raid mode
         """
-        channel = self.bot.get_channel(735864475994816576) # actual: 735864475994816576 test: 964165082437263361
-        embed = discord.Embed(title="A possible raid has been detected!", color=discord.Color.gold())
+        channel = self.bot.get_channel(984420447401676811) # actual: 735864475994816576 test: 964165082437263361
+        embed = discord.Embed(description="", title="A possible raid has been detected!", color=discord.Color.gold())
         embed.description += f"""\nThe criteria is detected to be `{self.raid_mode_criteria} ± 1` days
             Use `{self.bot.command_prefix[0]}raid-mode enable` after making sure this is not a false positive to enable raid mode!
             Upon usage of the command, the bot will automatically ban users who have been created within this time.
@@ -662,7 +690,7 @@ class AntiRaid:
 
         )
             
-    @tasks.loop(seconds=5)
+    @tasks.loop(seconds=20)
     async def check_for_raid(self):
         """
         Checks if the member is in the cache
