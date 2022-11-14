@@ -13,7 +13,7 @@ enable_virual_env () {
     fi
     echo "-----------------------------"
     pip install -r requirements.txt --quiet --exists-action i
-    python3.10 main.py
+    python3 main.py
     
 }
 

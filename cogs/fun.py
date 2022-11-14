@@ -75,7 +75,7 @@ class Fun(commands.Cog, command_attrs=dict(hidden=False)):
         number = await (
             self.http.api["numbers"]["random"]()
             if (number is None)
-            else self.api["numbers"]["number"](number)
+            else self.http.api["numbers"]["number"](number)
         )
         embed = await self.bot.embed(
             title=f"**{number}**",

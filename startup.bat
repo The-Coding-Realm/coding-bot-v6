@@ -2,8 +2,7 @@
 
 :: Check for Python Installation
 py -3.10 > NUL 
-if errorlevel 1 goto errorNoPylauncher
-else goto pyLauncherScript
+if errorlevel 1 (goto errorNoPylauncher) else (goto pyLauncherScript)
 
 :pyLauncherScript
     :: Reaching here means Python is installed.
@@ -53,8 +52,7 @@ goto:eof
 
 :errorNoPylauncher
     python --version | findstr 3.10 > NUL
-    if errorlevel 1 goto errorNoPython
-    else goto pythonScript
+    if errorlevel 1 (goto errorNoPython) else (goto pythonScript)
 
 :errorNoPython
     echo "Python 3.10 is not installed."
