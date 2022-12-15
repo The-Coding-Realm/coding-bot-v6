@@ -220,7 +220,7 @@ class ListenerCog(commands.Cog, command_attrs=dict(hidden=True)):
 
     @commands.Cog.listener('on_message')
     async def repo_mention(self, message: discord.Message):
-        if 'discord.py' in message.content:
+        if 'discord.py' in message.content and not message.author.bot:
             regex = re.search(r'Rapptz/discord.py(#\d+)?', message.content)
             if regex:
                 base_link = "https://github.com/Rapptz/discord.py"
