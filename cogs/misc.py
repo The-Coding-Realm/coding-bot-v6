@@ -36,6 +36,22 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
         await ctx.send("Please use commands in the server instead of dms")
         return False
 
+    @commands.hybrid_command(name='retry', aliases=['re'], help="Re-execute a command by replying to a message")
+    async def retry(self, ctx: commands.Context[CodingBot]):
+        """
+        Reinvoke a command, running it again. This does NOT bypass any permissions checks | Code from v4
+        """
+        try:
+            message = await ctx.channel.fetch_message(ctx.message.reference.message_id)
+        except discord.errors.NotFound:
+            return await ctx.send('I couldn\'t find that message')
+        if message.author == ctx.author:
+            await ctx.message.add_reaction('\U00002705')
+            context = await self.bot.get_context(message)
+            await self.bot.invoke(context)
+        else:
+            await ctx.send(embed='That isn\'t your message')
+    
     @commands.hybrid_command(name="afk", aliases = ["afk-set", "set-afk"], help = "Sets your afk")
     @commands.cooldown(1, 10, commands.BucketType.member)
     async def afk(self, ctx: commands.Context[CodingBot], *, reason: Optional[str] = None):
