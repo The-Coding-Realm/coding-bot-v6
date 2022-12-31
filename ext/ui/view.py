@@ -199,6 +199,10 @@ class Piston(discord.ui.View):
             self.page -= 1
         return
 
+    @ui.button(label="Delete", custom_id="delete", style=discord.ButtonStyle.danger, row=2)
+    async def _delete(self, interaction: discord.Interaction, button: discord.Button):
+        self.stop()
+        await self.msg.delete()
 
 class ConfirmButton(ui.View):
     if TYPE_CHECKING:
