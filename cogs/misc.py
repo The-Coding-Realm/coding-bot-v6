@@ -140,6 +140,7 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
                 code,
                 lang,
                 msg,
+                ctx.author,
             ),
         )
 
