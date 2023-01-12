@@ -78,7 +78,8 @@ class Piston(discord.ui.View):
         cog: commands.Cog, 
         code: str, 
         language: str, 
-        message: discord.Message
+        message: discord.Message,
+        author: discord.Member
     ) -> None:
 
         self.code = code
@@ -88,6 +89,7 @@ class Piston(discord.ui.View):
         self.is_compiled = False
         self.output = []
         self.msg = message
+        self.author = author
         self.page = 0
         super().__init__()
         self.timer.start()
@@ -204,6 +206,11 @@ class Piston(discord.ui.View):
         self.stop()
         await self.msg.delete()
 
+    async def interaction_check(self, interaction):
+        if interaction.author == self.author:
+            return True
+        return False
+        
 class ConfirmButton(ui.View):
     if TYPE_CHECKING:
         message: discord.Message
