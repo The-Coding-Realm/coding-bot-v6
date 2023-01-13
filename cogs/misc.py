@@ -281,7 +281,7 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
         )
         await ctx.send(f"Remove thank from <@{user_id}> with id {thank_id}")
 
-    @thank.command(name="leaderboard")
+    @thank.command(name="leaderboard", aliases=['lb'])
     async def thank_leaderboard(self, ctx: commands.Context[CodingBot]):
         """
         Shows the thanks leaderboard.
@@ -319,12 +319,15 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
             )
             embeds.append(embed)
         if len(embeds) == 1:
-            await self.bot.reply(ctx, embed=embeds[0])
+            paginator = pg.Paginator(self.bot, embeds, ctx)
+            paginator.add_button("delete", label="Delete", style=discord.ButtonStyle.danger)
+            await paginator.start()
         else:
             paginator = pg.Paginator(self.bot, embeds, ctx)
             paginator.add_button("back", emoji="◀️")
             paginator.add_button("goto", style=discord.ButtonStyle.primary)
             paginator.add_button("next", emoji="▶️")
+            paginator.add_button("delete", label="Delete", style=discord.ButtonStyle.danger)
             await paginator.start()
 
 
