@@ -204,6 +204,20 @@ class ListenerCog(commands.Cog, command_attrs=dict(hidden=True)):
             values=values,
         )
 
+    @commands.Cog.listener('on_message_edit')
+    async def invite_in_message(self, _: discord.Message, after: discord.Message):
+        """
+        Responsible for tracking member joins.
+        """
+        if after.author.bot or not after.guild:
+            return
+        perms = after.channel.permissions_for(after.author).manage_guild
+        if (await check_invite(self.bot, after.content, after.channel)) and (not perms):
+            invite_regex = "(?:https?://)?discord(?:app)?\.(?:com/invite|gg)/[a-zA-Z0-9]+/?"
+            if re.search(invite_regex, after.content):
+                await after.delete()
+                return await after.channel.send("Please don't send invite links in this server!")
+        
     @commands.Cog.listener('on_message')
     async def invite_in_message(self, message: discord.Message):
         """
@@ -212,9 +226,9 @@ class ListenerCog(commands.Cog, command_attrs=dict(hidden=True)):
         if message.author.bot or not message.guild:
             return
         perms = message.channel.permissions_for(message.author).manage_guild
-        if (await check_invite(self.bot, message.content, message.channel)) or (perms):
+        if (await check_invite(self.bot, message.content, message.channel)) and (not perms):
             invite_regex = "(?:https?://)?discord(?:app)?\.(?:com/invite|gg)/[a-zA-Z0-9]+/?"
-            if re.search(invite_regex, message.content):
+            if re.search(invite_regex, message.content): # `check_invite` already checks if there is an invite, why are we checking again?
                 await message.delete()
                 return await message.channel.send("Please don't send invite links in this server!")
 
