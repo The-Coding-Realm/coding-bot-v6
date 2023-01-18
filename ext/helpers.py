@@ -27,11 +27,10 @@ if TYPE_CHECKING:
     from ext.models import CodingBot
 
 
-async def check_invite(bot, content, channel=None):
+async def check_invite(bot, content, channel):
     # content = discord.utils.remove_markdown(content)
 
     whitelisted = [
-                    channel.guild.id if channel else None,
                     681882711945641997,  # TCA
                     782903894468198450,  # Swasville
                     336642139381301249,  # Discord.py
@@ -45,12 +44,11 @@ async def check_invite(bot, content, channel=None):
         r'discord(?:(?:(?:app)?\.com)\/invite|\.gg)/([a-zA-z0-9\-]{2,})\b')
     matches = re.findall(pattern, content, re.MULTILINE)
     if channel.id in [
-        754992725480439809,
-        801641781028454420,
-        727029474767667322
+        754992725480439809, # self-advertising
+        727029474767667322, # partnerships
     ]:
         return False
-    if len(matches) > 5:
+    if len(matches) > 5: # why 5?
         return True
     for code in matches:
         try:
