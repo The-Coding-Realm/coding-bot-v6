@@ -14,8 +14,8 @@ class Http:
             },
             # //////////////////////////////////////////////////////////////////////////////////////
             "rock": {
-                "random": lambda: self.get("https://mrconos.pythonanywhere.com/rock/random", _json=True),
-                "top": lambda: self.get("https://mrconos.pythonanywhere.com/rock/top"),
+                "random": lambda: self.get("https://rockapi.apiworks.tech/rock/random", _json=True),
+                "top": lambda: self.get("https://rockapi.apiworks.tech/rock/top"),
             },
             "numbers": {
                 "random": lambda _type="trivia": self.api["numbers"]["random_"+_type](),
@@ -55,6 +55,9 @@ class Http:
                     "brightness": lambda pfp: f"https://some-random-api.ml/canvas/brightness?avatar={pfp}",
                     "threshold": lambda pfp: f"https://some-random-api.ml/canvas/threshold?avatar={pfp}",
                 }
+            },
+            "joke": {
+                "api": "https://v2.jokeapi.dev/joke/Programming"
             }
         }
 
