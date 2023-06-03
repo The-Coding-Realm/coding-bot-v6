@@ -183,7 +183,7 @@ class Fun(commands.Cog, command_attrs=dict(hidden=False)):
             return await self.bot.reply(ctx, "The binary is an invalid length.")
         binary = binary.replace(" ", "")
         string = "".join(chr(int(binary[i:i+8], 2)) for i in range(0, len(binary), 8))
-        embed = discord.Embed(title="Encoded to binary", description=string, color=discord.Color.random())
+        embed = discord.Embed(title="Decoded from binary", description=string, color=discord.Color.random())
         embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url)
             
         await self.bot.reply(ctx,embed=embed)
