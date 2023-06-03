@@ -15,62 +15,6 @@ if TYPE_CHECKING:
     from ext.models import CodingBot
 
 
-class Rocks(discord.ui.View):
-    def __init__(self, *, cog, embed_gen, stars, embed):
-        self.cog = cog
-        self.embed_gen = embed_gen
-        self.pages = [
-            (embed, stars),
-        ]
-        self.page = 0
-        super().__init__()
-        for child in self.children:
-            if child.custom_id == "stars_count":
-                child.label = "⭐" * stars if stars else "o"
-
-    @discord.ui.button(label="-", custom_id="stars_count")
-    async def stars_hud(self, interaction, button):
-        pass
-
-    @discord.ui.button(label="<", custom_id="prev", disabled=True)
-    async def prev_rock(self, interaction, button):
-        if self.page == 0:
-            button.disabled = True
-            return await interaction.response.edit_message(view=self)
-        self.page -= 1
-        data = self.pages[self.page * -1]
-        self.stars = data[1]
-        for child in self.children:
-            if child.custom_id == "stars_count":
-                child.label = "⭐" * self.stars if self.stars else "o"
-            elif child.custom_id == "next":
-                if self.page + 1 < len(self.pages):
-                    child.Style = discord.ButtonStyle.gray
-        return await interaction.response.edit_message(
-            embed=data[0], view=self
-        )
-
-    @discord.ui.button(
-        label=">", custom_id="next", style=discord.ButtonStyle.green
-    )
-    async def next_rock(self, interaction, button):
-        if self.page + 1 == len(self.pages):
-            button.Style = discord.ButtonStyle.green
-            await self.gen()
-        self.page += 1
-        data = self.pages[self.page]
-        self.stars = data[1]
-        for child in self.children:
-            if child.custom_id == "stars_count":
-                child.label = "⭐" * self.stars if self.stars else "o"
-            elif child.custom_id == "prev":
-                child.disabled = False
-        await interaction.response.edit_message(embed=data[0], view=self)
-
-    async def gen(self):
-        self.pages.append(await self.embed_gen(self.cog))
-
-
 class Piston(discord.ui.View):
     
     def __init__(
