@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import random
+import base64
 from io import BytesIO
 from textwrap import wrap
 from typing import TYPE_CHECKING, Optional
@@ -127,12 +128,15 @@ class Fun(commands.Cog, command_attrs=dict(hidden=False)):
 
     @commands.hybrid_command(name="token")
     async def token(self, ctx: commands.Context[CodingBot]):
-        response = await self.http.api["some-random-api"]["bottoken"]()
-        json = await response.json()
+        first_string = ctx.author.id
+        last_string = random.randint(1000000000,9999999999)
 
-        bottoken = json['token']
+        token1 = base64.b64encode(f"{first_string}".encode("utf-8")).decode("utf-8")
+        token2 = base64.b64encode(f"{last_string}".encode("utf-8")).decode("utf-8")
 
-        embed = discord.Embed(title="Ha ha ha, I grabbed your bot token.", description=bottoken, color=discord.Color.random())
+        final_token = f"{token1}.{token2}"
+
+        embed = discord.Embed(title="Ha ha ha, I grabbed your bot token.", description=final_token, color=discord.Color.random())
         embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url)
         await self.bot.reply(ctx, embed=embed)
 
