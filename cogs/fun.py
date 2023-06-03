@@ -102,13 +102,33 @@ class Fun(commands.Cog, command_attrs=dict(hidden=False)):
 
     @commands.hybrid_command(name="joke")
     async def joke(self, ctx: commands.Context[CodingBot]):
-        response = await self.http.api["some-random-api"]["joke"]()
-        joke = response['joke']
+        joke_json = await self.http.api["get"]["joke"]["api"]()
+        
+        parts = joke_json['type']
+        
+        if parts == "single":
 
-        embed = discord.Embed(title="He're a joke", description=joke)
-        embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url)
+            joke = joke_json['joke']
 
-        await self.bot.reply(ctx, embed=embed)
+            embed = self.bot.embed(
+                title = "Here's a joke for you:",
+                description = joke,
+                color = discord.Color.random()
+            )
+            
+            return await self.bot.reply(ctx, embed=embed)
+        
+        else:
+            setup = joke_json['setup']
+            delivery = joke_json['delivery']
+        
+            embed = self.bot.embed(
+                title = "Here's a joke for you:",
+                description = f"{setup}\n\n||{delivery}||",
+                color = discord.Color.random()
+            )
+            await self.bot.reply(ctx, embed=embed)
+        
 
     @commands.hybrid_command(name="8ball")
     async def eightball(self, ctx: commands.Context[CodingBot], *, question: str):

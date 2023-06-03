@@ -55,6 +55,9 @@ class Http:
                     "brightness": lambda pfp: f"https://some-random-api.ml/canvas/brightness?avatar={pfp}",
                     "threshold": lambda pfp: f"https://some-random-api.ml/canvas/threshold?avatar={pfp}",
                 }
+            },
+            "joke": {
+                "api": "https://v2.jokeapi.dev/joke/Programming"
             }
         }
 
