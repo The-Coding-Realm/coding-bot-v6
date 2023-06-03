@@ -32,7 +32,6 @@ async def check_invite(bot, content, channel):
 
     whitelisted = [
                     681882711945641997,  # TCA
-                    782903894468198450,  # Swasville
                     336642139381301249,  # Discord.py
                     222078108977594368,  # Discord.js
                     881207955029110855,  # Pycord

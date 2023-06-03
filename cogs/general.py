@@ -111,12 +111,26 @@ class General(commands.Cog, command_attrs=dict(hidden=False)):
 
     @commands.hybrid_group(invoke_without_command=True)
     async def avatar(self, ctx: commands.Context[CodingBot]):
+        """
+        Commands for getting avatars.
+        
+        Usage:
+        ------
+        `{prefix}avatar` *will send a list of available methods*
+        """
         embed = discord.Embed(title="Avatar command", description="Available methods: `main`, `display`")
         embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url)
         await self.bot.reply(ctx,embed=embed)
 
     @avatar.command(name="main")
     async def avatar_main(self, ctx: commands.Context[CodingBot], member: discord.Member):
+        """
+        Returns the main avatar of a user.
+
+        Usage:
+        ------
+        `{prefix}avatar main [user]` *will send the main avatar of the user*
+        """
         embed = discord.Embed(title=f"{member}'s Main Avatar", description=f"Showing {member.mention}'s Main Avatar", color=discord.Color.random())
         embed.set_image(url=member.avatar.url)
         embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url)
@@ -124,6 +138,13 @@ class General(commands.Cog, command_attrs=dict(hidden=False)):
 
     @avatar.command(name="display")
     async def avatar_display(self, ctx: commands.Context[CodingBot], member: discord.Member):
+        """
+        Returns the display avatar of a user.
+
+        Usage:
+        ------
+        `{prefix}avatar display [user]` *will send the display avatar of the user*
+        """
         embed = discord.Embed(title=f"{member}'s Avatar", description=f"Showing {member.mention}'s Avatar", color=discord.Color.random())
         embed.set_image(url=member.display_avatar.url)
         embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url)

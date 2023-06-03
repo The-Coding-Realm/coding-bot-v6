@@ -227,7 +227,13 @@ class Helper(commands.Cog, command_attrs=dict(hidden=False)):
         ctx: commands.Context[CodingBot], 
         member: discord.Member
     ) -> None:
-    
+        """
+        Shows a list of help warnings for a member.
+
+        Usage:
+        {prefix}helper warnings <member>
+        
+        """
         embed = discord.Embed(
             title=f"{member} Help warnings List", color=discord.Color.red())
         records = await self.bot.conn.select_record(
@@ -252,13 +258,19 @@ class Helper(commands.Cog, command_attrs=dict(hidden=False)):
 
         await self.bot.reply(ctx,embed=embed)
 
-    @helper.command(name="clearwarning")
+    @helper.command(name="clearwarning", aliases = ['chw'])
     async def help_clearwarning(
         self, 
         ctx: commands.Context[CodingBot], 
         member: discord.Member, 
         index: int = None
     ) -> None:
+        """
+        Clears a help warning from a member.
+
+        Usage:
+        {prefix}helper clearwarning <member> [index]
+        """
         warn = None
 
         target = member or ctx.author
@@ -304,7 +316,12 @@ class Helper(commands.Cog, command_attrs=dict(hidden=False)):
         *,
         reason: str
     ) -> None:
+        """
+        Ban someone from help channels
 
+        Usage:
+        {prefix}helper ban <member> <reason>
+        """
         help_ban_role = ctx.guild.get_role(HELP_BAN_ROLE_ID)
         read_help_rules_role = ctx.guild.get_role(READ_HELP_RULES_ROLE_ID)
         if help_ban_role in member.roles:
@@ -327,7 +344,12 @@ class Helper(commands.Cog, command_attrs=dict(hidden=False)):
         ctx: commands.Context[CodingBot], 
         member: discord.Member
     ) -> None:
+        """
+        Unban someone from help channels
 
+        Usage:
+        {prefix}helper unban <member>
+        """
         help_ban_role = ctx.guild.get_role(HELP_BAN_ROLE_ID)
         read_help_rules_role = ctx.guild.get_role(READ_HELP_RULES_ROLE_ID)
         if not help_ban_role in member.roles:
@@ -351,7 +373,12 @@ class Helper(commands.Cog, command_attrs=dict(hidden=False)):
         ctx: commands.Context[CodingBot], 
         target: discord.Member
     ) -> None:
+        """
+        Help verify a member
 
+        Usage:
+        {prefix}helper verify <member>
+        """
         read_help_rules_role = ctx.guild.get_role(READ_HELP_RULES_ROLE_ID)
 
         if read_help_rules_role in target.roles:

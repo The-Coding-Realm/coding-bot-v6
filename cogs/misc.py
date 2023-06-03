@@ -66,8 +66,7 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
         assert isinstance(ctx.author, discord.Member)
         assert ctx.guild is not None
 
-        if not reason:
-            reason = "AFK"
+        reason = reason or "AFK"
         member = ctx.author
         staff_role = ctx.guild.get_role(795145820210462771)
         on_pat_staff = member.guild.get_role(726441123966484600) # "on_patrol_staff" role
@@ -147,6 +146,13 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
     @commands.hybrid_group(name="thanks", invoke_without_command=True)
     @commands.cooldown(1, 10, commands.BucketType.member)
     async def thanks(self, ctx: commands.Context[CodingBot], member: discord.Member):
+        """
+        See how many thanks someone has.
+
+        Usage:
+        ------
+        `{prefix}thanks {user}`: *will show how many thanks user has*
+        """
         record = await self.bot.conn.select_record(
             'thanks',
             table='thanks_info',
@@ -205,6 +211,13 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
     @thank.command(name="show")
     @commands.has_any_role(783909939311280129, 797688360806121522)
     async def thank_show(self, ctx: commands.Context[CodingBot], member: discord.Member):
+        """
+        Show the thanks information of a user.
+
+        Usage:
+        ------
+        `{prefix}thank show {user}`: *will show the thanks information of user*
+        """
         records = await self.bot.conn.select_record(
             'thanks',
             table='thanks_data',
@@ -253,6 +266,14 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
     @thank.command(name="delete")
     @commands.has_any_role(783909939311280129, 797688360806121522) 
     async def thank_delete(self, ctx: commands.Context[CodingBot], thank_id: str):
+        """
+        Delete a thank.
+
+        Usage:
+        ------
+        `{prefix}thank delete [thank_id]`: *will delete the thank with the id [thank_id]*
+        
+        """
         record = await self.bot.conn.select_record(
             'thanks',
             table='thanks_data',
@@ -333,6 +354,9 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
 
     @commands.hybrid_group(invoke_without_command=True)
     async def trainee(self, ctx: commands.Context[CodingBot]):
+        """
+        Sends the trainee help menu.
+        """
         await ctx.send_help('trainee')
 
     @trainee.command(name="list")
@@ -362,23 +386,31 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
         )
         await self.bot.reply(ctx, embed=embed)
 
-    # @commands.hybrid_command(aliases=['sp'])
-    # @commands.cooldown(5, 60.0, type=commands.BucketType.user)
-    # async def spotify(self, ctx: commands.Context, member: discord.Member = None):
-    #     member = member or ctx.author
-    #     spotify = Spotify(bot=self.bot, member=member)
-    #     embed = await spotify.get_embed()
-    #     if not embed:
-    #         if member == ctx.author:
-    #             return await ctx.reply(f"You are currently not listening to spotify!", mention_author=False)
-    #         return await self.bot.reply(
-    #             ctx,
-    #             f"{member.mention} is not listening to Spotify", 
-    #             mention_author=False,
-    #             allowed_mentions=discord.AllowedMentions(users=False)
-    #         )
-    #     embed, file, view = embed
-    #     await self.bot.send(ctx, embed=embed, file=file, view=view)
+    @commands.hybrid_command(aliases=['sp'])
+    @commands.cooldown(5, 60.0, type=commands.BucketType.user)
+    async def spotify(self, ctx: commands.Context, member: discord.Member = None):
+        """
+        Shows the spotify status of a member.
+
+        Usage:
+        ------
+        `{prefix}spotify`: *will show your spotify status*
+        `{prefix}spotify [member]`: *will show the spotify status of [member]*
+        """
+        member = member or ctx.author
+        spotify = Spotify(bot=self.bot, member=member)
+        embed = await spotify.get_embed()
+        if not embed:
+            if member == ctx.author:
+                return await ctx.reply(f"You are currently not listening to spotify!", mention_author=False)
+            return await self.bot.reply(
+                ctx,
+                f"{member.mention} is not listening to Spotify", 
+                mention_author=False,
+                allowed_mentions=discord.AllowedMentions(users=False)
+            )
+        embed, file, view = embed
+        await self.bot.send(ctx, embed=embed, file=file, view=view)
 
     # @commands.command(name='sauce')
     # async def sauce(self, ctx: commands.Context[CodingBot], source: Optional[str] = None):
@@ -433,7 +465,7 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
         
     #     embed = discord.Embed(timestamp=discord.utils.utcnow())
     #     embed.add_field(
-    #         name="Anime Title", 
+    #         name="Anime Title", DD
     #         value=f"Native: {native}\nEnglish: {english}\nRomaji: {romaji}", 
     #         inline=False
     #     )

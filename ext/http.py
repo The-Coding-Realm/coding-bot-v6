@@ -39,7 +39,7 @@ class Http:
                 ),
             },
             "meme-api": {
-                "gimme": lambda: self.get("https://meme-api.herokuapp.com/gimme", _json=True)
+                "gimme": lambda: self.get("https://meme-api.com/gimme/", _json=True)
             },
             "some-random-api": {
                 "bottoken": lambda: self.get("https://some-random-api.ml/bottoken", _json=True),

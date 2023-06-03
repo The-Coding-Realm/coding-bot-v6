@@ -344,8 +344,8 @@ class CodingBot(commands.Bot):
         self.processing_commands = 0
         self.message_cache = {}
         self.spotify_session: Optional[tuple] = None
-        # self.spotify_client_id: str = os.environ["SPOTIFY_CLIENT_ID"]
-        # self.spotify_client_secret: str = os.environ["SPOTIFY_CLIENT_SECRET"]
+        self.spotify_client_id: str = os.environ["SPOTIFY_CLIENT_ID"]
+        self.spotify_client_secret: str = os.environ["SPOTIFY_CLIENT_SECRET"]
         self.welcomer_enabled = True
         self.welcomer_channel_id = 743817386792058971
         self.raid_mode_enabled = False
