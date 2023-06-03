@@ -57,7 +57,7 @@ class Http:
                 }
             },
             "joke": {
-                "api": "https://v2.jokeapi.dev/joke/Programming"
+                "api": lambda: self.get("https://v2.jokeapi.dev/joke/Programming", _json=True),
             }
         }
 
