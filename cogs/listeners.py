@@ -43,6 +43,8 @@ class ListenerCog(commands.Cog, command_attrs=dict(hidden=True)):
             record = record.get(message.author.id)
             if record:
                 _, time = record
+                if (datetime.utcnow() - datetime.utcfromtimestamp(time)).seconds < 30:
+                    return
                 await self.bot.conn.delete_record(
                     'afk',
                     table='afk',

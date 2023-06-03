@@ -11,7 +11,7 @@ from discord.ext import commands
 from ext.errors import InsufficientPrivilegeError
 from ext.models import CodingBot, TimeConverter
 from ext.ui.view import ConfirmButton
-
+from ext.consts import TCR_MEMBER_ROLE_ID
 
 if TYPE_CHECKING:
     from ext.models import CodingBot
@@ -684,14 +684,14 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
         await ctx.send_help('welcomer')
 
     @welcomer.command(name="enable")
-    async def welcomer_enable(self, ctx: commands.Context[CodingBot]) -> None:
+    async def welcomer_enable(self, ctx: commands.Context[CodingBot], help = "Enable welcomer") -> None:
         if not self.bot.welcomer_enabled:
             self.bot.welcomer_enabled = True
             await self.bot.reply(ctx, "Welcomer is now enabled.")
         else:
             await self.bot.reply(ctx, "Welcomer is already enabled.")
 
-    @welcomer.command(name="disable")
+    @welcomer.command(name="disable", help = "Disable welcomer")
     async def welcomer_disable(self, ctx: commands.Context[CodingBot]) -> None:
         if self.bot.welcomer_enabled:
             self.bot.welcomer_enabled = False
@@ -699,7 +699,7 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
         else:
             await self.bot.reply(ctx, "Welcomer is already disabled.")
 
-    @welcomer.command(name="redirect")
+    @welcomer.command(name="redirect", help = "Set welcomer channel")
     async def welcomer_redirect(
         self,
         ctx: commands.Context[CodingBot],
@@ -724,11 +724,18 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
         Raid mode commands
 
         Commands:
+        {prefix}raid-mode enable *start raid mode*
+        {prefix}raid-mode disable *stop raid mode*
         """
         await ctx.send_help('raid-mode')
 
     @raid_mode.command(name="enable")
     async def raid_mode_enable(self, ctx: commands.Context[CodingBot]) -> None:
+        """
+        Enable raid mode
+
+        This will ban all members that have joined during the raid.
+        """
         if not self.bot.raid_mode_enabled:
             if self.bot.raid_checker.possible_raid:
                 self.bot.raid_mode_enabled = True

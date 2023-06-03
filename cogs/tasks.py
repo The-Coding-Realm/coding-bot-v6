@@ -28,7 +28,7 @@ class TaskCog(commands.Cog, command_attrs=dict(hidden=True)):
         statuses = ['over TCR', 'you', 'swas', '@everyone', 'general chat', 'discord', ',help', 'your mom',
                     'bob and shadow argue', 'swas simp for false', 'new members', 'the staff team', 'helpers', 'code',
                     'mass murders', 'karen be an idiot', 'a video', 'watches', 'bob', 'fight club', 'youtube',
-                    'https://devbio.me/u/CodingBot', 'potatoes', 'simps', 'people', 'my server', 'humans destroy the world',
+                    'potatoes', 'simps', 'people', 'my server', 'humans destroy the world',
                     'AI take over the world', 'female bots 😳', 'dinosaurs', 'https://youtu.be/o-YBDTqX_ZU', 'idiots',
                     'the beginning of WWIII', 'verified bot tags with envy', 'Server Boosters (boost to get your name on here)',
                     'OG members', "dalek rising from the ashes", 'spongebob', 'turtles', 'SQUIRREL!!!', 'people get banned',

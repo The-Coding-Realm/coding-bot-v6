@@ -37,6 +37,13 @@ class Developer(commands.Cog, command_attrs=dict(hidden=True)):
     @commands.command(name='load', aliases=['l'])
     @commands.is_owner()
     async def _load(self, ctx: commands.Context[CodingBot], cog_: str):
+        """
+        Load a cog
+
+        Usage:
+        ------
+        `{prefix}load [cog]`
+        """
         try:
             await self.bot.load_extension(cog_)
             embed = discord.Embed(
@@ -55,6 +62,14 @@ class Developer(commands.Cog, command_attrs=dict(hidden=True)):
     @commands.command(name='unload', aliases=['u'])
     @commands.is_owner()
     async def _unload(self, ctx: commands.Context[CodingBot], cog_: str):
+        """
+        Unload a cog
+
+        Usage:
+        ------
+        `{prefix}unload [cog]`
+
+        """
         try:
             await self.bot.unload_extension(cog_)
             embed = discord.Embed(
@@ -73,6 +88,13 @@ class Developer(commands.Cog, command_attrs=dict(hidden=True)):
     @commands.command(name='reload', aliases=['r'])
     @commands.is_owner()
     async def _reload(self, ctx: commands.Context[CodingBot], cog_: str):
+        """
+        Reload a cog
+
+        Usage:
+        ------
+        `{prefix}reload [cog]`
+        """
         try:
             await self.bot.reload_extension(cog_)
             embed = discord.Embed(
@@ -91,6 +113,14 @@ class Developer(commands.Cog, command_attrs=dict(hidden=True)):
     @commands.command(name='loadall', aliases=['la'])
     @commands.is_owner()
     async def _loadall(self, ctx: commands.Context[CodingBot]):
+        """
+        Load all cogs
+
+        Usage:
+        ------
+        `{prefix}loadall`
+
+        """
         data = os.listdir('./cogs')
         cogs: Dict[str, List[str]] = {
             'loaded': [],
@@ -114,6 +144,14 @@ class Developer(commands.Cog, command_attrs=dict(hidden=True)):
     @commands.command(name='unloadall', aliases=['ua', 'uall'])
     @commands.is_owner()
     async def _unloadall(self, ctx: commands.Context[CodingBot]):
+        """
+        Unload all cogs
+
+        Usage:
+        ------
+        `{prefix}unloadall`
+
+        """
         cogs: Dict[str, List[str]] = {
             'unloaded': [],
             'not': []
@@ -133,6 +171,14 @@ class Developer(commands.Cog, command_attrs=dict(hidden=True)):
     @commands.command(name='reloadall', aliases=['ra', 'rall'])
     @commands.is_owner()
     async def _reloadall(self, ctx: commands.Context[CodingBot]):
+        """
+        Reload all cogs
+
+        Usage:
+        ------
+        `{prefix}reloadall`
+        
+        """
         cogs: Dict[str, List[str]] = {
             'reloaded': [],
             'not': []
@@ -153,6 +199,16 @@ class Developer(commands.Cog, command_attrs=dict(hidden=True)):
     @commands.command(name='getusermetric', aliases=['gum'], hidden=True)
     @commands.is_owner()
     async def _getusermetric(self, ctx: commands.Context[CodingBot], member: discord.Member):
+        """
+        Get user metric
+
+        Usage:
+        ------
+        `{prefix}getusermetric [member]`
+        
+        """
+        member = member or ctx.author
+
         record = await self.bot.conn.select_record(
             'thanks',
             table='thanks_info',
