@@ -353,6 +353,14 @@ class CodingBot(commands.Bot):
         self.afk_cache: Dict[int, Dict[int, Tuple[str, int]]] = {}
         self.version: Version = VERSION
         self.logger: logging.Logger = create_logger("CodingBot")
+        self.owner_ids = [
+            556119013298667520, # Swas.py
+            879644654587478027, # Swas's alt
+            690420846774321221, # BobDotCom
+            579041484796461076, # Conch.py
+            687882857171255309, # Lexionas74
+            462067035556282378, # Gxpy
+        ]
 
     async def setup_hook(self) -> None:
         self.raid_checker.check_for_raid.start()
