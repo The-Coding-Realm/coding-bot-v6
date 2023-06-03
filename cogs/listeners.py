@@ -90,7 +90,7 @@ class ListenerCog(commands.Cog, command_attrs=dict(hidden=True)):
             for member in message.mentions:
                 record = self.bot.afk_cache.get(message.guild.id)
                 if record:
-                    record = record.get(message.author.id)
+                    record = record.get(member.id)
                     if record:
                         reason, time_ = record
                         em = discord.Embed(
@@ -236,17 +236,20 @@ class ListenerCog(commands.Cog, command_attrs=dict(hidden=True)):
 
     @commands.Cog.listener('on_message')
     async def repo_mention(self, message: discord.Message):
-        if 'discord.py' in message.content and not message.author.bot:
-            regex = re.search(r'Rapptz/discord.py(#\d+)?', message.content)
-            if regex:
-                base_link = "https://github.com/Rapptz/discord.py"
-                group = regex.group(0)
-                if '#' in group:
-                    group = group.split('#')[1]
-                    base_link += f"/pull/{group}"
-                resp = await self.bot.session.get(base_link)
-                if resp.ok:
-                    await message.channel.send(base_link)
+        """
+        Format: repo: user/repo
+
+        Responds with a link to the repo.
+        """
+        if message.content.lower().startswith('repo:') and not message.author.bot:
+            repo = message.content.split('repo:')[1].strip()
+            if '/' not in repo:
+                return
+            user, repo = repo.split('/')
+            base_link = f"https://github.com/{user}/{repo}"
+            resp = await self.bot.session.get(base_link)
+            if resp.ok:
+                await message.channel.send(base_link)
 
 
 
