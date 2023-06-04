@@ -212,7 +212,7 @@ class Fun(commands.Cog, command_attrs=dict(hidden=False)):
         await self.bot.reply(ctx,embed=embed)
 
     @binary.command(name="decode")
-    async def binary_decode(self, ctx: commands.Context[CodingBot], binary: str):
+    async def binary_decode(self, ctx: commands.Context[CodingBot], *, binary: str):
         if (len(binary) - binary.count(" ")) % 8 != 0:
             return await self.bot.reply(ctx, "The binary is an invalid length.")
         binary = binary.replace(" ", "")
