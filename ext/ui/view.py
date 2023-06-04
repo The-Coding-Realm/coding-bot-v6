@@ -150,11 +150,11 @@ class Piston(discord.ui.View):
         self.stop()
         await self.msg.delete()
 
-    async def interaction_check(self, interaction):
-        if interaction.author == self.author:
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        if interaction.user == self.author:
             return True
         return False
-        
+
 class ConfirmButton(ui.View):
     if TYPE_CHECKING:
         message: discord.Message
