@@ -558,23 +558,26 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
                 return await ctx.send("Message not found.")
         await self.bot.reply(ctx, f"{message.content} ||({message.id} was deleted by {ctx.author})||")
 
-    @commands.hybrid_command(name="slowmode")
+    @commands.hybrid_command(name="slowmode", aliases=["sm"])
     @commands.has_permissions(manage_messages=True)
     async def slowmode(
         self, 
         ctx: commands.Context[CodingBot], 
-        seconds: int, 
+        seconds: Optional[int] = None, 
         channel: Optional[discord.TextChannel] = None
     ) -> None:
         """
         Sets the slowmode of a channel
 
         Usage:
-        {prefix}slowmode <seconds> [channel]
+        {prefix}slowmode [seconds] [channel]
+
 
         Example:
-        {prefix}slowmode 10 #general
+        {prefix}slowmode 10 #lounge *will set a slowmode of 10 seconds in #lounge*
+        {prefix}slowmode *will set a slowmode of 0 seconds in the current channel*
         """
+        seconds = seconds or 0
         channel = channel or ctx.channel
         try:
             await channel.edit(slowmode_delay=seconds)
