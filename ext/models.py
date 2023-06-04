@@ -464,7 +464,7 @@ class CodingBot(commands.Bot):
             )
         return self.message_cache[key]
 
-    async def embed(
+    def embed(
         self,
         *,
         title: str = None,

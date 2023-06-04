@@ -82,7 +82,7 @@ class Fun(commands.Cog, command_attrs=dict(hidden=False)):
             if (number is None)
             else self.http.api["numbers"]["number"](number)
         )
-        embed = await self.bot.embed(
+        embed = self.bot.embed(
             title=f"**{number}**",
             description=" ",
             url="https://www.youtube.com/watch?v=o-YBDTqX_ZU",
@@ -121,7 +121,7 @@ class Fun(commands.Cog, command_attrs=dict(hidden=False)):
 
             joke = joke_json['joke']
 
-            embed = await self.bot.embed(
+            embed = self.bot.embed(
                 title = "Here's a joke for you:",
                 description = joke,
                 color = discord.Color.random()
@@ -133,7 +133,7 @@ class Fun(commands.Cog, command_attrs=dict(hidden=False)):
             setup = joke_json['setup']
             delivery = joke_json['delivery']
         
-            embed = await self.bot.embed(
+            embed = self.bot.embed(
                 title = "Here's a joke for you:",
                 description = f"{setup}\n\n||{delivery}||",
                 color = discord.Color.random()

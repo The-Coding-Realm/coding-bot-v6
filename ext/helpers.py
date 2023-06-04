@@ -617,7 +617,7 @@ async def get_rock(self):
     name = rock["name"]
     desc = rock["description"]
     image = rock["image"]
-    embed = await self.bot.embed(
+    embed = self.bot.embed(
         title=f"🪨   {name}",
         url=image or "https://www.youtube.com/watch?v=o-YBDTqX_ZU",
         description=f"```yaml\n{desc}```",

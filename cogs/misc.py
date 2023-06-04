@@ -122,13 +122,13 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
         lang = matches[0][0] or matches[0][1]
         if not matches:
             return await msg.edit(
-                embed=await self.bot.embed(
+                embed=self.bot.embed(
                     title="```ansi\nInvalid codeblock\n```"
                 )
             )
         if not lang:
             return await msg.edit(
-                embed=await self.bot.embed(
+                embed=self.bot.embed(
                     title="```ansi\nno language specified\n```"
                 )
             )
