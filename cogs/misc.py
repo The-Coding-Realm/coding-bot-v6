@@ -110,7 +110,7 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
     async def run(self, ctx, *, codeblock: str):
         """
         Runs code in a codeblock.
-        The codeblock must be surrounded by ``` and the language must be specified.
+        The codeblock must be surrounded by \`\`\` and the language must be specified.
         Example: ```py\nprint('hello world')\n```
 
         Usage:
