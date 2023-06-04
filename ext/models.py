@@ -334,7 +334,7 @@ class CodingBot(commands.Bot):
             }
         )
         super().__init__(
-            command_prefix=['>'], intents=INTENTS, case_insensitive=True,
+            command_prefix=['.'], intents=INTENTS, case_insensitive=True,
             help_command=help_command
         )
         self.conn: Database = discord.utils.MISSING
