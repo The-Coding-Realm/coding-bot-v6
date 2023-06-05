@@ -19,10 +19,22 @@ if TYPE_CHECKING:
 class ListenerCog(commands.Cog, command_attrs=dict(hidden=True)):
 
     hidden = True
+
     def __init__(self, bot: CodingBot) -> None:
         self.bot = bot
-        
 
+        def valid_gh_sect(name: str):
+            cons_set = zip(name, name[1:])
+            for s in cons_set:
+                if s == ("-", "-"):
+                    return False
+            if name.startswith("-") or name.endswith("-"):
+                return False
+            if not name.replace("-", "").isalnum():
+                return False
+            return True
+
+        self.valid_gh_sect = valid_gh_sect
 
     @commands.Cog.listener("on_message")
     async def afk_user_messaage(self, message: discord.Message):
@@ -46,15 +58,15 @@ class ListenerCog(commands.Cog, command_attrs=dict(hidden=True)):
                 if (datetime.utcnow() - datetime.utcfromtimestamp(time)).seconds < 30:
                     return
                 await self.bot.conn.delete_record(
-                    'afk',
-                    table='afk',
-                    where=('user_id',),
+                    "afk",
+                    table="afk",
+                    where=("user_id",),
                     values=(message.author.id,),
                 )
                 try:
                     if "[AFK]" in message.author.display_name:
-                        name = message.author.display_name.split(' ')[1:]
-                        # type: ignore 
+                        name = message.author.display_name.split(" ")[1:]
+                        # type: ignore
                         await message.author.edit(nick=" ".join(name))
                 except (discord.HTTPException, discord.Forbidden):
                     pass
@@ -101,9 +113,7 @@ class ListenerCog(commands.Cog, command_attrs=dict(hidden=True)):
 
     @commands.Cog.listener()
     async def on_message_edit(
-        self, 
-        before: discord.Message, 
-        after: discord.Message
+        self, before: discord.Message, after: discord.Message
     ) -> None:
         """
         Responsible for checking if a message was edited.
@@ -156,7 +166,7 @@ class ListenerCog(commands.Cog, command_attrs=dict(hidden=True)):
                 type(error), error, error.__traceback__, file=sys.stderr
             )
 
-    @commands.Cog.listener('on_message')
+    @commands.Cog.listener("on_message")
     async def track_sent_message(self, message: discord.Message):
         """
         Responsible for tracking staff messages.
@@ -166,47 +176,49 @@ class ListenerCog(commands.Cog, command_attrs=dict(hidden=True)):
             return
 
         values = [message.author.id, message.guild.id, 1, 1]
-        columns = ['user_id', 'guild_id', 'message_count']
+        columns = ["user_id", "guild_id", "message_count"]
 
         columns.append(status := message.author.status.name)
-        
+
         staff_role = message.guild.get_role(TCR_STAFF_ROLE_ID)
         if staff_role and staff_role in message.author.roles:  # type: ignore
-            columns.append('is_staff')
+            columns.append("is_staff")
             values.append(1)
         else:
             pass
-            
+
         return await self.bot.conn.insert_record(
-            'metrics',
-            table='message_metric',
+            "metrics",
+            table="message_metric",
             columns=columns,
             values=values,
-            extras=[f'ON CONFLICT (user_id, guild_id) DO UPDATE SET message_count = message_count + 1, {status} = {status} + 1'],
+            extras=[
+                f"ON CONFLICT (user_id, guild_id) DO UPDATE SET message_count = message_count + 1, {status} = {status} + 1"
+            ],
         )
 
-    @commands.Cog.listener('on_message_delete')
+    @commands.Cog.listener("on_message_delete")
     async def track_deleted_message(self, message: discord.Message):
         """
         Responsible for tracking user messages.
         """
-        
+
         if message.author.bot or not message.guild:
             return
-        
+
         values = [message.author.id, message.guild.id]
 
-        columns = ['deleted_message_count = deleted_message_count + 1']
+        columns = ["deleted_message_count = deleted_message_count + 1"]
 
         await self.bot.conn.update_record(
-            'metrics',
-            table='message_metric',
+            "metrics",
+            table="message_metric",
             to_update=columns,
-            where=['user_id', 'guild_id'],
+            where=["user_id", "guild_id"],
             values=values,
         )
 
-    @commands.Cog.listener('on_message_edit')
+    @commands.Cog.listener("on_message_edit")
     async def invite_in_message(self, _: discord.Message, after: discord.Message):
         """
         Responsible for tracking member joins.
@@ -215,12 +227,16 @@ class ListenerCog(commands.Cog, command_attrs=dict(hidden=True)):
             return
         perms = after.channel.permissions_for(after.author).manage_guild
         if (await check_invite(self.bot, after.content, after.channel)) and (not perms):
-            invite_regex = "(?:https?://)?discord(?:app)?\.(?:com/invite|gg)/[a-zA-Z0-9]+/?"
+            invite_regex = (
+                "(?:https?://)?discord(?:app)?\.(?:com/invite|gg)/[a-zA-Z0-9]+/?"
+            )
             if re.search(invite_regex, after.content):
                 await after.delete()
-                return await after.channel.send("Please don't send invite links in this server!")
-        
-    @commands.Cog.listener('on_message')
+                return await after.channel.send(
+                    "Please don't send invite links in this server!"
+                )
+
+    @commands.Cog.listener("on_message")
     async def invite_in_message(self, message: discord.Message):
         """
         Responsible for tracking member joins.
@@ -228,21 +244,32 @@ class ListenerCog(commands.Cog, command_attrs=dict(hidden=True)):
         if message.author.bot or not message.guild:
             return
         perms = message.channel.permissions_for(message.author).manage_guild
-        if (await check_invite(self.bot, message.content, message.channel)) and (not perms):
-            invite_regex = "(?:https?://)?discord(?:app)?\.(?:com/invite|gg)/[a-zA-Z0-9]+/?"
-            if re.search(invite_regex, message.content): # `check_invite` already checks if there is an invite, why are we checking again?
+        if (await check_invite(self.bot, message.content, message.channel)) and (
+            not perms
+        ):
+            invite_regex = (
+                "(?:https?://)?discord(?:app)?\.(?:com/invite|gg)/[a-zA-Z0-9]+/?"
+            )
+            if re.search(
+                invite_regex, message.content
+            ):  # `check_invite` already checks if there is an invite, why are we checking again?
                 await message.delete()
-                return await message.channel.send("Please don't send invite links in this server!")
+                return await message.channel.send(
+                    "Please don't send invite links in this server!"
+                )
 
-    @commands.Cog.listener('on_message')
+    @commands.Cog.listener("on_message")
     async def repo_mention(self, message: discord.Message):
         """
-        Format: repo: user/repo
+        Format: repo:user/repo
 
         Responds with a link to the repo.
         """
         if "repo:" in message.content.lower():
             repo = message.content.lower().split("repo:")[1].strip().split(" ")[0]
+            for sect in filter(repo.split("/")):
+                if not self.valid_gh_sect(sect):
+                    return
             url = f"https://github.com/{repo}"
             await message.channel.send(url)
 
