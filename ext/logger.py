@@ -1,7 +1,7 @@
 import logging
 
-class CustomFormatter(logging.Formatter):
 
+class CustomFormatter(logging.Formatter):
     grey = "\x1b[38;20m"
     green = "\x1b[1;32m"
     yellow = "\x1b[33;21m"
@@ -16,17 +16,18 @@ class CustomFormatter(logging.Formatter):
     )
 
     FORMATS = {
-        logging.DEBUG: local_format.replace('dependent', blue) + reset,
-        logging.INFO: local_format.replace('dependent', green) + reset,
-        logging.WARNING: local_format.replace('dependent', yellow) + reset,
-        logging.ERROR: local_format.replace('dependent', bold_red) + reset,
-        logging.CRITICAL: local_format.replace('dependent', red) + reset
+        logging.DEBUG: local_format.replace("dependent", blue) + reset,
+        logging.INFO: local_format.replace("dependent", green) + reset,
+        logging.WARNING: local_format.replace("dependent", yellow) + reset,
+        logging.ERROR: local_format.replace("dependent", bold_red) + reset,
+        logging.CRITICAL: local_format.replace("dependent", red) + reset,
     }
 
     def format(self, record):
         log_fmt = self.FORMATS.get(record.levelno)
-        formatter = logging.Formatter(log_fmt, datefmt='%Y-%m-%d %H:%M:%S')
+        formatter = logging.Formatter(log_fmt, datefmt="%Y-%m-%d %H:%M:%S")
         return formatter.format(record)
+
 
 def create_logger(name: str):
     logger = logging.getLogger(name)

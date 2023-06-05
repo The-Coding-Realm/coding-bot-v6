@@ -14,8 +14,8 @@ if TYPE_CHECKING:
 
 
 class Developer(commands.Cog, command_attrs=dict(hidden=True)):
-
     hidden = True
+
     def __init__(self, bot: CodingBot) -> None:
         self.bot = bot
 
@@ -34,7 +34,7 @@ class Developer(commands.Cog, command_attrs=dict(hidden=True)):
         await self.bot.tree.sync()
         await ctx.send("Finished syncing commands globally")
 
-    @commands.command(name='load', aliases=['l'])
+    @commands.command(name="load", aliases=["l"])
     @commands.is_owner()
     async def _load(self, ctx: commands.Context[CodingBot], cog_: str):
         """
@@ -47,19 +47,18 @@ class Developer(commands.Cog, command_attrs=dict(hidden=True)):
         try:
             await self.bot.load_extension(cog_)
             embed = discord.Embed(
-                title=f'Successfully loaded extension: `{cog_}`',
-                color=discord.Color.green()
+                title=f"Successfully loaded extension: `{cog_}`",
+                color=discord.Color.green(),
             )
         except Exception as e:
             embed = discord.Embed(
-                title=f'Failed to load extension: `{cog_}`',
-                color=discord.Color.red()
+                title=f"Failed to load extension: `{cog_}`", color=discord.Color.red()
             )
-            embed.description = f'```py\n{traceback.format_exc()}\n```'
-            
+            embed.description = f"```py\n{traceback.format_exc()}\n```"
+
         await ctx.send(embed=embed)
 
-    @commands.command(name='unload', aliases=['u'])
+    @commands.command(name="unload", aliases=["u"])
     @commands.is_owner()
     async def _unload(self, ctx: commands.Context[CodingBot], cog_: str):
         """
@@ -73,19 +72,18 @@ class Developer(commands.Cog, command_attrs=dict(hidden=True)):
         try:
             await self.bot.unload_extension(cog_)
             embed = discord.Embed(
-                title=f'Successfully unloaded extension: `{cog_}`',
-                color=discord.Color.green()
+                title=f"Successfully unloaded extension: `{cog_}`",
+                color=discord.Color.green(),
             )
         except Exception as e:
             embed = discord.Embed(
-                title=f'Failed to unload extension: `{cog_}`',
-                color=discord.Color.red()
+                title=f"Failed to unload extension: `{cog_}`", color=discord.Color.red()
             )
-            embed.description = f'```py\n{traceback.format_exc()}\n```'
-            
+            embed.description = f"```py\n{traceback.format_exc()}\n```"
+
         await ctx.send(embed=embed)
 
-    @commands.command(name='reload', aliases=['r'])
+    @commands.command(name="reload", aliases=["r"])
     @commands.is_owner()
     async def _reload(self, ctx: commands.Context[CodingBot], cog_: str):
         """
@@ -98,19 +96,18 @@ class Developer(commands.Cog, command_attrs=dict(hidden=True)):
         try:
             await self.bot.reload_extension(cog_)
             embed = discord.Embed(
-                title=f'Successfully reloaded extension: `{cog_}`',
-                color=discord.Color.green()
+                title=f"Successfully reloaded extension: `{cog_}`",
+                color=discord.Color.green(),
             )
         except Exception as e:
             embed = discord.Embed(
-                title=f'Failed to reload extension: `{cog_}`',
-                color=discord.Color.red()
+                title=f"Failed to reload extension: `{cog_}`", color=discord.Color.red()
             )
-            embed.description = f'```py\n{traceback.format_exc()}\n```'
-            
+            embed.description = f"```py\n{traceback.format_exc()}\n```"
+
         await ctx.send(embed=embed)
 
-    @commands.command(name='loadall', aliases=['la'])
+    @commands.command(name="loadall", aliases=["la"])
     @commands.is_owner()
     async def _loadall(self, ctx: commands.Context[CodingBot]):
         """
@@ -121,27 +118,31 @@ class Developer(commands.Cog, command_attrs=dict(hidden=True)):
         `{prefix}loadall`
 
         """
-        data = os.listdir('./cogs')
-        cogs: Dict[str, List[str]] = {
-            'loaded': [],
-            'not': []
-        }
+        data = os.listdir("./cogs")
+        cogs: Dict[str, List[str]] = {"loaded": [], "not": []}
         for cog in data:
-            if not cog.endswith('.py'):
+            if not cog.endswith(".py"):
                 continue
             if f"cogs.{cog[:-3]}" in self.bot.extensions:
                 continue
             try:
-                await self.bot.load_extension(f'cogs.{cog[:-3]}')
-                cogs['loaded'].append(f'cogs.{cog[:-3]}')
+                await self.bot.load_extension(f"cogs.{cog[:-3]}")
+                cogs["loaded"].append(f"cogs.{cog[:-3]}")
             except discord.DiscordException:
-                cogs['not'].append(f'cogs.{cog[:-3]}')
-        embed = discord.Embed(title='Load all cogs', description='\n'.join([
-            ('\U00002705' if cog_ in cogs['loaded'] else '\U0000274c')
-            + cog_ for cog_ in data if cog_.endswith('.py')]))
+                cogs["not"].append(f"cogs.{cog[:-3]}")
+        embed = discord.Embed(
+            title="Load all cogs",
+            description="\n".join(
+                [
+                    ("\U00002705" if cog_ in cogs["loaded"] else "\U0000274c") + cog_
+                    for cog_ in data
+                    if cog_.endswith(".py")
+                ]
+            ),
+        )
         await ctx.send(embed=embed)
 
-    @commands.command(name='unloadall', aliases=['ua', 'uall'])
+    @commands.command(name="unloadall", aliases=["ua", "uall"])
     @commands.is_owner()
     async def _unloadall(self, ctx: commands.Context[CodingBot]):
         """
@@ -152,23 +153,26 @@ class Developer(commands.Cog, command_attrs=dict(hidden=True)):
         `{prefix}unloadall`
 
         """
-        cogs: Dict[str, List[str]] = {
-            'unloaded': [],
-            'not': []
-        }
+        cogs: Dict[str, List[str]] = {"unloaded": [], "not": []}
         processing: Mapping[str, ModuleType] = self.bot.extensions.copy()  # type: ignore
         for cog in processing:
             try:
                 await self.bot.unload_extension(cog)
-                cogs['unloaded'].append(cog)
+                cogs["unloaded"].append(cog)
             except discord.DiscordException:
-                cogs['not'].append(cog)
-        embed = discord.Embed(title='Unload all cogs', description='\n'.join([
-            ('\U00002705' if cog_ in cogs['unloaded'] else '\U0000274c')
-            + cog_ for cog_ in processing]))
+                cogs["not"].append(cog)
+        embed = discord.Embed(
+            title="Unload all cogs",
+            description="\n".join(
+                [
+                    ("\U00002705" if cog_ in cogs["unloaded"] else "\U0000274c") + cog_
+                    for cog_ in processing
+                ]
+            ),
+        )
         await ctx.send(embed=embed)
 
-    @commands.command(name='reloadall', aliases=['ra', 'rall'])
+    @commands.command(name="reloadall", aliases=["ra", "rall"])
     @commands.is_owner()
     async def _reloadall(self, ctx: commands.Context[CodingBot]):
         """
@@ -177,62 +181,76 @@ class Developer(commands.Cog, command_attrs=dict(hidden=True)):
         Usage:
         ------
         `{prefix}reloadall`
-        
+
         """
-        cogs: Dict[str, List[str]] = {
-            'reloaded': [],
-            'not': []
-        }
+        cogs: Dict[str, List[str]] = {"reloaded": [], "not": []}
         processing: Mapping[str, ModuleType] = self.bot.extensions.copy()  # type: ignore
         for cog in processing:
             try:
                 await self.bot.reload_extension(cog)
-                cogs['reloaded'].append(cog)
+                cogs["reloaded"].append(cog)
             except discord.DiscordException:
-                cogs['not'].append(cog)
-        embed = discord.Embed(title='Reload all cogs', description='\n'.join([
-            ('\U00002705' if cog_ in cogs['reloaded'] else '\U0000274c')
-            + f' `{cog_}`' for cog_ in processing
-        ]))
+                cogs["not"].append(cog)
+        embed = discord.Embed(
+            title="Reload all cogs",
+            description="\n".join(
+                [
+                    ("\U00002705" if cog_ in cogs["reloaded"] else "\U0000274c")
+                    + f" `{cog_}`"
+                    for cog_ in processing
+                ]
+            ),
+        )
         await ctx.send(embed=embed)
 
-    @commands.command(name='getusermetric', aliases=['gum'], hidden=True)
+    @commands.command(name="getusermetric", aliases=["gum"], hidden=True)
     @commands.is_owner()
-    async def _getusermetric(self, ctx: commands.Context[CodingBot], member: discord.Member):
+    async def _getusermetric(
+        self, ctx: commands.Context[CodingBot], member: discord.Member
+    ):
         """
         Get user metric
 
         Usage:
         ------
         `{prefix}getusermetric [member]`
-        
+
         """
         member = member or ctx.author
 
         record = await self.bot.conn.select_record(
-            'thanks',
-            table='thanks_info',
-            arguments=['thanks_count'],
-            where=['guild_id', 'user_id'],
-            values=[ctx.guild.id, member.id]
+            "thanks",
+            table="thanks_info",
+            arguments=["thanks_count"],
+            where=["guild_id", "user_id"],
+            values=[ctx.guild.id, member.id],
         )
         total_thank_count = record[0].thanks_count if record else 0
         revoked_thank_count = await self.bot.conn.select_record(
-            'thanks',
-            table='thanks_data',
-            arguments=['count(*)'],
-            where=['guild_id', 'user_id', 'thank_revoked'],
-            values=[ctx.guild.id, member.id, 1]
+            "thanks",
+            table="thanks_data",
+            arguments=["count(*)"],
+            where=["guild_id", "user_id", "thank_revoked"],
+            values=[ctx.guild.id, member.id, 1],
         )
         revoked_thank_count = revoked_thank_count[0].count
-        surviving_thank_count = total_thank_count - revoked_thank_count 
+        surviving_thank_count = total_thank_count - revoked_thank_count
 
         message_metric = await self.bot.conn.select_record(
-            'metrics',
-            table='message_metric',
-            arguments=['user_id', 'guild_id', 'message_count', 'deleted_message_count', 'offline', 'online', 'dnd', 'idle'],
-            where=['user_id', 'guild_id'],
-            values=[member.id, ctx.guild.id]
+            "metrics",
+            table="message_metric",
+            arguments=[
+                "user_id",
+                "guild_id",
+                "message_count",
+                "deleted_message_count",
+                "offline",
+                "online",
+                "dnd",
+                "idle",
+            ],
+            where=["user_id", "guild_id"],
+            values=[member.id, ctx.guild.id],
         )
         record = message_metric[0] if message_metric else None
         if record:
@@ -248,19 +266,18 @@ class Developer(commands.Cog, command_attrs=dict(hidden=True)):
             """
 
         embed = discord.Embed(
-            title=f'{member.name}#{member.discriminator} Detailed anaylysis',
-            description=
-            f'Total thanks this month: {total_thank_count}\n'
-            f'Revoked thanks this month: {revoked_thank_count} (`{revoked_thank_count/total_thank_count*100 if total_thank_count > 0 else 0:.2f}%`)\n'
-            f'Actual thanks this month: {surviving_thank_count} (`{surviving_thank_count/total_thank_count*100 if total_thank_count > 0 else 0:.2f}%`)'
+            title=f"{member.name}#{member.discriminator} Detailed anaylysis",
+            description=f"Total thanks this month: {total_thank_count}\n"
+            f"Revoked thanks this month: {revoked_thank_count} (`{revoked_thank_count/total_thank_count*100 if total_thank_count > 0 else 0:.2f}%`)\n"
+            f"Actual thanks this month: {surviving_thank_count} (`{surviving_thank_count/total_thank_count*100 if total_thank_count > 0 else 0:.2f}%`)"
             f'\n{formatted_message if record else ""}',
-            timestamp=discord.utils.utcnow()
+            timestamp=discord.utils.utcnow(),
         )
         embed.set_thumbnail(url=member.display_avatar.url)
-        embed.set_footer(text=f'Requested by {ctx.author}', )
+        embed.set_footer(
+            text=f"Requested by {ctx.author}",
+        )
         await ctx.send(embed=embed)
-
-
 
 
 async def setup(bot: CodingBot):

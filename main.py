@@ -11,6 +11,7 @@ if not os.path.exists("./database"):
 
 bot = CodingBot()
 
+
 @bot.before_invoke
 async def before_invoke(ctx: commands.Context[CodingBot]):
     bot.processing_commands += 1
@@ -19,6 +20,7 @@ async def before_invoke(ctx: commands.Context[CodingBot]):
 @bot.after_invoke
 async def after_invoke(ctx: commands.Context[CodingBot]):
     bot.processing_commands -= 1
+
 
 @bot.check
 async def check_processing_commands(ctx: commands.Context[CodingBot]):
