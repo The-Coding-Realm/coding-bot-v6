@@ -5,8 +5,18 @@ import logging
 import os
 import string
 from dataclasses import dataclass, field
-from typing import (Any, Dict, Iterable, List, Mapping, NamedTuple, Optional,
-                    Set, Tuple, Union)
+from typing import (
+    Any,
+    Dict,
+    Iterable,
+    List,
+    Mapping,
+    NamedTuple,
+    Optional,
+    Set,
+    Tuple,
+    Union,
+)
 
 import aiohttp
 import aiosqlite
@@ -16,15 +26,24 @@ from DiscordUtils import InviteTracker
 from dotenv import load_dotenv
 from pytimeparse import parse
 
-from .consts import (AFK_CONFIG_SCHEMA, COMMANDS_CONFIG_SCHEMA, HELP_COMMAND,
-                     HELP_WARNINGS_CONFIG_SCHEMA, INTENTS,
-                     MESSAGE_METRIC_SCHEMA, PREFIX_CONFIG_SCHEMA,
-                     THANK_DATA_CONFIG_SCHEMA, THANK_INFO_CONFIG_SCHEMA,
-                     WARNINGS_CONFIG_SCHEMA, VERSION, Version)
+from .consts import (
+    AFK_CONFIG_SCHEMA,
+    COMMANDS_CONFIG_SCHEMA,
+    HELP_COMMAND,
+    HELP_WARNINGS_CONFIG_SCHEMA,
+    INTENTS,
+    MESSAGE_METRIC_SCHEMA,
+    PREFIX_CONFIG_SCHEMA,
+    THANK_DATA_CONFIG_SCHEMA,
+    THANK_INFO_CONFIG_SCHEMA,
+    WARNINGS_CONFIG_SCHEMA,
+    VERSION,
+    Version,
+)
 from .helpers import AntiRaid, WelcomeBanner, log_error
 from .logger import create_logger
 
-load_dotenv('.env', verbose=True)
+load_dotenv(".env", verbose=True)
 
 
 class Record:
@@ -37,8 +56,7 @@ class Record:
         if isinstance(__item, str):
             if __item in self.arguments:
                 return self.arguments[__item]
-            raise AttributeError(
-                f'Dynamic object has no attribute \'{__item}\'')
+            raise AttributeError(f"Dynamic object has no attribute '{__item}'")
         elif isinstance(__item, int):  # type: ignore
             return tuple(self.arguments.values())[__item]
 
@@ -51,15 +69,22 @@ class Record:
         return len(self.arguments.keys())
 
     def __repr__(self) -> str:
-        argument = ", ".join(
-            f"{key}={value}" for key, value in self.arguments.items()
-        )
+        argument = ", ".join(f"{key}={value}" for key, value in self.arguments.items())
         return f"<Record: {argument}>"
 
     @classmethod
     def from_tuple(cls, arguments: Iterable[Any], tuple_: Iterable[Any]) -> Record:
-        arguments = ["".join(map(lambda x: x if x in string.ascii_letters +
-                             string.digits + '_' else "", arg)) for arg in arguments]
+        arguments = [
+            "".join(
+                map(
+                    lambda x: x
+                    if x in string.ascii_letters + string.digits + "_"
+                    else "",
+                    arg,
+                )
+            )
+            for arg in arguments
+        ]
         return cls(dict(zip(arguments, tuple_)))
 
 
@@ -75,6 +100,7 @@ class Cache:
     channel_id : int
         The ID of the channel
     """
+
     prefixes: List[str]
     commands: Set[str] = field(default_factory=set)
 
@@ -95,13 +121,11 @@ class Database:
         self.conn: Dict[str, aiosqlite.Connection] = {}
         self.is_closed: bool = False
         self.bot: CodingBot = bot
-        
 
     def __getattr__(self, __name: str) -> Any:
         if __name in self.conn:
             return self.conn[__name]
         return super().__getattribute__(__name)
-
 
     async def __aenter__(self) -> "Database":
         self.bot.logger.info(f"Making connections to databases")
@@ -117,10 +141,8 @@ class Database:
     async def fill_cache(self):
         self.bot.logger.info(f"Filling stored cache data before startup")
         record = await self.select_record(
-                'afk',
-                table='afk',
-                arguments=['user_id', 'reason', 'afk_time']
-            )
+            "afk", table="afk", arguments=["user_id", "reason", "afk_time"]
+        )
 
         for row in record:
             self.bot.afk_cache[row.user_id] = (row.reason, row.afk_time)
@@ -167,14 +189,10 @@ class Database:
         values: Optional[Tuple[Any, ...]] = None,
         extras: Optional[List[str]] = None,
     ) -> Optional[List[Record]]:
-        statement = """SELECT {} FROM {}""".format(
-            ", ".join(arguments), table
-        )
+        statement = """SELECT {} FROM {}""".format(", ".join(arguments), table)
         if where is not None:
             assign_question = map(lambda x: f"{x} = ?", where)
-            statement += " WHERE {}".format(
-                " AND ".join(assign_question)
-            )
+            statement += " WHERE {}".format(" AND ".join(assign_question))
         if extras:
             for stuff in extras:
                 statement += f" {stuff}"
@@ -193,13 +211,12 @@ class Database:
         *,
         table: str,
         where: Tuple[str, ...],
-        values: Optional[Tuple[Any, ...]] = None
+        values: Optional[Tuple[Any, ...]] = None,
     ) -> None:
         delete_statement = f"DELETE FROM {table}"
         if where is not None:
             assign_question = map(lambda x: f"{x} = ?", where)
-            delete_statement += " WHERE {}".format(
-                " AND ".join(assign_question))
+            delete_statement += " WHERE {}".format(" AND ".join(assign_question))
 
         async with self.cursor(connection) as cursor:
             await cursor.execute(delete_statement, values or ())
@@ -213,9 +230,8 @@ class Database:
         table: str,
         values: Tuple[Any, ...],
         columns: Tuple[str, ...],
-        extras: Optional[List[str]] = None
+        extras: Optional[List[str]] = None,
     ) -> None:
-
         insert_statement = """
                            INSERT INTO {}({}) VALUES ({})
                            """.format(
@@ -237,14 +253,14 @@ class Database:
         to_update: Tuple[str, ...],
         where: Tuple[str, ...],
         values: Tuple[Any, ...],
-        extras: Optional[List[str]] = None
+        extras: Optional[List[str]] = None,
     ) -> None:
         update_statement = """
                            UPDATE {} SET {} WHERE {}
                            """.format(
-            table, ", ".join(
-                map(lambda x: f"{x} = ?" if "=" not in x else x, to_update)),
-            " AND ".join(map(lambda x: f"{x} = ?", where))
+            table,
+            ", ".join(map(lambda x: f"{x} = ?" if "=" not in x else x, to_update)),
+            " AND ".join(map(lambda x: f"{x} = ?", where)),
         )
         if extras:
             for stuff in extras:
@@ -272,24 +288,22 @@ class CodingHelp(commands.HelpCommand):
         super().__init__(*args, **kwargs)
 
     async def send_bot_help(
-            self,
-            mapping: Mapping[
-                Optional[commands.Cog],
-                List[commands.Command]
-            ]
+        self, mapping: Mapping[Optional[commands.Cog], List[commands.Command]]
     ) -> None:
-        embed = discord.Embed(title="Bot Commands",
-                              description="Coding Bot V6")
+        embed = discord.Embed(title="Bot Commands", description="Coding Bot V6")
         for cog, commands in mapping.items():
             if cog and not cog.hidden:
-                embed.add_field(name=cog.qualified_name, value=" ".join(
-                    f"`{command.name}`" for command in commands))
+                embed.add_field(
+                    name=cog.qualified_name,
+                    value=" ".join(f"`{command.name}`" for command in commands),
+                )
         destination = self.get_destination()
         await destination.send(embed=embed)
 
     async def send_group_help(self, group: commands.Group[Any, ..., Any], /) -> None:
-        embed = discord.Embed(title=f"{group.qualified_name} Commands",
-                                description=group.help or "")
+        embed = discord.Embed(
+            title=f"{group.qualified_name} Commands", description=group.help or ""
+        )
 
         for command in group.commands:
             if not command.hidden:
@@ -298,21 +312,27 @@ class CodingHelp(commands.HelpCommand):
         destination = self.get_destination()
         await destination.send(embed=embed)
 
-    async def send_command_help(self, command: commands.Command[Any, ..., Any], /) -> None:
-        embed = discord.Embed(title=f"{command.qualified_name} Command",
-                              description=command.help.format(
-                                prefix=self.context.prefix, 
-                                user=self.context.author.mention, 
-                                member=self.context.author.mention 
-                            ) if command.help else "No help available for this command."
-                        )
+    async def send_command_help(
+        self, command: commands.Command[Any, ..., Any], /
+    ) -> None:
+        embed = discord.Embed(
+            title=f"{command.qualified_name} Command",
+            description=command.help.format(
+                prefix=self.context.prefix,
+                user=self.context.author.mention,
+                member=self.context.author.mention,
+            )
+            if command.help
+            else "No help available for this command.",
+        )
 
         destination = self.get_destination()
         await destination.send(embed=embed)
-    
+
     async def send_cog_help(self, cog: commands.Cog[Any, ..., Any], /) -> None:
-        embed = discord.Embed(title=f"{cog.qualified_name} Commands",
-                              description=cog.help)
+        embed = discord.Embed(
+            title=f"{cog.qualified_name} Commands", description=cog.help
+        )
 
         for command in cog.get_commands():
             if not command.hidden:
@@ -326,20 +346,22 @@ class CodingBot(commands.Bot):
     def __init__(self) -> None:
         help_command = CodingHelp(
             command_attrs={
-                'cooldown': commands.CooldownMapping.from_cooldown(
+                "cooldown": commands.CooldownMapping.from_cooldown(
                     3, 5, commands.BucketType.user
                 ),
-                'cooldown_after_parsing': True,
-                'help': HELP_COMMAND
+                "cooldown_after_parsing": True,
+                "help": HELP_COMMAND,
             }
         )
         super().__init__(
-            command_prefix=['.'], intents=INTENTS, case_insensitive=True,
-            help_command=help_command
+            command_prefix=["."],
+            intents=INTENTS,
+            case_insensitive=True,
+            help_command=help_command,
         )
         self.conn: Database = discord.utils.MISSING
         self.tracker = InviteTracker(self)
-        self.default_prefixes = [')']
+        self.default_prefixes = [")"]
         self.welcomer = WelcomeBanner(self)
         self.processing_commands = 0
         self.message_cache = {}
@@ -354,11 +376,11 @@ class CodingBot(commands.Bot):
         self.version: Version = VERSION
         self.logger: logging.Logger = create_logger("CodingBot")
         self.owner_ids = [
-            556119013298667520, # Swas.py
-            879644654587478027, # Swas's alt
-            690420846774321221, # BobDotCom
-            579041484796461076, # Conch.py
-            687882857171255309, # Lexionas74
+            556119013298667520,  # Swas.py
+            879644654587478027,  # Swas's alt
+            690420846774321221,  # BobDotCom
+            579041484796461076,  # Conch.py
+            687882857171255309,  # Lexionas74
         ]
 
     async def setup_hook(self) -> None:
@@ -367,10 +389,10 @@ class CodingBot(commands.Bot):
             if filename.endswith(".py"):
                 await self.load_extension(f"cogs.{filename[:-3]}")
                 self.logger.info(f"Loaded {filename.title()} Cog")
-        os.environ['JISHAKU_NO_UNDERSCORE'] = "True"
+        os.environ["JISHAKU_NO_UNDERSCORE"] = "True"
         await self.load_extension("jishaku")
         self.logger.info("Loaded Jishaku Cog")
-        jishaku = self.get_cog('Jishaku')
+        jishaku = self.get_cog("Jishaku")
         if jishaku:
             jishaku.hidden = True
 
@@ -412,13 +434,13 @@ class CodingBot(commands.Bot):
         embed = discord.Embed(
             title=f"Welcome to {member.guild.name}!",
             description=(
-
-                f'Welcome {member.mention}, we\'re glad you joined! Before you get'
-                ' started, here are some things to check out: \n**Read the Rules:'
-                f'** {rules_channel} \n**Get roles:** <#726074137168183356> and '
-                '<#806909970482069556> \n**Want help? Read here:** '
-                '<#799527165863395338> and <#754712400757784709>'),
-            timestamp=dt.datetime.now(dt.timezone.utc)
+                f"Welcome {member.mention}, we're glad you joined! Before you get"
+                " started, here are some things to check out: \n**Read the Rules:"
+                f"** {rules_channel} \n**Get roles:** <#726074137168183356> and "
+                "<#806909970482069556> \n**Want help? Read here:** "
+                "<#799527165863395338> and <#754712400757784709>"
+            ),
+            timestamp=dt.datetime.now(dt.timezone.utc),
         )
         file = await self.welcomer.construct_image(member=member)
         channel = member.guild.get_channel(self.welcomer_channel_id)
@@ -431,16 +453,14 @@ class CodingBot(commands.Bot):
         # type: ignore  # Always a Messageable
         await channel.send(content=member.mention, file=file)
         await verify_here.send(  # type: ignore  # Always a Messageable
-            f'Welcome {member.mention}! Follow the instructions in other channels to get verified. :)',
-            embed=embed
+            f"Welcome {member.mention}! Follow the instructions in other channels to get verified. :)",
+            embed=embed,
         )
 
     async def on_error(self, event_method: str, *args: Any, **kwargs: Any):
         await log_error(self, event_method, *args, **kwargs)
 
-    async def send(
-        self, ctx, *args, **kwargs
-    ) -> discord.Message:
+    async def send(self, ctx, *args, **kwargs) -> discord.Message:
         if getattr(ctx, "msg_before", None) is not None:
             key = ctx.msg_before.id
             await self.message_cache[key].edit(*args, **kwargs)
@@ -449,18 +469,13 @@ class CodingBot(commands.Bot):
             self.message_cache[key] = await ctx.send(*args, **kwargs)
         return self.message_cache[key]
 
-    async def reply(
-            self, ctx, *args, **kwargs) -> discord.Message:
+    async def reply(self, ctx, *args, **kwargs) -> discord.Message:
         if getattr(ctx, "msg_before", None) is not None:
             key = ctx.msg_before.id
             await self.message_cache[key].edit(*args, **kwargs)
         else:
-            key = (
-                ctx.id if isinstance(ctx, discord.Message) else ctx.message.id
-            )
-            self.message_cache[key] = await ctx.reply(
-                *args, **kwargs
-            )
+            key = ctx.id if isinstance(ctx, discord.Message) else ctx.message.id
+            self.message_cache[key] = await ctx.reply(*args, **kwargs)
         return self.message_cache[key]
 
     def embed(
@@ -485,7 +500,9 @@ class CodingBot(commands.Bot):
 
 
 class TimeConverter(commands.Converter[dt.timedelta]):
-    async def convert(self, ctx: commands.Context[CodingBot], argument: str) -> dt.timedelta:
+    async def convert(
+        self, ctx: commands.Context[CodingBot], argument: str
+    ) -> dt.timedelta:
         """
         Parses a string into a timedelta object
 

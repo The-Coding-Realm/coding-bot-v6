@@ -17,7 +17,6 @@ if TYPE_CHECKING:
 
 
 class ListenerCog(commands.Cog, command_attrs=dict(hidden=True)):
-
     hidden = True
 
     def __init__(self, bot: CodingBot) -> None:
@@ -267,7 +266,7 @@ class ListenerCog(commands.Cog, command_attrs=dict(hidden=True)):
         """
         if "repo:" in message.content.lower():
             repo = message.content.lower().split("repo:")[1].strip().split(" ")[0]
-            for sect in filter(repo.split("/")):
+            for sect in filter(None, repo.split("/")):
                 if not self.valid_gh_sect(sect):
                     return
             url = f"https://github.com/{repo}"

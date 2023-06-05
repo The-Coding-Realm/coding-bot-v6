@@ -3,25 +3,25 @@ from typing import NamedTuple
 import discord
 
 
-
 __all__ = (
-    'INTENTS',
-    'PREFIX_CONFIG_SCHEMA',
-    'COMMANDS_CONFIG_SCHEMA',
-    'WARNINGS_CONFIG_SCHEMA',
-    'AFK_CONFIG_SCHEMA',
-    'HELP_WARNINGS_CONFIG_SCHEMA',
-    'HELP_COMMAND',
-    'OFFICIAL_HELPER_ROLE_ID',
-    'TCR_GUILD_ID',
-    'HELP_BAN_ROLE_ID',
-    'READ_HELP_RULES_ROLE_ID',
-    'THANK_INFO_CONFIG_SCHEMA',
-    'THANK_DATA_CONFIG_SCHEMA',
-    'MESSAGE_METRIC_SCHEMA',
-    'TCR_STAFF_ROLE_ID',
-    'VERSION'
+    "INTENTS",
+    "PREFIX_CONFIG_SCHEMA",
+    "COMMANDS_CONFIG_SCHEMA",
+    "WARNINGS_CONFIG_SCHEMA",
+    "AFK_CONFIG_SCHEMA",
+    "HELP_WARNINGS_CONFIG_SCHEMA",
+    "HELP_COMMAND",
+    "OFFICIAL_HELPER_ROLE_ID",
+    "TCR_GUILD_ID",
+    "HELP_BAN_ROLE_ID",
+    "READ_HELP_RULES_ROLE_ID",
+    "THANK_INFO_CONFIG_SCHEMA",
+    "THANK_DATA_CONFIG_SCHEMA",
+    "MESSAGE_METRIC_SCHEMA",
+    "TCR_STAFF_ROLE_ID",
+    "VERSION",
 )
+
 
 class Version(NamedTuple):
     major: int
@@ -31,18 +31,12 @@ class Version(NamedTuple):
 
     def __str__(self) -> str:
         return f"v{self.major}.{self.submajor}.{self.minor} [{self.release}]"
-    
+
     def release_format(self):
         return f"Version: `{self.major}.{self.submajor}.{self.minor}`\nPatch: `{self.release}`"
 
 
-
-VERSION = Version(
-    major=0,
-    submajor=0,
-    minor=1,
-    release="alpha"
-)
+VERSION = Version(major=0, submajor=0, minor=1, release="alpha")
 
 INTENTS = discord.Intents(
     messages=True,
@@ -56,7 +50,7 @@ INTENTS = discord.Intents(
     voice_states=True,
     reactions=True,
     message_content=True,
-    presences=True
+    presences=True,
 )
 
 
