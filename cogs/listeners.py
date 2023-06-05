@@ -241,16 +241,10 @@ class ListenerCog(commands.Cog, command_attrs=dict(hidden=True)):
 
         Responds with a link to the repo.
         """
-        if message.content.lower().startswith('repo:') and not message.author.bot:
-            repo = message.content.split('repo:')[1].strip()
-            if '/' not in repo:
-                return
-            user, repo = repo.split('/')
-            base_link = f"https://github.com/{user}/{repo}"
-            resp = await self.bot.session.get(base_link)
-            if resp.ok:
-                await message.channel.send(base_link)
-
+        if "repo:" in message.content.lower():
+            repo = message.content.lower().split("repo:")[1].strip().split(" ")[0]
+            url = f"https://github.com/{repo}"
+            await message.channel.send(url)
 
 
 async def setup(bot: CodingBot):
