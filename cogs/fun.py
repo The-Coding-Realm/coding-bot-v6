@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import random
+import json
 from io import BytesIO
 from textwrap import wrap
 from typing import TYPE_CHECKING, Optional
@@ -117,31 +118,16 @@ class Fun(commands.Cog, command_attrs=dict(hidden=False)):
         ------
         `{prefix}joke`: *will get a random joke*
         """
-        joke_json = await self.http.api["joke"]["api"]()
+        joke_json = json.loads(await self.http.api["joke"]["api"]())
+        print(joke_json)
+        setup = joke_json[0]["question"]
+        delivery = joke_json[0]["punchline"]
 
-        parts = joke_json["type"]
-
-        if parts == "single":
-            joke = joke_json["joke"]
-
-            embed = self.bot.embed(
-                title="Here's a joke for you:",
-                description=joke,
-                color=discord.Color.random(),
-            )
-
-            return await self.bot.reply(ctx, embed=embed)
-
-        else:
-            setup = joke_json["setup"]
-            delivery = joke_json["delivery"]
-
-            embed = self.bot.embed(
-                title="Here's a joke for you:",
-                description=f"{setup}\n\n||{delivery}||",
-                color=discord.Color.random(),
-            )
-            await self.bot.reply(ctx, embed=embed)
+        embed = self.bot.embed(
+            title = setup,
+            description = f"||{delivery}||",
+        )
+        await self.bot.reply(ctx, embed=embed)
 
     @commands.hybrid_command(name="8ball")
     async def eightball(self, ctx: commands.Context[CodingBot], *, question: str):
