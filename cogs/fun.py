@@ -7,10 +7,13 @@ from typing import TYPE_CHECKING, Optional
 
 import base64
 import discord
+from discord import utils
 from discord.ext import commands
 from ext.helpers import create_trash_meme, get_rock
 from ext.http import Http
 from ext.ui.view import *
+
+import asyncio
 
 if TYPE_CHECKING:
     from ext.models import CodingBot
@@ -319,6 +322,39 @@ class Fun(commands.Cog, command_attrs=dict(hidden=False)):
             text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url
         )
         await self.bot.reply(ctx, embed=embed)
+    
+    @commands.hybrid_command(name="mock")
+    async def mock(self, ctx: commands.Context[CodingBot], *, text: str):
+        embed = discord.Embed(
+            title=f"Mocked Text",
+            description=text.swapcase(),
+            color=discord.Color.random(),
+        )
+        embed.set_footer(
+            text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url
+        )
+        await self.bot.reply(ctx, embed=embed)
+    
+    @commands.hybrid_command(name="beerparty")
+    async def _beerparty(
+        self, ctx: commands.Context, *, reason: commands.clean_content = None
+    ):
+        reason = ("\nReason: " + reason) if reason else ""
+        msg = await ctx.send(
+            "Open invite to beerparty! React with 🍻 to join!" + reason
+        )
+        await msg.add_reaction("\U0001f37b")
+        await asyncio.sleep(60)
+        msg = await ctx.channel.fetch_message(msg.id)
+        users = [user async for user in msg.reactions[0].users()]
+        users.remove(self.bot.user)
+        if len(users) == 0:
+            return await ctx.send("Nobody joined the beerparty :(")
+        await ctx.send(
+            ', '.join(user.display_name for user in users)
+            + f" joined the beerparty!"
+        ) 
+
 
     # Filters command
     # @commands.hybrid_group(invoke_without_command=True)
