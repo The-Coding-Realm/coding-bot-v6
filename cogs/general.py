@@ -36,9 +36,7 @@ class General(commands.Cog, command_attrs=dict(hidden=False)):
         `{prefix}source [command]` *will send link to the source code of the command*
         `{prefix}source [command] [subcommand]` *will send link to the source code of the subcommand*
         """
-        github = (
-            "<:githubwhite:804344724621230091>"
-        )
+        github = "<:githubwhite:804344724621230091>"
         embed = discord.Embed(title=f"{github} GitHub (Click Here) {github}")
         source_url = "https://github.com/The-Coding-Realm/coding-bot-v6"
         branch = "master"
