@@ -119,13 +119,12 @@ class Fun(commands.Cog, command_attrs=dict(hidden=False)):
         `{prefix}joke`: *will get a random joke*
         """
         joke_json = json.loads(await self.http.api["joke"]["api"]())
-        print(joke_json)
         setup = joke_json[0]["question"]
         delivery = joke_json[0]["punchline"]
 
         embed = self.bot.embed(
-            title = setup,
-            description = f"||{delivery}||",
+            title=setup,
+            description=f"||{delivery}||",
         )
         await self.bot.reply(ctx, embed=embed)
 
@@ -308,7 +307,7 @@ class Fun(commands.Cog, command_attrs=dict(hidden=False)):
             text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url
         )
         await self.bot.reply(ctx, embed=embed)
-    
+
     @commands.hybrid_command(name="mock")
     async def mock(self, ctx: commands.Context[CodingBot], *, text: str):
         embed = discord.Embed(
@@ -320,15 +319,13 @@ class Fun(commands.Cog, command_attrs=dict(hidden=False)):
             text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url
         )
         await self.bot.reply(ctx, embed=embed)
-    
+
     @commands.hybrid_command(name="beerparty")
     async def _beerparty(
         self, ctx: commands.Context, *, reason: commands.clean_content = None
     ):
         reason = ("\nReason: " + reason) if reason else ""
-        msg = await ctx.send(
-            "Open invite to beerparty! React with 🍻 to join!" + reason
-        )
+        msg = await ctx.send("Open invite to beerparty! React with 🍻 to join!" + reason)
         await msg.add_reaction("\U0001f37b")
         await asyncio.sleep(60)
         msg = await ctx.channel.fetch_message(msg.id)
@@ -337,10 +334,8 @@ class Fun(commands.Cog, command_attrs=dict(hidden=False)):
         if len(users) == 0:
             return await ctx.send("Nobody joined the beerparty :(")
         await ctx.send(
-            ', '.join(user.display_name for user in users)
-            + f" joined the beerparty!"
-        ) 
-
+            ", ".join(user.display_name for user in users) + f" joined the beerparty!"
+        )
 
     # Filters command
     # @commands.hybrid_group(invoke_without_command=True)
