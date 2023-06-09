@@ -76,7 +76,7 @@ class Http:
             },
             "joke": {
                 "api": lambda: self.get(
-                    "https://backend-omega-seven.vercel.app/api/getjoke",
+                    "https://backend-omega-seven.vercel.app/api/getjoke", _json=True
                 ),
             },
         }

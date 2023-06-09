@@ -118,7 +118,8 @@ class Fun(commands.Cog, command_attrs=dict(hidden=False)):
         ------
         `{prefix}joke`: *will get a random joke*
         """
-        joke_json = json.loads(await self.http.api["joke"]["api"]())
+        joke = await self.http.api["joke"]["api"]()
+        joke_json = await joke.json(content_type='text/html')
         setup = joke_json[0]["question"]
         delivery = joke_json[0]["punchline"]
 
