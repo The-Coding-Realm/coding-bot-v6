@@ -76,7 +76,7 @@ class Http:
             },
             "joke": {
                 "api": lambda: self.get(
-                    "https://v2.jokeapi.dev/joke/Programming", _json=True
+                    "https://backend-omega-seven.vercel.app/api/getjoke", _json=True
                 ),
             },
         }
@@ -166,7 +166,9 @@ class Http:
 
     async def get(self, _url, _json=False, **kwargs):
         async with self.session.get(_url, **kwargs) as response:
-            return await (response.json() if _json else response.text())
+            return await (
+                response.json(content_type=None) if _json else response.text()
+            )
 
     async def post(self, _url, _json=False, **kwargs):
         async with self.session.post(_url, **kwargs) as response:

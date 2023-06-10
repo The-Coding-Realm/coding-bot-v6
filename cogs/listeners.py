@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import re
 import sys
+import asyncio
 import traceback
 from datetime import datetime
 from typing import TYPE_CHECKING
@@ -82,7 +83,9 @@ class ListenerCog(commands.Cog, command_attrs=dict(hidden=True)):
                     description=f"{message.author.mention} Welcome back, I removed your AFK!",
                     color=discord.Color.dark_gold(),
                 )
-                await message.reply(embed=em)
+                msg = await message.reply(embed=em)
+                await asyncio.sleep(5)
+                await msg.delete()
 
     @commands.Cog.listener("on_message")
     async def user_mentioned(self, message: discord.Message):
