@@ -43,7 +43,7 @@ class Piston(discord.ui.View):
             self.timer.cancel()
             return
         await self.msg.edit(
-            embed=await self.cog.bot.embed(
+            embed=self.cog.bot.embed(
                 title="compiling **[** {} **]**".format(
                     int(time.time()) - self.timestamp
                 )
@@ -57,7 +57,7 @@ class Piston(discord.ui.View):
         self.timer.cancel()
         if "message" in self.res:
             return await self.msg.edit(
-                embed=await self.cog.bot.embed(
+                embed=self.cog.bot.embed(
                     title=" ",
                     description="```ansi\n[1;31m{}\n```".format(self.res["message"]),
                 )
@@ -87,7 +87,7 @@ class Piston(discord.ui.View):
                     child.style = discord.ButtonStyle.red
                     child.label = f"failed to run '{self.lang}' code  |  {int(time.time()) - self.timestamp}s"
         await self.msg.edit(
-            embed=await self.cog.bot.embed(
+            embed=self.cog.bot.embed(
                 title=" ", description=f"```{self.lang}\n{output[0]}\n```"
             ),
             view=self,
@@ -103,7 +103,7 @@ class Piston(discord.ui.View):
             if child.custom_id == "next":
                 child.disabled = False
         return await interaction.response.edit_message(
-            embed=await self.cog.bot.embed(
+            embed=self.cog.bot.embed(
                 title=" ",
                 description=f"```{self.lang}\n{self.output[self.page]}\n```",
             ),
@@ -127,7 +127,7 @@ class Piston(discord.ui.View):
                 child.disabled = False
         try:
             await interaction.response.edit_message(
-                embed=await self.cog.bot.embed(
+                embed=self.cog.bot.embed(
                     title=" ",
                     description=f"```{self.lang}\n{self.output[self.page]}\n```",
                 ),
