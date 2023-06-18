@@ -44,23 +44,23 @@ class Fun(commands.Cog, command_attrs=dict(hidden=False)):
         file = await create_trash_meme(avatar_one, avatar_two)
         await self.bot.send(ctx, file=file)
 
-    @commands.hybrid_command()
-    async def rock(
-        self, ctx: commands.Context[CodingBot], *, query: Optional[str] = None
-    ):
-        """
-        Get a random rock
-        Usage:
-        ------
-        `{prefix}rock`: *will get a random rock*
-        `{prefix}rock [rock]`: *will get the [rock]*
+    # @commands.hybrid_command()
+    # async def rock(
+    #     self, ctx: commands.Context[CodingBot], *, query: Optional[str] = None
+    # ):
+    #     """
+    #     Get a random rock
+    #     Usage:
+    #     ------
+    #     `{prefix}rock`: *will get a random rock*
+    #     `{prefix}rock [rock]`: *will get the [rock]*
 
-        """
-        rock_info = await get_rock(self)
-        return await self.bot.reply(
-            ctx,
-            embed=rock_info,
-        )
+    #     """
+    #     rock_info = await get_rock(self)
+    #     return await self.bot.reply(
+    #         ctx,
+    #         embed=rock_info,
+    #     )
 
     @commands.hybrid_command()
     async def number(

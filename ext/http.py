@@ -13,12 +13,12 @@ class Http:
                 "meme": lambda: self.api["meme-api"]["gimme"](),
             },
             # //////////////////////////////////////////////////////////////////////////////////////
-            "rock": {
-                "random": lambda: self.get(
-                    "https://rockapi.apiworks.tech/rock/random", _json=True
-                ),
-                "top": lambda: self.get("https://rockapi.apiworks.tech/rock/top"),
-            },
+            # "rock": {
+            #     "random": lambda: self.get(
+            #         "https://rockapi.apiworks.tech/rock/random", _json=True
+            #     ),
+            #     "top": lambda: self.get("https://rockapi.apiworks.tech/rock/top"),
+            # },
             "numbers": {
                 "random": lambda _type="trivia": self.api["numbers"][
                     "random_" + _type
