@@ -438,8 +438,8 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
         """
         member = member or ctx.author
         spotify = Spotify(bot=self.bot, member=member)
-        embed = await spotify.get_embed()
-        if not embed:
+        result = await spotify.get_embed()
+        if not result:
             if member == ctx.author:
                 return await ctx.reply(
                     f"You are currently not listening to spotify!", mention_author=False
@@ -450,8 +450,8 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
                 mention_author=False,
                 allowed_mentions=discord.AllowedMentions(users=False),
             )
-        embed, file, view = embed
-        await self.bot.send(ctx, embed=embed, file=file, view=view)
+        file, view = result
+        await self.bot.send(ctx, file=file, view=view)
 
     # @commands.command(name='sauce')
     # async def sauce(self, ctx: commands.Context[CodingBot], source: Optional[str] = None):
