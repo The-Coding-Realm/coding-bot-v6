@@ -20,6 +20,7 @@ from bs4 import BeautifulSoup
 from colorthief import ColorThief
 from discord.ext import tasks
 from PIL import Image, ImageDraw, ImageFilter, ImageFont
+from cbvx import iml
 
 from ext.consts import TCR_STAFF_ROLE_ID
 
@@ -496,74 +497,11 @@ class Spotify:
         """
         self.member = member
         self.bot = bot
-        self.embed = discord.Embed(
-            title=f"{member.display_name} is Listening to Spotify",
-            color=discord.Color.green(),
-        )
         self.counter = 0
-
-    async def request_pass(self, *, track_id: str):
-        """
-        Requests for a list of artists from the spotify API
-        Parameters:
-        ----------------
-            track_id : str
-                Spotify track's id
-        Returns
-        ----------------
-        list
-            A list of artist details
-        Raises
-        ----------------
-        Exception
-            If Spotify API is down
-        """
-        try:
-            headers = {
-                "Authorization": f'Basic {base64.urlsafe_b64encode(f"{self.bot.spotify_client_id.strip()}:{self.bot.spotify_client_secret.strip()}".encode()).decode()}',
-                "Content-Type": "application/x-www-form-urlencoded",
-            }
-            params = {"grant_type": "client_credentials"}
-            if (
-                not self.bot.spotify_session
-                or dt.datetime.utcnow() > self.bot.spotify_session[1]
-            ):
-                resp = await self.bot.session.post(
-                    "https://accounts.spotify.com/api/token",
-                    params=params,
-                    headers=headers,
-                )
-                auth_js = await resp.json()
-                timenow = dt.datetime.utcnow() + dt.timedelta(
-                    seconds=auth_js["expires_in"]
-                )
-                type_token = auth_js["token_type"]
-                token = auth_js["access_token"]
-                auth_token = f"{type_token} {token}"
-                self.bot.spotify_session = (auth_token, timenow)
-            else:
-                auth_token = self.bot.spotify_session[0]
-        except Exception:
-            raise Exception("Something went wrong!")
-        else:
-            try:
-                resp = await self.bot.session.get(
-                    f"https://api.spotify.com/v1/tracks/{urllib.parse.quote(track_id)}",
-                    params={"market": "US"},
-                    headers={"Authorization": auth_token},
-                )
-                json = await resp.json()
-                return json
-            except Exception:
-                if self.counter == 4:
-                    raise Exception("Something went wrong!")
-                else:
-                    self.counter += 1
-                    await self.request_pass(track_id=track_id)
 
     @staticmethod
     @executor()
-    def pil_process(pic, name, artists, time, time_at, track) -> discord.File:
+    def pil_process(pic: BytesIO, name, artists, time, time_at, track) -> discord.File:
         """
         Makes an image with spotify album cover with Pillow
 
@@ -576,9 +514,9 @@ class Spotify:
         artists : list
             Name(s) of the Artists
         time : int
-            Total duration of song in seconds
+            Total duration of song in xx:xx format
         time_at : int
-            Total duration into the song in seconds
+            Total duration into the song in xx:xx format
         track : int
             Offset for covering the played bar portion
         Returns
@@ -586,37 +524,56 @@ class Spotify:
         discord.File
             contains the spotify image
         """
-        s = ColorThief(pic)
-        color = s.get_palette(color_count=2)
-        result = Image.new("RGBA", (575, 170))
-        draw = ImageDraw.Draw(result)
-        color_font = "white" if sum(color[0]) < 450 else "black"
-        draw.rounded_rectangle(((0, 0), (575, 170)), 20, fill=color[0])
-        s = Image.open(pic)
-        s = s.resize((128, 128))
-        result1 = Image.new("RGBA", (129, 128))
-        Image.Image.paste(result, result1, (29, 23))
-        Image.Image.paste(result, s, (27, 20))
-        font = ImageFont.truetype("storage/fonts/spotify.ttf", 28)
-        font2 = ImageFont.truetype("storage/fonts/spotify.ttf", 18)
-        draw.text((170, 20), name, color_font, font=font)
-        draw.text((170, 55), artists, color_font, font=font2)
-        draw.text((500, 120), time, color_font, font=font2)
-        draw.text((170, 120), time_at, color_font, font=font2)
-        draw.rectangle(((230, 127), (490, 130)), fill="grey")  # play bar
-        draw.rectangle(((230, 127), (230 + track, 130)), fill=color_font)
-        draw.ellipse(
-            (230 + track - 5, 122, 230 + track + 5, 134),
-            fill=color_font,
-            outline=color_font,
+
+        # Resize imput image to 300x300
+        # TODO: Remove hardcoded domentions frpm cbvx
+        d = Image.open(pic).resize((300, 300))
+        # Save to a buffer as PNG
+        buffer = BytesIO()
+        d.save(buffer, "png")
+        buffer.seek(0)
+        # Pass raw bytes to cbvx.iml (needs to be png data)
+        csp = iml.Spotify(buffer.getvalue())
+        # Spotify class has 3 config methods - rate (logarithmic rate of interpolation), contrast and shift (pallet shift)
+        csp.rate(0.55)  # Higner = less sharp interpolation
+        csp.contrast(20.0)  # default, Higner = more contrast
+        csp.shift(0)  # default
+        # _ is the bg color (non constrasted), we only care about foreground color
+        _, fore = csp.pallet()
+        fore = (fore.r, fore.g, fore.b)
+        # We get the base to write text on
+        result = csp.get_base()
+        base = Image.frombytes("RGB", (600, 300), result)
+
+        font0 = ImageFont.truetype("storage/fonts/spotify.ttf", 35) # For title
+        font = ImageFont.truetype("storage/fonts/spotify.ttf", 28) # Artist
+        font2 = ImageFont.truetype("storage/fonts/spotify.ttf", 18) # Time stamps
+
+        draw = ImageDraw.Draw(
+            base,
         )
+        draw.rounded_rectangle(
+            ((50, 230), (550, 230)),
+            radius=1,
+            fill=tuple(map(lambda c: int(c * 0.5), fore)),
+        )  # play bar
+        draw.rounded_rectangle(
+            ((50, 230 - 1), (int(50 + track * 500), 230 + 1)),
+            radius=1,
+            fill=fore,
+        )  # pogress
         draw.ellipse(
-            (230 + track - 6, 122, 230 + track + 6, 134),
-            fill=color_font,
-            outline=color_font,
-        )
+            (int(50 + track * 500) - 5, 230 - 5, int(50 + track * 500) + 5, 230 + 5),
+            fill=fore,
+            outline=fore,
+        )  # Playhead
+        draw.text((50, 245), time_at, fore, font=font2)  # Current time
+        draw.text((500, 245), time, fore, font=font2)  # Total duration
+        draw.text((50, 50), name, fore, font=font0)  # Track name
+        draw.text((50, 100), artists, fore, font=font2)  # Artists
+
         output = BytesIO()
-        result.save(output, "png")
+        base.save(output, "png")
         output.seek(0)
         return discord.File(fp=output, filename="spotify.png")
 
@@ -643,7 +600,7 @@ class Spotify:
         time_at = (
             dt.datetime.utcnow().replace(tzinfo=dt.timezone.utc) - act.start
         ).total_seconds()
-        track = (time_at / time) * 260
+        track = time_at / time
         time = f"{time // 60:02d}:{time % 60:02d}"
         time_at = f"{int((time_at if time_at > 0 else 0) // 60):02d}:{int((time_at if time_at > 0 else 0) % 60):02d}"
         pog = act.album_cover_url
@@ -668,19 +625,8 @@ class Spotify:
         )
         if not activity:
             return False
-        result = await self.request_pass(track_id=activity.track_id)
-        final_string = ", ".join(
-            [
-                f"[{resp['name']}]({resp['external_urls']['spotify']})"
-                for resp in result["artists"]
-            ]
-        )
         url = activity.track_url
         image = await self.get_from_local(self.bot, activity)
-        self.embed.description = (
-            f"**Artists**: {final_string}\n**Album**: [{activity.album}]({url})"
-        )
-        self.embed.set_image(url="attachment://spotify.png")
         view = discord.ui.View()
         view.add_item(
             discord.ui.Button(
@@ -690,7 +636,7 @@ class Spotify:
                 emoji="<:spotify:983984483755765790>",
             )
         )
-        return (self.embed, image, view)
+        return (image, view)
 
 
 async def get_rock(self):
