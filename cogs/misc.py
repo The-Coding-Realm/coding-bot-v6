@@ -451,7 +451,7 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
                 allowed_mentions=discord.AllowedMentions(users=False),
             )
         file, view = result
-        await self.bot.send(ctx, file=file, view=view)
+        await self.bot.send(ctx, content=f"{member.display_name} is listening to:", file=file, view=view)
 
     # @commands.command(name='sauce')
     # async def sauce(self, ctx: commands.Context[CodingBot], source: Optional[str] = None):
