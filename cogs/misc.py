@@ -81,7 +81,7 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
 
         if staff_role in member.roles:
             try:
-                await member.remove_roles(on_pat_staff)  # type: ignore
+                await member.remove_roles(on_pat_staff) 
             except (discord.Forbidden, discord.HTTPException):
                 pass
         if ctx.guild.id not in self.bot.afk_cache:
@@ -95,7 +95,7 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
             )
             try:
                 await member.edit(nick=f"[AFK] {member.display_name}")
-            except:
+            except Exception:
                 pass
             try:
                 self.bot.afk_cache[ctx.guild.id][member.id] = (
@@ -456,82 +456,6 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
             )
         file, view = result
         await self.bot.send(ctx, file=file, view=view)
-
-    # @commands.command(name='sauce')
-    # async def sauce(self, ctx: commands.Context[CodingBot], source: Optional[str] = None):
-    #     """
-    #     Get the sauce of a source.
-    #     Example: {prefix}sauce <source>
-    #     """
-    #     source = source or ctx.message.attachments[0].url if ctx.message.attachments else None
-    #     if not source:
-    #         return await ctx.send(
-    #             'Please provide image/video url, '
-    #             'reply to another message or upload the image/video along with the command. '
-    #             f'Please use {ctx.prefix}help saucefor more information.')
-
-    #     anime_information = await find_anime_source(self.bot.session, source)
-
-    #     result = anime_information['result']
-    #     if not result:
-    #         return await ctx.send(
-    #             'Could not find any anime source for this image/video.'
-    #         )
-    #     else:
-    #         result = result[0]
-
-    #     print(ctx.channel.is_nsfw())
-    #     print(result['anilist'].get('isAdult'))
-
-    #     if result['anilist'].get('isAdult') and not ctx.channel.is_nsfw():
-    #         await ctx.send(
-    #             'This source is marked as adult content and can only be used in NSFW channels. I Will try to DM you instead.'
-    #         )
-    #         ctx = ctx.author
-
-    #     browser = "https://trace.moe/?url={}".format(source)
-
-    #     anilist_id = result['anilist']['id']
-    #     mal_id = result['anilist']['idMal']
-
-    #     anilist_url = f'https://anilist.co/anime/{anilist_id}'
-    #     anilist_banner = f"https://img.anili.st/media/{anilist_id}"
-    #     mal_url = f'https://myanimelist.net/anime/{mal_id}'
-
-    #     native = result['anilist']['title'].get('native')
-    #     english = result['anilist']['title'].get('english')
-    #     romaji = result['anilist']['title'].get('romaji')
-
-    #     filename = result['filename']
-    #     similarity = round(result['similarity'] * 100, 2)
-
-    #     from_timestamp = timedelta(seconds=int(result['from']))
-    #     to_timestamp = timedelta(seconds=int(result['to']))
-
-    #     embed = discord.Embed(timestamp=discord.utils.utcnow())
-    #     embed.add_field(
-    #         name="Anime Title", DD
-    #         value=f"Native: {native}\nEnglish: {english}\nRomaji: {romaji}",
-    #         inline=False
-    #     )
-    #     embed.add_field(
-    #         name="Scene Details",
-    #         value=f"**Filename:** {filename}\n**From:** {from_timestamp}\n**To:** {to_timestamp}\n**Similarity:** {similarity}%",
-    #         inline=False
-    #     )
-    #     embed.add_field(
-    #         name="Links",
-    #         value="[Open In Browser]({}) | [AniList]({}) | [MyAnimeList]({})".format(
-    #             browser, anilist_url, mal_url
-    #         ),
-    #         inline=False
-
-    #     )
-    #     embed.set_image(url=anilist_banner)
-    #     try:
-    #         await ctx.send(embed=embed)
-    #     except (discord.HTTPException, discord.Forbidden):
-    #         pass
 
 
 async def setup(bot: CodingBot):
