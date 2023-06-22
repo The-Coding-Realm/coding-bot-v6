@@ -1,5 +1,4 @@
 from __future__ import annotations
-from io import BytesIO
 
 import os
 import traceback
@@ -50,7 +49,7 @@ class Developer(commands.Cog, command_attrs=dict(hidden=True)):
                 title=f"Successfully loaded extension: `{cog_}`",
                 color=discord.Color.green(),
             )
-        except Exception as e:
+        except Exception:
             embed = discord.Embed(
                 title=f"Failed to load extension: `{cog_}`", color=discord.Color.red()
             )
@@ -75,7 +74,7 @@ class Developer(commands.Cog, command_attrs=dict(hidden=True)):
                 title=f"Successfully unloaded extension: `{cog_}`",
                 color=discord.Color.green(),
             )
-        except Exception as e:
+        except Exception:
             embed = discord.Embed(
                 title=f"Failed to unload extension: `{cog_}`", color=discord.Color.red()
             )
@@ -99,7 +98,7 @@ class Developer(commands.Cog, command_attrs=dict(hidden=True)):
                 title=f"Successfully reloaded extension: `{cog_}`",
                 color=discord.Color.green(),
             )
-        except Exception as e:
+        except Exception:
             embed = discord.Embed(
                 title=f"Failed to reload extension: `{cog_}`", color=discord.Color.red()
             )
@@ -154,7 +153,7 @@ class Developer(commands.Cog, command_attrs=dict(hidden=True)):
 
         """
         cogs: Dict[str, List[str]] = {"unloaded": [], "not": []}
-        processing: Mapping[str, ModuleType] = self.bot.extensions.copy()  # type: ignore
+        processing: Mapping[str, ModuleType] = self.bot.extensions.copy()
         for cog in processing:
             try:
                 await self.bot.unload_extension(cog)
@@ -184,7 +183,7 @@ class Developer(commands.Cog, command_attrs=dict(hidden=True)):
 
         """
         cogs: Dict[str, List[str]] = {"reloaded": [], "not": []}
-        processing: Mapping[str, ModuleType] = self.bot.extensions.copy()  # type: ignore
+        processing: Mapping[str, ModuleType] = self.bot.extensions.copy() 
         for cog in processing:
             try:
                 await self.bot.reload_extension(cog)
@@ -254,22 +253,43 @@ class Developer(commands.Cog, command_attrs=dict(hidden=True)):
         )
         record = message_metric[0] if message_metric else None
         if record:
+            deleted_message_percent = (record.deleted_message_count / 
+                                       record.message_count * 100)
+            actual_message_percent = ((record.message_count - 
+                                       record.deleted_message_count) / 
+                                       record.message_count * 100)
+            offline_message_percent = record.offline / record.message_count * 100
+            online_message_percent = record.online / record.message_count * 100
+            dnd_message_percent = record.dnd / record.message_count * 100
+            idle_message_percent = record.idle / record.message_count * 100
             formatted_message = f"""
             **__Message metrics__** For {member.mention}:
-            \u3164 • **__Total message count__**:            {record.message_count}
-            \u3164 • **__Deleted message count__**:          {record.deleted_message_count} (`{record.deleted_message_count / record.message_count * 100:.2f}%`)
-            \u3164 • **__Actual message count__**:           {record.message_count - record.deleted_message_count} (`{(record.message_count - record.deleted_message_count) / record.message_count * 100:.2f}%`)
-            \u3164 • **__Offline message count__**:          {record.offline} (`{record.offline / record.message_count * 100:.2f}%`)
-            \u3164 • **__Online message count__**:           {record.online} (`{record.online / record.message_count * 100:.2f}%`)
-            \u3164 • **__Dnd message count__**:              {record.dnd} (`{record.dnd / record.message_count * 100:.2f}%`)
-            \u3164 • **__Idle message count__**:             {record.idle} (`{record.idle / record.message_count * 100:.2f}%`)
+            \u3164 • **__Total message count__**: {record.message_count}
+            \u3164 • **__Deleted message count__**: \
+            {record.deleted_message_count} (`{deleted_message_percent}%`)
+            \u3164 • **__Actual message count__**: \
+            {record.message_count - record.deleted_message_count} \
+                (`{actual_message_percent}%`)
+            \u3164 • **__Offline message count__**: \
+            {record.offline} (`{offline_message_percent}%`)
+            \u3164 • **__Online message count__**: \
+            {record.online} (`{online_message_percent}%`)
+            \u3164 • **__Dnd message count__**: {record.dnd} (`{dnd_message_percent}%`)
+            \u3164 • **__Idle message count__**: \
+            {record.idle} (`{idle_message_percent}%`)
             """
 
+        revoked_thanks_percent = (revoked_thank_count/total_thank_count*100 
+                                  if total_thank_count > 0 else 0)
+        actual_thanks_percent = (surviving_thank_count/total_thank_count*100 
+                                 if total_thank_count > 0 else 0)
         embed = discord.Embed(
             title=f"{member.name}#{member.discriminator} Detailed anaylysis",
             description=f"Total thanks this month: {total_thank_count}\n"
-            f"Revoked thanks this month: {revoked_thank_count} (`{revoked_thank_count/total_thank_count*100 if total_thank_count > 0 else 0:.2f}%`)\n"
-            f"Actual thanks this month: {surviving_thank_count} (`{surviving_thank_count/total_thank_count*100 if total_thank_count > 0 else 0:.2f}%`)"
+            f"Revoked thanks this month: {revoked_thank_count} "
+            f"(`{revoked_thanks_percent}%`)\n"
+            f"Actual thanks this month: \
+                {surviving_thank_count} (`{actual_thanks_percent}%`)"
             f'\n{formatted_message if record else ""}',
             timestamp=discord.utils.utcnow(),
         )

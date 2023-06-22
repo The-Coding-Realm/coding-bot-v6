@@ -4,14 +4,12 @@ import string
 
 import random
 import re
-import string
-from datetime import datetime, timedelta
 from typing import TYPE_CHECKING, Optional
 
 import button_paginator as pg
 import discord
 from discord.ext import commands
-from ext.helpers import Spotify, grouper, ordinal_suffix_of, find_anime_source
+from ext.helpers import Spotify, grouper, ordinal_suffix_of
 from ext.http import Http
 from ext.ui.view import Piston
 
@@ -42,7 +40,8 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
     )
     async def retry(self, ctx: commands.Context[CodingBot]):
         """
-        Reinvoke a command, running it again. This does NOT bypass any permissions checks | Code from v4
+        Reinvoke a command, running it again. 
+        This does NOT bypass any permissions checks | Code from v4
         """
         try:
             message = await ctx.channel.fetch_message(ctx.message.reference.message_id)
@@ -82,7 +81,7 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
 
         if staff_role in member.roles:
             try:
-                await member.remove_roles(on_pat_staff)  # type: ignore
+                await member.remove_roles(on_pat_staff) 
             except (discord.Forbidden, discord.HTTPException):
                 pass
         if ctx.guild.id not in self.bot.afk_cache:
@@ -96,7 +95,7 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
             )
             try:
                 await member.edit(nick=f"[AFK] {member.display_name}")
-            except:
+            except Exception:
                 pass
             try:
                 self.bot.afk_cache[ctx.guild.id][member.id] = (
@@ -287,7 +286,10 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
 
                 embed.add_field(
                     name=f"Thank: {thank_id}",
-                    value=f"Thank giver: {giver.mention}\nDate: <t:{timestamp}:R>\nReason: {reason}\nThank given in: {channel.mention}\nMessage link: [Click here!]({msg_link})",
+                    value=
+                    f"Thank giver: {giver.mention}\nDate: <t:{timestamp}:R>\n"
+                    f"Reason: {reason}\nThank given in: {channel.mention}\n"
+                    f"Message link: [Click here!]({msg_link})",
                     inline=False,
                 )
 
@@ -310,7 +312,8 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
 
         Usage:
         ------
-        `{prefix}thank delete [thank_id]`: *will delete the thank with the id [thank_id]*
+        `{prefix}thank delete [thank_id]`:
+         *will delete the thank with the id [thank_id]*
 
         """
         record = await self.bot.conn.select_record(
@@ -367,10 +370,11 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
         for info in information:
             user = [ctx.guild.get_member(i.user_id) for i in info]
             embed = discord.Embed(
-                title=f"Thank points leaderboard",
+                title="Thank points leaderboard",
                 description="\n\n".join(
                     [
-                        f"`{i}{ordinal_suffix_of(i)}` is {user.mention} with `{thanks_count.thanks_count}` Thank point(s)"
+                        f"`{i}{ordinal_suffix_of(i)}` is {user.mention} with "
+                        f"`{thanks_count.thanks_count}` Thank point(s)"
                         for i, (user, thanks_count) in enumerate(zip(user, info), 1)
                     ]
                 ),
@@ -421,7 +425,7 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
                 f"{i}. {member.mention}" for i, member in enumerate(members, 1)
             )
         embed = discord.Embed(
-            title=f"Trainees list", description=trainees, color=discord.Color.blue()
+            title="Trainees list", description=trainees, color=discord.Color.blue()
         )
         await self.bot.reply(ctx, embed=embed)
 
@@ -442,7 +446,7 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
         if not result:
             if member == ctx.author:
                 return await ctx.reply(
-                    f"You are currently not listening to spotify!", mention_author=False
+                    "You are currently not listening to spotify!", mention_author=False
                 )
             return await self.bot.reply(
                 ctx,
@@ -452,82 +456,6 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
             )
         file, view = result
         await self.bot.send(ctx, file=file, view=view)
-
-    # @commands.command(name='sauce')
-    # async def sauce(self, ctx: commands.Context[CodingBot], source: Optional[str] = None):
-    #     """
-    #     Get the sauce of a source.
-    #     Example: {prefix}sauce <source>
-    #     """
-    #     source = source or ctx.message.attachments[0].url if ctx.message.attachments else None
-    #     if not source:
-    #         return await ctx.send(
-    #             'Please provide image/video url, '
-    #             'reply to another message or upload the image/video along with the command. '
-    #             f'Please use {ctx.prefix}help saucefor more information.')
-
-    #     anime_information = await find_anime_source(self.bot.session, source)
-
-    #     result = anime_information['result']
-    #     if not result:
-    #         return await ctx.send(
-    #             'Could not find any anime source for this image/video.'
-    #         )
-    #     else:
-    #         result = result[0]
-
-    #     print(ctx.channel.is_nsfw())
-    #     print(result['anilist'].get('isAdult'))
-
-    #     if result['anilist'].get('isAdult') and not ctx.channel.is_nsfw():
-    #         await ctx.send(
-    #             'This source is marked as adult content and can only be used in NSFW channels. I Will try to DM you instead.'
-    #         )
-    #         ctx = ctx.author
-
-    #     browser = "https://trace.moe/?url={}".format(source)
-
-    #     anilist_id = result['anilist']['id']
-    #     mal_id = result['anilist']['idMal']
-
-    #     anilist_url = f'https://anilist.co/anime/{anilist_id}'
-    #     anilist_banner = f"https://img.anili.st/media/{anilist_id}"
-    #     mal_url = f'https://myanimelist.net/anime/{mal_id}'
-
-    #     native = result['anilist']['title'].get('native')
-    #     english = result['anilist']['title'].get('english')
-    #     romaji = result['anilist']['title'].get('romaji')
-
-    #     filename = result['filename']
-    #     similarity = round(result['similarity'] * 100, 2)
-
-    #     from_timestamp = timedelta(seconds=int(result['from']))
-    #     to_timestamp = timedelta(seconds=int(result['to']))
-
-    #     embed = discord.Embed(timestamp=discord.utils.utcnow())
-    #     embed.add_field(
-    #         name="Anime Title", DD
-    #         value=f"Native: {native}\nEnglish: {english}\nRomaji: {romaji}",
-    #         inline=False
-    #     )
-    #     embed.add_field(
-    #         name="Scene Details",
-    #         value=f"**Filename:** {filename}\n**From:** {from_timestamp}\n**To:** {to_timestamp}\n**Similarity:** {similarity}%",
-    #         inline=False
-    #     )
-    #     embed.add_field(
-    #         name="Links",
-    #         value="[Open In Browser]({}) | [AniList]({}) | [MyAnimeList]({})".format(
-    #             browser, anilist_url, mal_url
-    #         ),
-    #         inline=False
-
-    #     )
-    #     embed.set_image(url=anilist_banner)
-    #     try:
-    #         await ctx.send(embed=embed)
-    #     except (discord.HTTPException, discord.Forbidden):
-    #         pass
 
 
 async def setup(bot: CodingBot):

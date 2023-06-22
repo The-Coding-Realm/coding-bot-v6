@@ -82,10 +82,16 @@ class Piston(discord.ui.View):
             if child.custom_id == "info":
                 if self.ran:
                     child.style = discord.ButtonStyle.green
-                    child.label = f"ran '{self.lang}' code  |  {int(time.time()) - self.timestamp}s"
+                    child.label = (
+                        f"ran '{self.lang}' code  |  "
+                        f"{int(time.time()) - self.timestamp}s"
+                        )
                 else:
                     child.style = discord.ButtonStyle.red
-                    child.label = f"failed to run '{self.lang}' code  |  {int(time.time()) - self.timestamp}s"
+                    child.label = (
+                        f"failed to run '{self.lang}' code  |  "
+                        f"{int(time.time()) - self.timestamp}s"
+                                   )
         await self.msg.edit(
             embed=self.cog.bot.embed(
                 title=" ", description=f"```{self.lang}\n{output[0]}\n```"

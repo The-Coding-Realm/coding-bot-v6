@@ -76,7 +76,7 @@ class Helper(commands.Cog, command_attrs=dict(hidden=False)):
         """
         view = ConfirmButton(ctx)
         view.message = await ctx.author.send(
-            f"Do you want to provide an evidence for your action?", view=view
+            "Do you want to provide an evidence for your action?", view=view
         )
         view_touched = not (await view.wait())
         evidence_byts = None
@@ -97,7 +97,8 @@ class Helper(commands.Cog, command_attrs=dict(hidden=False)):
                 except asyncio.TimeoutError:
                     await initial_mess.delete()
                     await ctx.author.send(
-                        "You didn't send any evidence in time. Proceeding with the ban without evidence."
+                        "You didn't send any evidence in time. "
+                        "Proceeding with the ban without evidence."
                     )
                 else:
                     evidence_byts = await wait_mess.attachments[0].read()
@@ -149,7 +150,8 @@ class Helper(commands.Cog, command_attrs=dict(hidden=False)):
             },
             "warn": {
                 "action": "warned",
-                "undo_action": f"removed warning (`{kwargs.get('warning') or 'removed all warnings'}`)",
+                "undo_action": "removed warning "
+                f"(`{kwargs.get('warning') or 'removed all warnings'}`)",
                 "icon": ":warning:",
                 "undo_icon": ":flag_white:",
                 "color": discord.Color.yellow(),
@@ -351,7 +353,7 @@ class Helper(commands.Cog, command_attrs=dict(hidden=False)):
 
         if read_help_rules_role in member.roles:
             await member.remove_roles(read_help_rules_role)
-        if not help_ban_role in member.roles:
+        if help_ban_role not in member.roles:
             await member.add_roles(help_ban_role)
 
         await self.bot.reply(ctx, f"help-banned {member.mention} with reason: {reason}")
@@ -372,17 +374,17 @@ class Helper(commands.Cog, command_attrs=dict(hidden=False)):
         """
         help_ban_role = ctx.guild.get_role(HELP_BAN_ROLE_ID)
         read_help_rules_role = ctx.guild.get_role(READ_HELP_RULES_ROLE_ID)
-        if not help_ban_role in member.roles:
+        if help_ban_role not in member.roles:
             return await self.bot.reply(ctx, f"{member.mention} is not help-banned")
 
-        if not read_help_rules_role in member.roles:
+        if read_help_rules_role not in member.roles:
             await member.add_roles(read_help_rules_role)
         if help_ban_role in member.roles:
             await member.remove_roles(help_ban_role)
 
         await self.bot.reply(ctx, f"help-unbanned {member.mention}")
         try:
-            await member.send(f"You have been help-unbanned")
+            await member.send("You have been help-unbanned")
             await self.log(action="ban", undo=True, member=member, helper=ctx.author)
         except discord.Forbidden:
             pass
