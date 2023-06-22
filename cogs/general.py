@@ -1,13 +1,12 @@
 from __future__ import annotations
 
-import datetime
 import inspect
 import os
 from typing import TYPE_CHECKING, List
 
 import discord
 from discord.ext import commands
-from ext.helpers import UrbanDefinition, UrbanDictionary, find_anime_source
+from ext.helpers import UrbanDefinition, UrbanDictionary
 
 if TYPE_CHECKING:
     from ext.models import CodingBot
@@ -34,7 +33,8 @@ class General(commands.Cog, command_attrs=dict(hidden=False)):
         ------
         `{prefix}source` *will send link to my source code*
         `{prefix}source [command]` *will send link to the source code of the command*
-        `{prefix}source [command] [subcommand]` *will send link to the source code of the subcommand*
+        `{prefix}source [command] [subcommand]`:
+        *will send link to the source code of the subcommand*
         """
         github = "<:githubwhite:804344724621230091>"
         embed = discord.Embed(title=f"{github} GitHub (Click Here) {github}")

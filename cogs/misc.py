@@ -4,14 +4,12 @@ import string
 
 import random
 import re
-import string
-from datetime import datetime, timedelta
 from typing import TYPE_CHECKING, Optional
 
 import button_paginator as pg
 import discord
 from discord.ext import commands
-from ext.helpers import Spotify, grouper, ordinal_suffix_of, find_anime_source
+from ext.helpers import Spotify, grouper, ordinal_suffix_of
 from ext.http import Http
 from ext.ui.view import Piston
 
@@ -42,7 +40,8 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
     )
     async def retry(self, ctx: commands.Context[CodingBot]):
         """
-        Reinvoke a command, running it again. This does NOT bypass any permissions checks | Code from v4
+        Reinvoke a command, running it again. 
+        This does NOT bypass any permissions checks | Code from v4
         """
         try:
             message = await ctx.channel.fetch_message(ctx.message.reference.message_id)
@@ -287,7 +286,10 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
 
                 embed.add_field(
                     name=f"Thank: {thank_id}",
-                    value=f"Thank giver: {giver.mention}\nDate: <t:{timestamp}:R>\nReason: {reason}\nThank given in: {channel.mention}\nMessage link: [Click here!]({msg_link})",
+                    value=
+                    f"Thank giver: {giver.mention}\nDate: <t:{timestamp}:R>\n"
+                    f"Reason: {reason}\nThank given in: {channel.mention}\n"
+                    f"Message link: [Click here!]({msg_link})",
                     inline=False,
                 )
 
@@ -310,7 +312,8 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
 
         Usage:
         ------
-        `{prefix}thank delete [thank_id]`: *will delete the thank with the id [thank_id]*
+        `{prefix}thank delete [thank_id]`:
+         *will delete the thank with the id [thank_id]*
 
         """
         record = await self.bot.conn.select_record(
@@ -367,10 +370,11 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
         for info in information:
             user = [ctx.guild.get_member(i.user_id) for i in info]
             embed = discord.Embed(
-                title=f"Thank points leaderboard",
+                title="Thank points leaderboard",
                 description="\n\n".join(
                     [
-                        f"`{i}{ordinal_suffix_of(i)}` is {user.mention} with `{thanks_count.thanks_count}` Thank point(s)"
+                        f"`{i}{ordinal_suffix_of(i)}` is {user.mention} with "
+                        f"`{thanks_count.thanks_count}` Thank point(s)"
                         for i, (user, thanks_count) in enumerate(zip(user, info), 1)
                     ]
                 ),
@@ -421,7 +425,7 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
                 f"{i}. {member.mention}" for i, member in enumerate(members, 1)
             )
         embed = discord.Embed(
-            title=f"Trainees list", description=trainees, color=discord.Color.blue()
+            title="Trainees list", description=trainees, color=discord.Color.blue()
         )
         await self.bot.reply(ctx, embed=embed)
 
@@ -442,7 +446,7 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
         if not result:
             if member == ctx.author:
                 return await ctx.reply(
-                    f"You are currently not listening to spotify!", mention_author=False
+                    "You are currently not listening to spotify!", mention_author=False
                 )
             return await self.bot.reply(
                 ctx,

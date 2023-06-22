@@ -1,18 +1,14 @@
 from __future__ import annotations
 
 import random
-import json
 from io import BytesIO
-from textwrap import wrap
 from typing import TYPE_CHECKING, Optional
 
 import base64
 import discord
-from discord import utils
 from discord.ext import commands
-from ext.helpers import create_trash_meme, get_rock
+from ext.helpers import create_trash_meme
 from ext.http import Http
-from ext.ui.view import *
 
 import asyncio
 
@@ -299,7 +295,7 @@ class Fun(commands.Cog, command_attrs=dict(hidden=False)):
     @commands.hybrid_command(name="owofy")
     async def owofy(self, ctx: commands.Context[CodingBot], *, text: str):
         embed = discord.Embed(
-            title=f"Owofied Text",
+            title="Owofied Text",
             description=text.replace("o", "OwO"),
             color=discord.Color.random(),
         )
@@ -311,7 +307,7 @@ class Fun(commands.Cog, command_attrs=dict(hidden=False)):
     @commands.hybrid_command(name="mock")
     async def mock(self, ctx: commands.Context[CodingBot], *, text: str):
         embed = discord.Embed(
-            title=f"Mocked Text",
+            title="Mocked Text",
             description=text.swapcase(),
             color=discord.Color.random(),
         )
@@ -334,7 +330,7 @@ class Fun(commands.Cog, command_attrs=dict(hidden=False)):
         if len(users) == 0:
             return await ctx.send("Nobody joined the beerparty :(")
         await ctx.send(
-            ", ".join(user.display_name for user in users) + f" joined the beerparty!"
+            ", ".join(user.display_name for user in users) + " joined the beerparty!"
         )
 
     # Filters command

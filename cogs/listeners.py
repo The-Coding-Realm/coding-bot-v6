@@ -40,7 +40,8 @@ class ListenerCog(commands.Cog, command_attrs=dict(hidden=True)):
     async def afk_user_messaage(self, message: discord.Message):
         """
         Responsible for checking if a message was sent by an AFK user.
-        If so, the bot will send a message to the channel informating that they are no longer AFK.
+        If so, the bot will send a message to the channel informing the user
+          that they are no longer AFK.
         It will also remove the [AFK] tag from the user's name.
 
         Parameters
@@ -66,13 +67,12 @@ class ListenerCog(commands.Cog, command_attrs=dict(hidden=True)):
                 try:
                     if "[AFK]" in message.author.display_name:
                         name = message.author.display_name.split(" ")[1:]
-                        # type: ignore
                         await message.author.edit(nick=" ".join(name))
                 except (discord.HTTPException, discord.Forbidden):
                     pass
 
                 staff_role = message.guild.get_role(795145820210462771)
-                if staff_role and staff_role in message.author.roles:  # type: ignore
+                if staff_role and staff_role in message.author.roles: 
                     on_pat_staff = message.guild.get_role(726441123966484600)
                     try:
                         await message.author.add_roles(on_pat_staff)
@@ -80,7 +80,8 @@ class ListenerCog(commands.Cog, command_attrs=dict(hidden=True)):
                         pass
                 del self.bot.afk_cache[message.guild.id][message.author.id]
                 em = discord.Embed(
-                    description=f"{message.author.mention} Welcome back, I removed your AFK!",
+                    description=f"{message.author.mention} Welcome back, "
+                    "I removed your AFK!",
                     color=discord.Color.dark_gold(),
                 )
                 msg = await message.reply(embed=em)
@@ -91,7 +92,8 @@ class ListenerCog(commands.Cog, command_attrs=dict(hidden=True)):
     async def user_mentioned(self, message: discord.Message):
         """
         Responsible for checking if an AFK user was mentioned in a message.
-        If so, the bot will send a message to the channel informing that the user that was mentioned is AFK.
+        If so, the bot will send a message to the channel informing that the user 
+        that was mentioned is AFK.
 
         Parameters
         ----------
@@ -108,7 +110,8 @@ class ListenerCog(commands.Cog, command_attrs=dict(hidden=True)):
                     if record:
                         reason, time_ = record
                         em = discord.Embed(
-                            description=f"{member.mention} is AFK: {reason} (<t:{time_}:R>)",
+                            description=f"{member.mention} is AFK: {reason} "
+                            f"(<t:{time_}:R>)",
                             color=discord.Color.dark_blue(),
                         )
                         await message.reply(embed=em)
@@ -155,7 +158,8 @@ class ListenerCog(commands.Cog, command_attrs=dict(hidden=True)):
         elif isinstance(error, commands.CommandOnCooldown):
             embed = discord.Embed(
                 title="Command on Cooldown",
-                description=f"{ctx.author.mention} Please wait {error.retry_after:.2f} seconds before using this command again.",
+                description=f"{ctx.author.mention} Please wait {error.retry_after:.2f}"
+                 " seconds before using this command again.",
                 color=discord.Color.red(),
             )
             return await ctx.send(embed=embed, ephemeral=True)
@@ -195,7 +199,8 @@ class ListenerCog(commands.Cog, command_attrs=dict(hidden=True)):
             columns=columns,
             values=values,
             extras=[
-                f"ON CONFLICT (user_id, guild_id) DO UPDATE SET message_count = message_count + 1, {status} = {status} + 1"
+                "ON CONFLICT (user_id, guild_id) DO UPDATE SET message_count = "
+                f"message_count + 1, {status} = {status} + 1"
             ],
         )
 
@@ -221,7 +226,7 @@ class ListenerCog(commands.Cog, command_attrs=dict(hidden=True)):
         )
 
     @commands.Cog.listener("on_message_edit")
-    async def invite_in_message(self, _: discord.Message, after: discord.Message):
+    async def invite_in_message_edit(self, _: discord.Message, after: discord.Message):
         """
         Responsible for tracking member joins.
         """

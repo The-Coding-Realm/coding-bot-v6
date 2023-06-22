@@ -1,5 +1,4 @@
 from __future__ import annotations
-from io import BytesIO
 
 import os
 import traceback
@@ -50,7 +49,7 @@ class Developer(commands.Cog, command_attrs=dict(hidden=True)):
                 title=f"Successfully loaded extension: `{cog_}`",
                 color=discord.Color.green(),
             )
-        except Exception as e:
+        except Exception:
             embed = discord.Embed(
                 title=f"Failed to load extension: `{cog_}`", color=discord.Color.red()
             )
@@ -75,7 +74,7 @@ class Developer(commands.Cog, command_attrs=dict(hidden=True)):
                 title=f"Successfully unloaded extension: `{cog_}`",
                 color=discord.Color.green(),
             )
-        except Exception as e:
+        except Exception:
             embed = discord.Embed(
                 title=f"Failed to unload extension: `{cog_}`", color=discord.Color.red()
             )
@@ -99,7 +98,7 @@ class Developer(commands.Cog, command_attrs=dict(hidden=True)):
                 title=f"Successfully reloaded extension: `{cog_}`",
                 color=discord.Color.green(),
             )
-        except Exception as e:
+        except Exception:
             embed = discord.Embed(
                 title=f"Failed to reload extension: `{cog_}`", color=discord.Color.red()
             )
@@ -154,7 +153,7 @@ class Developer(commands.Cog, command_attrs=dict(hidden=True)):
 
         """
         cogs: Dict[str, List[str]] = {"unloaded": [], "not": []}
-        processing: Mapping[str, ModuleType] = self.bot.extensions.copy()  # type: ignore
+        processing: Mapping[str, ModuleType] = self.bot.extensions.copy()
         for cog in processing:
             try:
                 await self.bot.unload_extension(cog)
@@ -184,7 +183,7 @@ class Developer(commands.Cog, command_attrs=dict(hidden=True)):
 
         """
         cogs: Dict[str, List[str]] = {"reloaded": [], "not": []}
-        processing: Mapping[str, ModuleType] = self.bot.extensions.copy()  # type: ignore
+        processing: Mapping[str, ModuleType] = self.bot.extensions.copy() 
         for cog in processing:
             try:
                 await self.bot.reload_extension(cog)
@@ -268,7 +267,8 @@ class Developer(commands.Cog, command_attrs=dict(hidden=True)):
         embed = discord.Embed(
             title=f"{member.name}#{member.discriminator} Detailed anaylysis",
             description=f"Total thanks this month: {total_thank_count}\n"
-            f"Revoked thanks this month: {revoked_thank_count} (`{revoked_thank_count/total_thank_count*100 if total_thank_count > 0 else 0:.2f}%`)\n"
+            f"Revoked thanks this month: {revoked_thank_count} "
+            f"(`{revoked_thank_count/total_thank_count*100 if total_thank_count > 0 else 0:.2f}%`)\n"
             f"Actual thanks this month: {surviving_thank_count} (`{surviving_thank_count/total_thank_count*100 if total_thank_count > 0 else 0:.2f}%`)"
             f'\n{formatted_message if record else ""}',
             timestamp=discord.utils.utcnow(),
