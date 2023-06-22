@@ -259,7 +259,8 @@ class ListenerCog(commands.Cog, command_attrs=dict(hidden=True)):
             )
             if re.search(
                 invite_regex, message.content
-            ):  # `check_invite` already checks if there is an invite, why are we checking again?
+            ):  # `check_invite` already checks if there is an invite, 
+                # why are we checking again?
                 await message.delete()
                 return await message.channel.send(
                     "Please don't send invite links in this server!"
