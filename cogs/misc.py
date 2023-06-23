@@ -150,28 +150,6 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
             ),
         )
 
-    @commands.hybrid_group(name="thanks", invoke_without_command=True)
-    @commands.cooldown(1, 10, commands.BucketType.member)
-    async def thanks(self, ctx: commands.Context[CodingBot], member: discord.Member):
-        """
-        See how many thanks someone has.
-
-        Usage:
-        ------
-        `{prefix}thanks {user}`: *will show how many thanks user has*
-        """
-        record = await self.bot.conn.select_record(
-            "thanks",
-            table="thanks_info",
-            arguments=("thanks_count",),
-            where=["guild_id", "user_id"],
-            values=[ctx.guild.id, member.id],
-        )
-        if not record:
-            return await ctx.send(f"{member.display_name} does not have any thanks")
-        thanks = record[0]
-        await ctx.send(f"{member.display_name} has `{thanks.thanks_count}` thanks")
-
     @commands.hybrid_group(name="thank", invoke_without_command=True)
     @commands.cooldown(1, 10, commands.BucketType.member)
     async def thank(
