@@ -150,7 +150,7 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
             ),
         )
 
-    @commands.hybrid_group(name="thank", invoke_without_command=True)
+    @commands.hybrid_group(name="thank", invoke_without_command=True, fallback="you")
     @commands.cooldown(1, 10, commands.BucketType.member)
     async def thank(
         self, ctx: commands.Context[CodingBot], member: discord.Member, *, reason: str
