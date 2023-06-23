@@ -56,6 +56,7 @@ class ListenerCog(commands.Cog, command_attrs=dict(hidden=True)):
                 "thanks" in message.content.lower()
                 or "thank you" in message.content.lower()
                 or "thx" in message.content.lower()
+                or "thnx" in message.content.lower()
                 ):
                 await message.reply(
                     "If someone has helped you, "
