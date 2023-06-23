@@ -279,7 +279,7 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
                 timestamp = data.date
                 channel = ctx.guild.get_channel(channel_id)
                 msg_link = (
-                    f"https://discord.com/channels/{ctx.guild.id}/{channel.id}/{msg_id}"
+                    f"https://discord.com/channels/{ctx.guild.id}/{channel_id}/{msg_id}"
                 )
 
                 giver = ctx.guild.get_member(giver_id)
@@ -288,7 +288,8 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
                     name=f"Thank: {thank_id}",
                     value=
                     f"Thank giver: {giver.mention}\nDate: <t:{timestamp}:R>\n"
-                    f"Reason: {reason}\nThank given in: {channel.mention}\n"
+                    f"Reason: {reason}\nThank given in: "
+                    f"{channel.mention if channel else f'<#{channel_id}>'}\n"
                     f"Message link: [Click here!]({msg_link})",
                     inline=False,
                 )
