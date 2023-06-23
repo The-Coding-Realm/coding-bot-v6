@@ -37,6 +37,32 @@ class ListenerCog(commands.Cog, command_attrs=dict(hidden=True)):
         self.valid_gh_sect = valid_gh_sect
 
     @commands.Cog.listener("on_message")
+    async def thank_message(self, message: discord.Message):
+        """
+        Responsible for checking if a user is saying thanks in a help channel. 
+        if so, the bot will inform the user that they can use the thank command
+        to support the user that helped them.
+
+        Parameters
+        ----------
+        message : discord.Message
+            The message that was sent.
+        """
+        if message.author.bot or not message.guild:
+            return
+        
+        if message.channel.category.id == 754710748353265745:
+            if (
+                "thanks" in message.content.lower()
+                or "thank you" in message.content.lower()
+                or "thx" in message.content.lower()
+                ):
+                await message.reply(
+                    "If someone has helped you, "
+                    "you can thank them by using the `.thank` command."
+                )
+
+    @commands.Cog.listener("on_message")
     async def afk_user_messaage(self, message: discord.Message):
         """
         Responsible for checking if a message was sent by an AFK user.
