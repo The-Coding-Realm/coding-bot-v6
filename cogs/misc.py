@@ -419,7 +419,8 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
         `{prefix}spotify`: *will show your spotify status*
         `{prefix}spotify [member]`: *will show the spotify status of [member]*
         """
-        member = member or ctx.author
+        member = ctx.guild.get_member((member or ctx.author).id)
+        
         spotify = Spotify(bot=self.bot, member=member)
         result = await spotify.get_embed()
         if not result:
@@ -435,6 +436,11 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
             )
         file, view = result
         await self.bot.send(ctx, file=file, view=view)
+
+
+    @commands.hybrid_command(name="testact")
+    async def _testact(self, ctx):
+        await ctx.send(ctx.author.activity)
 
 
 async def setup(bot: CodingBot):
