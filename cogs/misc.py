@@ -361,7 +361,12 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
             )
             embeds.append(embed)
         if len(embeds) == 1:
-            paginator = pg.Paginator(self.bot, embeds, ctx)
+            paginator = pg.Paginator(
+                self.bot,
+                embeds,
+                ctx,
+                check=lambda i: i.user.id == ctx.author.id,
+                )
             paginator.add_button(
                 "delete", label="Delete", style=discord.ButtonStyle.danger
             )
