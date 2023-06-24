@@ -23,6 +23,7 @@ from ext.consts import TCR_STAFF_ROLE_ID
 
 if TYPE_CHECKING:
     from ext.models import CodingBot
+    from discord.ext import commands
 
 
 async def check_invite(bot, content, channel):
@@ -492,8 +493,8 @@ class Spotify:
         member : discord.Member
             represents the Member object whose spotify listening is to be handled
         """
-        self.member = member
-        self.bot = bot
+        self.member: discord.Member | discord.User = member
+        self.bot: commands.Bot = bot
         self.counter = 0
 
     @staticmethod

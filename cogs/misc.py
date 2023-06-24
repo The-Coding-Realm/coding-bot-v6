@@ -361,7 +361,12 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
             )
             embeds.append(embed)
         if len(embeds) == 1:
-            paginator = pg.Paginator(self.bot, embeds, ctx)
+            paginator = pg.Paginator(
+                self.bot,
+                embeds,
+                ctx,
+                check=lambda i: i.user.id == ctx.author.id,
+                )
             paginator.add_button(
                 "delete", label="Delete", style=discord.ButtonStyle.danger
             )
@@ -419,7 +424,8 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
         `{prefix}spotify`: *will show your spotify status*
         `{prefix}spotify [member]`: *will show the spotify status of [member]*
         """
-        member = member or ctx.author
+        member = ctx.guild.get_member((member or ctx.author).id)
+        
         spotify = Spotify(bot=self.bot, member=member)
         result = await spotify.get_embed()
         if not result:
