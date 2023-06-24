@@ -443,10 +443,5 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
         await self.bot.send(ctx, file=file, view=view)
 
 
-    @commands.hybrid_command(name="testact")
-    async def _testact(self, ctx):
-        await ctx.send(ctx.author.activity)
-
-
 async def setup(bot: CodingBot):
     await bot.add_cog(Miscellaneous(bot))
