@@ -48,8 +48,7 @@ class General(commands.Cog, command_attrs=dict(hidden=False)):
             src = type(self.bot.help_command)
             module = src.__module__
             filename = inspect.getsourcefile(src)
-            help_command = self.bot.get_command("help")
-            if help_command:
+            if help_command := self.bot.get_command("help"):
                 embed.description = help_command.help.format(prefix=ctx.prefix)
         else:
             obj = self.bot.get_command(command.replace(".", " "))
@@ -97,7 +96,7 @@ class General(commands.Cog, command_attrs=dict(hidden=False)):
             return await ctx.send(f"Could not find definition for `{word}`")
         definition = definition[0]
         embed = discord.Embed(
-            title="Definition of {}".format(word),
+            title=f"Definition of {word}",
             description=f"**Meaning**: {definition.meaning}\n",
             color=discord.Color.random(),
         )

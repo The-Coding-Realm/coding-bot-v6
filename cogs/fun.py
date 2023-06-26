@@ -256,8 +256,8 @@ class Fun(commands.Cog, command_attrs=dict(hidden=False)):
     ):
         reason = ("\nReason: " + reason) if reason else ""
         msg = await ctx.send(
-            "Open invite to beerparty! React with 🍻 to join!" + reason
-            )
+            f"Open invite to beerparty! React with 🍻 to join!{reason}"
+        )
         await msg.add_reaction("\U0001f37b")
         await asyncio.sleep(60)
         msg = await ctx.channel.fetch_message(msg.id)

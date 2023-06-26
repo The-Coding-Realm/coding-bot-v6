@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import datetime
 from io import BytesIO
 from typing import Any, Dict, Optional, Union
@@ -17,9 +18,8 @@ from ext.consts import TCR_MEMBER_ROLE_ID
 def trainee_check():
     def wrapper(ctx: commands.Context[CodingBot]):
         trainee_role = ctx.guild.get_role(729537643951554583)  # type: ignore
-        if trainee_role:
-            if ctx.author.top_role.position >= trainee_role.position:  # type: ignore
-                return True
+        if trainee_role and ctx.author.top_role.position >= trainee_role.position:
+            return True
         raise InsufficientPrivilegeError(
             "{}, you don't have the permission to use this command.".format(
                 ctx.author.mention
@@ -78,28 +78,27 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
         )
         view_touched = not (await view.wait())
         evidence_byts = None
-        if view_touched:
-            if view.confirmed:
-                initial_mess = await ctx.author.send(
-                    "Please send the evidence in the form of an attachment."
+        if view_touched and view.confirmed:
+            initial_mess = await ctx.author.send(
+                "Please send the evidence in the form of an attachment."
+            )
+            try:
+                wait_mess = await self.bot.wait_for(
+                    "message",
+                    check=lambda m: m.author == ctx.author
+                    and m.channel == initial_mess.channel
+                    and m.attachments
+                    and not m.guild,
+                    timeout=60,
                 )
-                try:
-                    wait_mess = await self.bot.wait_for(
-                        "message",
-                        check=lambda m: m.author == ctx.author
-                        and m.channel == initial_mess.channel
-                        and m.attachments
-                        and not m.guild,
-                        timeout=60,
-                    )
-                except asyncio.TimeoutError:
-                    await initial_mess.delete()
-                    await ctx.author.send(
-                        "You didn't send any evidence in time. "
-                        "Proceeding with the ban without evidence."
-                    )
-                else:
-                    evidence_byts = await wait_mess.attachments[0].read()
+            except asyncio.TimeoutError:
+                await initial_mess.delete()
+                await ctx.author.send(
+                    "You didn't send any evidence in time. "
+                    "Proceeding with the ban without evidence."
+                )
+            else:
+                evidence_byts = await wait_mess.attachments[0].read()
         return evidence_byts
 
     async def log(
@@ -173,15 +172,15 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
             raise undo_action
 
         action_string = (
-            action_info["action"] if not undo else action_info["undo_action"]
+            action_info["undo_action"] if undo else action_info["action"]
         )
-        icon = action_info["icon"] if not undo else action_info["undo_icon"]
+        icon = action_info["undo_icon"] if undo else action_info["icon"]
         color = discord.Color.green() if undo else action_info.get("color")
 
         embed = discord.Embed(color=color, timestamp=discord.utils.utcnow())
 
-        embed.description = "{} **Action:** {}\n**Reason:** {}\n".format(
-            icon, action_string.title(), reason
+        embed.description = (
+            f"{icon} **Action:** {action_string.title()}\n**Reason:** {reason}\n"
         )
         if duration:
             embed.description += "**Duration:** {}\n".format(
@@ -224,8 +223,7 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
         {prefix}kick {user} Because I don't like them
         """
         assert ctx.guild is not None
-        check_made = self.check_member_permission(ctx, member)
-        if check_made:
+        if check_made := self.check_member_permission(ctx, member):
             return await self.bot.reply(ctx, check_made)
         try:
             await member.send(
@@ -262,22 +260,18 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
         {prefix}ban {user} spamming
         """
         assert ctx.guild is not None
-        check_made = self.check_member_permission(ctx, member)
-        if check_made:
+        if check_made := self.check_member_permission(ctx, member):
             return await self.bot.reply(ctx, check_made)
-        else:
-            try:
-                await member.send(
-                    "You have been :hammer: **Banned** :hammer: from "
-                    f"**{ctx.guild.name}**. \nReason: {reason}"
-                )
-            except (discord.Forbidden, discord.HTTPException):
-                pass
-            await ctx.guild.ban(member, reason=reason, delete_message_days=7)
-            await self.bot.reply(ctx, f"Banned {member.mention}")
-            evidence = await self.capture_evidence(ctx)
-            await self.log(action="ban", moderator=ctx.author, member=member, 
-                           undo=False, reason=reason, duration=None, evidence=evidence)
+        with contextlib.suppress(discord.Forbidden, discord.HTTPException):
+            await member.send(
+                "You have been :hammer: **Banned** :hammer: from "
+                f"**{ctx.guild.name}**. \nReason: {reason}"
+            )
+        await ctx.guild.ban(member, reason=reason, delete_message_days=7)
+        await self.bot.reply(ctx, f"Banned {member.mention}")
+        evidence = await self.capture_evidence(ctx)
+        await self.log(action="ban", moderator=ctx.author, member=member, 
+                       undo=False, reason=reason, duration=None, evidence=evidence)
 
     @commands.hybrid_command(name="unban")
     @commands.has_permissions(ban_members=True)
@@ -327,8 +321,7 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
         {prefix}mute <member> <duration> [reason]
         """
         assert ctx.guild is not None
-        check_made = self.check_member_permission(ctx, member)
-        if check_made:
+        if check_made := self.check_member_permission(ctx, member):
             return await self.bot.reply(ctx, check_made)
 
         try:
@@ -366,8 +359,7 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
         Example:
         {prefix}unmute {user} I am feeling generous
         """
-        check_made = self.check_member_permission(ctx, member)
-        if check_made:
+        if check_made := self.check_member_permission(ctx, member):
             return await self.bot.reply(ctx, check_made)
         try:
             await member.timeout(None)
@@ -402,16 +394,13 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
             )
         counter_dict: Dict[str, Any] = {"banned": [], "not_banned": []}
         for user in users:
-            check_made = self.check_member_permission(ctx, user)
-            if check_made:
+            if check_made := self.check_member_permission(ctx, user):
                 counter_dict["not_banned"].append(user)
                 continue
             await ctx.guild.ban(user)  # type: ignore
             counter_dict["banned"].append(user)
         embed = discord.Embed(color=discord.Color.red())
-        description = "Following members were banned:\n{}".format(
-            ", ".join(f"{user.mention}" for user in counter_dict["banned"])
-        )
+        description = f'Following members were banned:\n{", ".join(f"{user.mention}" for user in counter_dict["banned"])}'
         if counter_dict["not_banned"]:
             embed.color = discord.Color.yellow()
             description += "\n\nFollowing members were not banned:\n"
@@ -437,8 +426,7 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
         Example:
         {prefix}warn {user} broke rules
         """
-        check = self.check_member_permission(ctx, member, priv_level=0)
-        if check:
+        if check := self.check_member_permission(ctx, member, priv_level=0):
             return await self.bot.reply(ctx, check)
         assert ctx.guild is not None
         if not reason:
@@ -506,12 +494,9 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
 
         for i, warning in enumerate(records, 1):
             moderator = ctx.guild.get_member(warning.moderator_id)
-            if moderator:
-                moderator = moderator.mention
-            else:
-                moderator = "Unknown"
+            moderator = moderator.mention if moderator else "Unknown"
             embed.add_field(
-                name="`{}.` Reason: {}".format(i, warning.reason),
+                name=f"`{i}.` Reason: {warning.reason}",
                 value=f"Issued by: {moderator} - <t:{int(warning.date)}:f>",
                 inline=False,
             )
@@ -862,21 +847,21 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
 
         This will ban all members that have joined during the raid.
         """
-        if not self.bot.raid_mode_enabled:
-            if self.bot.raid_checker.possible_raid:
-                self.bot.raid_mode_enabled = True
-                await self.bot.reply(ctx, "Raid mode is now enabled.")
-                for member in self.bot.raid_checker.cache:
-                    if self.bot.raid_checker.check(member):
-                        await member.ban(
-                            reason="Raid mode enabled and met raid criteria."
-                        )
-            else:
-                await self.bot.reply(
-                    ctx, "There is no raid that has been detected yet."
-                )
-        else:
+        if self.bot.raid_mode_enabled:
             await self.bot.reply(ctx, "Raid mode is already enabled.")
+
+        elif self.bot.raid_checker.possible_raid:
+            self.bot.raid_mode_enabled = True
+            await self.bot.reply(ctx, "Raid mode is now enabled.")
+            for member in self.bot.raid_checker.cache:
+                if self.bot.raid_checker.check(member):
+                    await member.ban(
+                        reason="Raid mode enabled and met raid criteria."
+                    )
+        else:
+            await self.bot.reply(
+                ctx, "There is no raid that has been detected yet."
+            )
 
     @raid_mode.command(name="disable")
     async def raid_mode_disable(self, ctx: commands.Context[CodingBot]) -> None:
