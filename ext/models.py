@@ -362,7 +362,7 @@ class CodingBot(commands.Bot):
         )
         self.conn: Database = discord.utils.MISSING
         self.tracker = InviteTracker(self)
-        self.default_prefixes = [")"]
+        self.default_prefixes = ["."]
         self.welcomer = WelcomeBanner(self)
         self.processing_commands = 0
         self.message_cache = {}
