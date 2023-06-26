@@ -11,7 +11,6 @@ from typing import (
     Iterable,
     List,
     Mapping,
-    NamedTuple,
     Optional,
     Set,
     Tuple,
@@ -128,7 +127,7 @@ class Database:
         return super().__getattribute__(__name)
 
     async def __aenter__(self) -> "Database":
-        self.bot.logger.info(f"Making connections to databases")
+        self.bot.logger.info("Making connections to databases")
         self.conn["config"] = await aiosqlite.connect("./database/config.db")
         self.conn["warnings"] = await aiosqlite.connect("./database/warnings.db")
         self.conn["afk"] = await aiosqlite.connect("./database/afk.db")
@@ -139,7 +138,7 @@ class Database:
         return self
 
     async def fill_cache(self):
-        self.bot.logger.info(f"Filling stored cache data before startup")
+        self.bot.logger.info("Filling stored cache data before startup")
         record = await self.select_record(
             "afk", table="afk", arguments=["user_id", "reason", "afk_time"]
         )
@@ -291,11 +290,11 @@ class CodingHelp(commands.HelpCommand):
         self, mapping: Mapping[Optional[commands.Cog], List[commands.Command]]
     ) -> None:
         embed = discord.Embed(title="Bot Commands", description="Coding Bot V6")
-        for cog, commands in mapping.items():
+        for cog, cmds in mapping.items():
             if cog and not cog.hidden:
                 embed.add_field(
                     name=cog.qualified_name,
-                    value=" ".join(f"`{command.name}`" for command in commands),
+                    value=" ".join(f"`{command.name}`" for command in cmds),
                 )
         destination = self.get_destination()
         await destination.send(embed=embed)
@@ -307,7 +306,8 @@ class CodingHelp(commands.HelpCommand):
 
         for command in group.commands:
             if not command.hidden:
-                embed.description += f"\n`{command.qualified_name} - {command.brief or 'Not documented yet'}`"
+                embed.description += f"\n`{command.qualified_name} - "\
+                f"{command.brief or 'Not documented yet'}`"
 
         destination = self.get_destination()
         await destination.send(embed=embed)
@@ -336,7 +336,8 @@ class CodingHelp(commands.HelpCommand):
 
         for command in cog.get_commands():
             if not command.hidden:
-                embed.description += f"\n`{command.qualified_name} {command.brief or 'Not documented yet'}`"
+                embed.description += f"\n`{command.qualified_name} "\
+                    f"{command.brief or 'Not documented yet'}`"
 
         destination = self.get_destination()
         await destination.send(embed=embed)
@@ -401,7 +402,7 @@ class CodingBot(commands.Bot):
     async def on_ready(self) -> None:
         await self.wait_until_ready()
         await self.tracker.cache_invites()
-        self.logger.info(f"Coding Bot V6 is ready for action!")
+        self.logger.info("Coding Bot V6 is ready for action!")
 
     async def on_invite_create(self, invite: discord.Invite) -> None:
         await self.tracker.update_invite_cache(invite)
@@ -450,7 +451,8 @@ class CodingBot(commands.Bot):
         # type: ignore  # Always a Messageable
         await channel.send(content=member.mention, file=file)
         await verify_here.send(  # type: ignore  # Always a Messageable
-            f"Welcome {member.mention}! Follow the instructions in other channels to get verified. :)",
+            f"Welcome {member.mention}! Follow the instructions "
+            "in other channels to get verified. :)",
             embed=embed,
         )
 

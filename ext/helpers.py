@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import asyncio
-import base64
 import datetime as dt
 import functools
 import itertools
@@ -9,7 +8,6 @@ import re
 import string
 import sys
 import traceback
-import urllib
 from io import BytesIO
 from typing import TYPE_CHECKING, Any, Callable, List, Optional, Tuple
 
@@ -17,7 +15,6 @@ import aiohttp
 import discord
 import humanize
 from bs4 import BeautifulSoup
-from colorthief import ColorThief
 from discord.ext import tasks
 from PIL import Image, ImageDraw, ImageFilter, ImageFont
 from cbvx import iml
@@ -26,6 +23,7 @@ from ext.consts import TCR_STAFF_ROLE_ID
 
 if TYPE_CHECKING:
     from ext.models import CodingBot
+    from discord.ext import commands
 
 
 async def check_invite(bot, content, channel):
@@ -255,7 +253,7 @@ class WelcomeBanner:
         else:
             try:
                 vanity = await member.guild.vanity_invite()
-            except:
+            except Exception:
                 pass
         ago = dt.datetime.now(dt.timezone.utc) - member.created_at
         img = BytesIO(
@@ -495,8 +493,8 @@ class Spotify:
         member : discord.Member
             represents the Member object whose spotify listening is to be handled
         """
-        self.member = member
-        self.bot = bot
+        self.member: discord.Member | discord.User = member
+        self.bot: commands.Bot = bot
         self.counter = 0
 
     @staticmethod
@@ -534,7 +532,8 @@ class Spotify:
         buffer.seek(0)
         # Pass raw bytes to cbvx.iml (needs to be png data)
         csp = iml.Spotify(buffer.getvalue())
-        # Spotify class has 3 config methods - rate (logarithmic rate of interpolation), contrast and shift (pallet shift)
+        # Spotify class has 3 config methods - rate (logarithmic rate of interpolation),
+        #  contrast, and shift (pallet shift)
         csp.rate(0.55)  # Higner = less sharp interpolation
         csp.contrast(20.0)  # default, Higner = more contrast
         csp.shift(0)  # default
@@ -546,7 +545,6 @@ class Spotify:
         base = Image.frombytes("RGB", (600, 300), result)
 
         font0 = ImageFont.truetype("storage/fonts/spotify.ttf", 35) # For title
-        font = ImageFont.truetype("storage/fonts/spotify.ttf", 28) # Artist
         font2 = ImageFont.truetype("storage/fonts/spotify.ttf", 18) # Time stamps
 
         draw = ImageDraw.Draw(
@@ -602,7 +600,8 @@ class Spotify:
         ).total_seconds()
         track = time_at / time
         time = f"{time // 60:02d}:{time % 60:02d}"
-        time_at = f"{int((time_at if time_at > 0 else 0) // 60):02d}:{int((time_at if time_at > 0 else 0) % 60):02d}"
+        time_at = f"{int((time_at if time_at > 0 else 0) // 60):02d}:"\
+        f"{int((time_at if time_at > 0 else 0) % 60):02d}"
         pog = act.album_cover_url
         name = "".join([x for x in act.title if x in s])
         name = name[0:21] + "..." if len(name) > 21 else name
@@ -700,7 +699,8 @@ class AntiRaid:
                 assert channel is not None
 
                 await channel.send(
-                    f"{member.mention} is highly unlikely to be part of the raid, skipping user.\nReason: Failed the raid mode checks"
+                    f"{member.mention} is highly unlikely to be part of the raid, "
+                    "skipping user.\nReason: Failed the raid mode checks"
                 )
                 return False
 
@@ -716,9 +716,12 @@ class AntiRaid:
             title="A possible raid has been detected!",
             color=discord.Color.gold(),
         )
-        embed.description += f"""\nThe criteria is detected to be `{self.raid_mode_criteria} ± 1` days
-            Use `{self.bot.command_prefix[0]}raid-mode enable` after making sure this is not a false positive to enable raid mode!
-            Upon usage of the command, the bot will automatically ban users who have been created within this time.
+        embed.description += f"""
+            The criteria is detected to be `{self.raid_mode_criteria} ± 1` days
+            Use `{self.bot.command_prefix[0]}raid-mode enable` after making sure this \
+                is not a false positive to enable raid mode!
+            Upon usage of the command, the bot will automatically ban users who have \
+                been created within this time.
         """
         await channel.send(
             f"<@&{TCR_STAFF_ROLE_ID}>",

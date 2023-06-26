@@ -11,7 +11,8 @@ class CustomFormatter(logging.Formatter):
     light_blue = "\x1b[1;36m"
     purple = "\x1b[5;35m"
     reset = "\x1b[0m"
-    local_format = "{}%(asctime)s{reset} {}%(levelname)s{reset}     {}%(name)s{reset} dependent%(message)s{reset}".format(
+    local_format = "{}%(asctime)s{reset} {}%(levelname)s{reset}     {}%(name)s{reset} "\
+    " dependent%(message)s{reset}".format(
         grey, blue, purple, reset=reset
     )
 

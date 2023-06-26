@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 import datetime
 from io import BytesIO
-from typing import TYPE_CHECKING, Any, Dict, Optional, Union
+from typing import Any, Dict, Optional, Union
 
 import discord
 import humanize
@@ -12,9 +12,6 @@ from ext.errors import InsufficientPrivilegeError
 from ext.models import CodingBot, TimeConverter
 from ext.ui.view import ConfirmButton
 from ext.consts import TCR_MEMBER_ROLE_ID
-
-if TYPE_CHECKING:
-    from ext.models import CodingBot
 
 
 def trainee_check():
@@ -64,9 +61,11 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
             ctx.author.top_role.position <= member.top_role.position
             and ctx.author != ctx.guild.owner
         ):
-            return f"You can't {ctx.command.name} this member. They have a higher or equal role than you."
+            return f"You can't {ctx.command.name} this member. They have a higher or "\
+                "equal role than you."
         elif ctx.guild.me.top_role.position <= member.top_role.position and priv_level:
-            return f"I can't {ctx.command.name} this member. They have a higher or equal role than me."
+            return f"I can't {ctx.command.name} this member. "\
+                "They have a higher or equal role than me."
 
         return False
 
@@ -75,7 +74,7 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
     ) -> Optional[discord.Attachment]:
         view = ConfirmButton(ctx)
         view.message = await ctx.author.send(
-            f"Do you want to provide an evidence for your action?", view=view
+            "Do you want to provide an evidence for your action?", view=view
         )
         view_touched = not (await view.wait())
         evidence_byts = None
@@ -96,7 +95,8 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
                 except asyncio.TimeoutError:
                     await initial_mess.delete()
                     await ctx.author.send(
-                        "You didn't send any evidence in time. Proceeding with the ban without evidence."
+                        "You didn't send any evidence in time. "
+                        "Proceeding with the ban without evidence."
                     )
                 else:
                     evidence_byts = await wait_mess.attachments[0].read()
@@ -238,7 +238,13 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
             await member.kick(reason=reason)
             await self.bot.reply(ctx, f"Kicked {member.mention}")
             evidence = await self.capture_evidence(ctx)
-            await self.log(action="kick", moderator=ctx.author, member=member, reason=reason, evidence=evidence)  # type: ignore
+            await self.log(
+                action="kick",
+                moderator=ctx.author,
+                member=member,
+                reason=reason,
+                evidence=evidence
+                )
 
     @commands.hybrid_command(name="ban")
     @commands.has_permissions(ban_members=True)
@@ -270,7 +276,8 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
             await ctx.guild.ban(member, reason=reason, delete_message_days=7)
             await self.bot.reply(ctx, f"Banned {member.mention}")
             evidence = await self.capture_evidence(ctx)
-            await self.log(action="ban", moderator=ctx.author, member=member, undo=False, reason=reason, duration=None, evidence=evidence)  # type: ignore
+            await self.log(action="ban", moderator=ctx.author, member=member, 
+                           undo=False, reason=reason, duration=None, evidence=evidence)
 
     @commands.hybrid_command(name="unban")
     @commands.has_permissions(ban_members=True)
@@ -299,7 +306,8 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
             )
         else:
             await self.bot.reply(ctx, f"Unbanned {user.mention}")
-            await self.log(action="ban", moderator=ctx.author, member=user, undo=True, reason=reason, duration=None)  # type: ignore
+            await self.log(action="ban", moderator=ctx.author, member=user, undo=True,
+                            reason=reason, duration=None)  
 
     @trainee_check()
     @commands.hybrid_command(name="mute", aliases=["timeout"])
@@ -335,7 +343,9 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
             await member.timeout(until)
             await self.bot.reply(ctx, f"Muted {member.mention}")
             evidence = await self.capture_evidence(ctx)
-            await self.log(action="mute", moderator=ctx.author, member=member, undo=False, reason=reason, duration=duration, evidence=evidence)  # type: ignore
+            await self.log(action="mute", moderator=ctx.author, member=member, 
+                           undo=False, reason=reason, duration=duration, 
+                           evidence=evidence)
 
     @trainee_check()
     @commands.hybrid_command(name="unmute")
@@ -365,8 +375,8 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
             return await self.bot.reply(ctx, f"{member.mention} is not muted.")
         else:
             await self.bot.reply(ctx, f"Unmuted {member.mention}")
-            await self.log(action="mute", moderator=ctx.author, member=member, undo=True, reason=reason)  # type: ignore
-
+            await self.log(action="mute", moderator=ctx.author, member=member, 
+                           undo=True, reason=reason)  
     @trainee_check()
     @commands.hybrid_command()
     async def massban(
@@ -404,7 +414,8 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
         )
         if counter_dict["not_banned"]:
             embed.color = discord.Color.yellow()
-            description += f"\n\nFollowing members were not banned:\n{', '.join(f'{user.mention}' for user in counter_dict['not_banned'])}"
+            description += "\n\nFollowing members were not banned:\n"
+            f"{', '.join(f'{user.mention}' for user in counter_dict['not_banned'])}"
         embed.description = description
         await self.bot.reply(ctx, embed=embed)
 
@@ -446,7 +457,8 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
         )
         await self.bot.reply(ctx, f"Warned {member.mention}")
         evidence = await self.capture_evidence(ctx)
-        await self.log(action="warn", moderator=ctx.author, member=member, reason=reason, evidence=evidence)  # type: ignore
+        await self.log(action="warn", moderator=ctx.author, member=member, 
+                       reason=reason, evidence=evidence) 
 
     @trainee_check()
     @commands.hybrid_command(name="purge")
@@ -461,8 +473,9 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
         Example:
         {prefix}purge 10
         """
-        purged_amt = len(await ctx.channel.purge(limit=amount + 1))  # type: ignore
-        await self.bot.reply(ctx, f"Purged {purged_amt} messages in {ctx.channel.mention}")  # type: ignore
+        purged_amt = len(await ctx.channel.purge(limit=amount + 1)) 
+        await self.bot.reply(ctx,
+                             f"Purged {purged_amt} messages in {ctx.channel.mention}") 
 
     @trainee_check()
     @commands.hybrid_command(name="warnings")
@@ -561,7 +574,7 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
             f"{target.mention}'s warning was cleared.",
             allowed_mentions=discord.AllowedMentions(users=False),
         )
-        await self.log(action="warn", moderator=ctx.author, member=target, undo=True)  # type: ignore
+        await self.log(action="warn", moderator=ctx.author, member=target, undo=True) 
 
     @trainee_check()
     @commands.hybrid_command(name="verify")
