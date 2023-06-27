@@ -379,6 +379,7 @@ class CodingBot(commands.Bot):
             690420846774321221,  # BobDotCom
             579041484796461076,  # Conch.py
             687882857171255309,  # Lexionas74
+            462067035556282378,  # gxpy no remove
         ]
 
     async def setup_hook(self) -> None:
