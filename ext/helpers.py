@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import datetime as dt
 import functools
 import itertools
@@ -52,9 +53,8 @@ async def check_invite(bot, content, channel):
             invite = await bot.fetch_invite(code)
         except discord.errors.NotFound:
             invite = None
-        if invite:
-            if invite.guild.id not in whitelisted:
-                return True
+        if invite and invite.guild.id not in whitelisted:
+            return True
     return False
 
 
@@ -68,10 +68,10 @@ async def find_anime_source(session, source_image: str):
 def grouper(n, iterable):
     it = iter(iterable)
     while True:
-        chunk = tuple(itertools.islice(it, n))
-        if not chunk:
+        if chunk := tuple(itertools.islice(it, n)):
+            yield chunk
+        else:
             return
-        yield chunk
 
 
 def ordinal_suffix_of(i):
@@ -88,7 +88,7 @@ def ordinal_suffix_of(i):
 async def log_error(bot: CodingBot, event_method: str, *args: Any, **kwargs: Any):
     channel = bot.get_channel(826861610173333595)
     try:
-        title = "Ignoring exception in {}".format(event_method)
+        title = f"Ignoring exception in {event_method}"
         err = "".join(traceback.format_exc())
         embed = discord.Embed(
             title=title,
@@ -100,7 +100,7 @@ async def log_error(bot: CodingBot, event_method: str, *args: Any, **kwargs: Any
         # channel is always a Messageable
         await channel.send(embed=embed)  # type: ignore
     except (discord.errors.Forbidden, AttributeError):
-        print("Ignoring exception in {}".format(event_method), file=sys.stderr)
+        print(f"Ignoring exception in {event_method}", file=sys.stderr)
         traceback.print_exc()
 
 
@@ -135,9 +135,7 @@ def create_trash_meme(member_avatar: BytesIO, author_avatar: BytesIO) -> discord
     buffer = BytesIO()
     background.save(buffer, format="PNG")
     buffer.seek(0)
-    file = discord.File(buffer, filename="Trash.png")
-
-    return file
+    return discord.File(buffer, filename="Trash.png")
 
 
 class WelcomeBanner:
@@ -236,8 +234,7 @@ class WelcomeBanner:
         buf = BytesIO()
         txt.save(buf, format="png")
         buf.seek(0)
-        file = discord.File(buf, filename="welcome.png")
-        return file
+        return discord.File(buf, filename="welcome.png")
 
     async def construct_image(self, **kwargs: Any) -> discord.File:
         member = kwargs.pop("member")
@@ -251,10 +248,8 @@ class WelcomeBanner:
                 if i.inviter and i.inviter.id == inviter.id
             )
         else:
-            try:
+            with contextlib.suppress(Exception):
                 vanity = await member.guild.vanity_invite()
-            except Exception:
-                pass
         ago = dt.datetime.now(dt.timezone.utc) - member.created_at
         img = BytesIO(
             await member.display_avatar.with_format("png").with_size(128).read()
@@ -266,7 +261,7 @@ class WelcomeBanner:
         except AttributeError:
             banner = "./storage/banner.png"
 
-        file = await self.generate_image(
+        return await self.generate_image(
             member,
             inviter=inviter,
             vanity=vanity,
@@ -275,7 +270,6 @@ class WelcomeBanner:
             banner=banner,
             ago=ago,
         )
-        return file
 
 
 class UrbanDefinition:
@@ -360,10 +354,9 @@ class UrbanDictionary:
         for example in examples:
             final_example = example
             for key, value in references:
-                if key not in final_example:
-                    if final_example not in final_examples:
-                        final_examples.append(final_example)
-                        continue
+                if key not in final_example and final_example not in final_examples:
+                    final_examples.append(final_example)
+                    continue
                 final_example = final_example.replace(
                     key, f"[{key}]({self.BASE_URL}{value})"
                 )
@@ -398,9 +391,8 @@ class UrbanDictionary:
         for meaning in meanings:
             final_meaning = meaning
             for key, value in references:
-                if key not in final_meaning:
-                    if final_meaning not in final_meanings:
-                        continue
+                if key not in final_meaning and final_meaning not in final_meanings:
+                    continue
                 final_meaning = final_meaning.replace(
                     key, f"[{key}]({self.BASE_URL}{value})"
                 )
@@ -476,8 +468,7 @@ class UrbanDictionary:
                 raise Exception("Failed to get definition")
             else:
                 text = await resp.text()
-        result = await self.parse(text, results)
-        return result
+        return await self.parse(text, results)
 
 
 class Spotify:
@@ -593,7 +584,7 @@ class Spotify:
         s = tuple(f"{string.ascii_letters}{string.digits}{string.punctuation} ")
         artists = ", ".join(act.artists)
         artists = "".join([x for x in artists if x in s])
-        artists = artists[0:36] + "..." if len(artists) > 36 else artists
+        artists = f"{artists[:36]}..." if len(artists) > 36 else artists
         time = act.duration.seconds
         time_at = (
             dt.datetime.utcnow().replace(tzinfo=dt.timezone.utc) - act.start
@@ -601,7 +592,7 @@ class Spotify:
         track = time_at / time
         time = f"{time // 60:02d}:{time % 60:02d}"
         time_at = f"{int((time_at if time_at > 0 else 0) // 60):02d}:"\
-        f"{int((time_at if time_at > 0 else 0) % 60):02d}"
+            f"{int((time_at if time_at > 0 else 0) % 60):02d}"
         pog = act.album_cover_url
         name = "".join([x for x in act.title if x in s])
         name = name[0:21] + "..." if len(name) > 21 else name

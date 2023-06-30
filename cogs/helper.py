@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import datetime
 from io import BytesIO
 from typing import TYPE_CHECKING, Any, Optional
@@ -80,28 +81,27 @@ class Helper(commands.Cog, command_attrs=dict(hidden=False)):
         )
         view_touched = not (await view.wait())
         evidence_byts = None
-        if view_touched:
-            if view.confirmed:
-                initial_mess = await ctx.author.send(
-                    "Please send the evidence in the form of an attachment."
+        if view_touched and view.confirmed:
+            initial_mess = await ctx.author.send(
+                "Please send the evidence in the form of an attachment."
+            )
+            try:
+                wait_mess = await self.bot.wait_for(
+                    "message",
+                    check=lambda m: m.author == ctx.author
+                    and m.channel == initial_mess.channel
+                    and m.attachments
+                    and not m.guild,
+                    timeout=60,
                 )
-                try:
-                    wait_mess = await self.bot.wait_for(
-                        "message",
-                        check=lambda m: m.author == ctx.author
-                        and m.channel == initial_mess.channel
-                        and m.attachments
-                        and not m.guild,
-                        timeout=60,
-                    )
-                except asyncio.TimeoutError:
-                    await initial_mess.delete()
-                    await ctx.author.send(
-                        "You didn't send any evidence in time. "
-                        "Proceeding with the ban without evidence."
-                    )
-                else:
-                    evidence_byts = await wait_mess.attachments[0].read()
+            except asyncio.TimeoutError:
+                await initial_mess.delete()
+                await ctx.author.send(
+                    "You didn't send any evidence in time. "
+                    "Proceeding with the ban without evidence."
+                )
+            else:
+                evidence_byts = await wait_mess.attachments[0].read()
         return evidence_byts
 
     async def log(
@@ -168,15 +168,15 @@ class Helper(commands.Cog, command_attrs=dict(hidden=False)):
             raise undo_action
 
         action_string = (
-            action_info["action"] if not undo else action_info["undo_action"]
+            action_info["undo_action"] if undo else action_info["action"]
         )
-        icon = action_info["icon"] if not undo else action_info["undo_icon"]
+        icon = action_info["undo_icon"] if undo else action_info["icon"]
         color = discord.Color.green() if undo else action_info.get("color")
 
         embed = discord.Embed(color=color, timestamp=discord.utils.utcnow())
 
-        embed.description = "{} **Action:** {}\n**Reason:** {}\n".format(
-            icon, action_string.title(), reason
+        embed.description = (
+            f"{icon} **Action:** {action_string.title()}\n**Reason:** {reason}\n"
         )
         if duration:
             embed.description += "**Duration:** {}\n".format(
@@ -272,12 +272,9 @@ class Helper(commands.Cog, command_attrs=dict(hidden=False)):
 
         for i, warning in enumerate(records, 1):
             helper = ctx.guild.get_member(warning.helper_id)
-            if helper:
-                helper = helper.mention
-            else:
-                helper = "Unknown"
+            helper = helper.mention if helper else "Unknown"
             embed.add_field(
-                name="`{}.` Reason: {}".format(i, warning.reason),
+                name=f"`{i}.` Reason: {warning.reason}",
                 value=f"Issued by: {helper} - <t:{int(warning.date)}:f>",
                 inline=False,
             )
@@ -357,10 +354,8 @@ class Helper(commands.Cog, command_attrs=dict(hidden=False)):
             await member.add_roles(help_ban_role)
 
         await self.bot.reply(ctx, f"help-banned {member.mention} with reason: {reason}")
-        try:
+        with contextlib.suppress(discord.Forbidden):
             await member.send(f"You have been help-banned with reason: {reason}")
-        except discord.Forbidden:
-            pass
 
     @helper.command(name="unban")
     async def help_unban(
@@ -383,11 +378,9 @@ class Helper(commands.Cog, command_attrs=dict(hidden=False)):
             await member.remove_roles(help_ban_role)
 
         await self.bot.reply(ctx, f"help-unbanned {member.mention}")
-        try:
+        with contextlib.suppress(discord.Forbidden):
             await member.send("You have been help-unbanned")
             await self.log(action="ban", undo=True, member=member, helper=ctx.author)
-        except discord.Forbidden:
-            pass
 
     @helper.command(name="verify")
     async def help_verify(

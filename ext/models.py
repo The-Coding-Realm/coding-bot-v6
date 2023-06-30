@@ -188,18 +188,16 @@ class Database:
         values: Optional[Tuple[Any, ...]] = None,
         extras: Optional[List[str]] = None,
     ) -> Optional[List[Record]]:
-        statement = """SELECT {} FROM {}""".format(", ".join(arguments), table)
+        statement = f"""SELECT {", ".join(arguments)} FROM {table}"""
         if where is not None:
             assign_question = map(lambda x: f"{x} = ?", where)
-            statement += " WHERE {}".format(" AND ".join(assign_question))
+            statement += f' WHERE {" AND ".join(assign_question)}'
         if extras:
             for stuff in extras:
                 statement += f" {stuff}"
         async with self.cursor(connection) as cursor:
             await cursor.execute(statement, values or ())
-            # type: ignore # Type checker cries unnecessarily.
-            rows: List[aiosqlite.Row[Any]] = [i async for i in cursor]
-            if rows:
+            if rows := [i async for i in cursor]:
                 return [Record.from_tuple(arguments, row) for row in rows]
             return None
 
@@ -215,7 +213,7 @@ class Database:
         delete_statement = f"DELETE FROM {table}"
         if where is not None:
             assign_question = map(lambda x: f"{x} = ?", where)
-            delete_statement += " WHERE {}".format(" AND ".join(assign_question))
+            delete_statement += f' WHERE {" AND ".join(assign_question)}'
 
         async with self.cursor(connection) as cursor:
             await cursor.execute(delete_statement, values or ())
@@ -391,8 +389,7 @@ class CodingBot(commands.Bot):
         os.environ["JISHAKU_NO_UNDERSCORE"] = "True"
         await self.load_extension("jishaku")
         self.logger.info("Loaded Jishaku Cog")
-        jishaku = self.get_cog("Jishaku")
-        if jishaku:
+        if jishaku := self.get_cog("Jishaku"):
             jishaku.hidden = True
 
     async def start(self, token: str, *, reconnect: bool = True) -> None:
@@ -425,8 +422,7 @@ class CodingBot(commands.Bot):
         if banned:
             return
 
-        rules = member.guild.rules_channel
-        if rules:
+        if rules := member.guild.rules_channel:
             rules_channel = rules.mention
         else:
             rules_channel = "No official rule channel set yet."
