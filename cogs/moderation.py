@@ -812,7 +812,7 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
         await ctx.send_help("welcomer")
 
     @welcomer.command(name="enable")
-    @commands.has_permissions(manage_server=True)
+    @commands.has_permissions(manage_guild=True)
     async def welcomer_enable(
         self, ctx: commands.Context[CodingBot], help="Enable welcomer"
     ) -> None:
@@ -823,7 +823,7 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
             await self.bot.reply(ctx, "Welcomer is already enabled.")
 
     @welcomer.command(name="disable", help="Disable welcomer")
-    @commands.has_permissions(manage_server=True)
+    @commands.has_permissions(manage_guild=True)
     async def welcomer_disable(self, ctx: commands.Context[CodingBot]) -> None:
         if self.bot.welcomer_enabled:
             self.bot.welcomer_enabled = False
@@ -832,7 +832,7 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
             await self.bot.reply(ctx, "Welcomer is already disabled.")
 
     @welcomer.command(name="redirect", help="Set welcomer channel")
-    @commands.has_permissions(manage_server=True)
+    @commands.has_permissions(manage_guild=True)
     async def welcomer_redirect(
         self, ctx: commands.Context[CodingBot], channel: Optional[discord.TextChannel]
     ) -> None:
