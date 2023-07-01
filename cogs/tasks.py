@@ -72,25 +72,20 @@ class TaskCog(commands.Cog, command_attrs=dict(hidden=True)):
             "bob get a gf",
             "a documentary",
         ]
-        tcr = self.bot.get_guild(681882711945641997)
-        if tcr:
+        if tcr := self.bot.get_guild(681882711945641997):
             if tcr.get_role(795145820210462771):
                 statuses.append(
                     random.choice(tcr.get_role(795145820210462771).members).name
                 )  # type: ignore
             if tcr.get_role(737517726737629214):
                 statuses.append(
-                    random.choice(tcr.get_role(737517726737629214).members).name
-                    + " (Server Booster)"
-                )  # type: ignore
+                    f"{random.choice(tcr.get_role(737517726737629214).members).name} (Server Booster)"
+                )
 
         await self.bot.change_presence(
             activity=discord.Activity(
                 type=discord.ActivityType.watching,
-                name=random.choice(statuses)
-                + " | "
-                + self.bot.default_prefixes[0]
-                + "help",
+                name=f"{random.choice(statuses)} | {self.bot.default_prefixes[0]}help",
             )
         )
 
@@ -110,7 +105,7 @@ class TaskCog(commands.Cog, command_attrs=dict(hidden=True)):
             where=("guild_id",),
             values=(TCR_GUILD_ID,),
         )
-        now = datetime.datetime.utcnow().timestamp()
+        now = datetime.datetime.now(datetime.timezone.utc).timestamp()
         if records:
             for record in records:
                 if record.date + (60 * 60 * 24 * 31) < now:

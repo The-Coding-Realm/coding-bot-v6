@@ -3,11 +3,13 @@ from __future__ import annotations
 import re
 import sys
 import asyncio
+import contextlib
 import traceback
 from datetime import datetime
 from typing import TYPE_CHECKING
 
 import discord
+from datetime import timezone
 from discord.ext import commands
 from ext.consts import TCR_STAFF_ROLE_ID
 from ext.helpers import check_invite
@@ -51,17 +53,16 @@ class ListenerCog(commands.Cog, command_attrs=dict(hidden=True)):
         if message.author.bot or not message.guild:
             return
         
-        if message.channel.category.id == 754710748353265745:
-            if (
-                "thanks" in message.content.lower()
-                or "thank you" in message.content.lower()
-                or "thx" in message.content.lower()
-                or "thnx" in message.content.lower()
-                ):
-                await message.reply(
-                    "If someone has helped you, "
-                    "you can thank them by using the `.thank` command."
-                )
+        if message.channel.category.id == 754710748353265745 and (
+                        "thanks" in message.content.lower()
+                        or "thank you" in message.content.lower()
+                        or "thx" in message.content.lower()
+                        or "thnx" in message.content.lower()
+                        ):
+            await message.reply(
+                "If someone has helped you, "
+                "you can thank them by using the `.thank` command."
+            )
 
     @commands.Cog.listener("on_message")
     async def afk_user_messaage(self, message: discord.Message):
@@ -81,39 +82,36 @@ class ListenerCog(commands.Cog, command_attrs=dict(hidden=True)):
         record = self.bot.afk_cache.get(message.guild.id)
         if record:
             record = record.get(message.author.id)
-            if record:
-                _, time = record
-                if (datetime.utcnow() - datetime.utcfromtimestamp(time)).seconds < 30:
-                    return
-                await self.bot.conn.delete_record(
-                    "afk",
-                    table="afk",
-                    where=("user_id",),
-                    values=(message.author.id,),
-                )
-                try:
-                    if "[AFK]" in message.author.display_name:
-                        name = message.author.display_name.split(" ")[1:]
-                        await message.author.edit(nick=" ".join(name))
-                except (discord.HTTPException, discord.Forbidden):
-                    pass
-
-                staff_role = message.guild.get_role(795145820210462771)
-                if staff_role and staff_role in message.author.roles: 
-                    on_pat_staff = message.guild.get_role(726441123966484600)
-                    try:
-                        await message.author.add_roles(on_pat_staff)
-                    except (discord.Forbidden, discord.HTTPException):
-                        pass
-                del self.bot.afk_cache[message.guild.id][message.author.id]
-                em = discord.Embed(
-                    description=f"{message.author.mention} Welcome back, "
-                    "I removed your AFK!",
-                    color=discord.Color.dark_gold(),
-                )
-                msg = await message.reply(embed=em)
-                await asyncio.sleep(5)
-                await msg.delete()
+        if record:
+            _, time = record
+            if (
+                datetime.now(timezone.utc) - datetime.utcfromtimestamp(time)
+            ).seconds < 30:
+                return
+            await self.bot.conn.delete_record(
+                "afk",
+                table="afk",
+                where=("user_id",),
+                values=(message.author.id,),
+            )
+            with contextlib.suppress(discord.HTTPException, discord.Forbidden):
+                if "[AFK]" in message.author.display_name:
+                    name = message.author.display_name.split(" ")[1:]
+                    await message.author.edit(nick=" ".join(name))
+            staff_role = message.guild.get_role(795145820210462771)
+            if staff_role and staff_role in message.author.roles: 
+                on_pat_staff = message.guild.get_role(726441123966484600)
+                with contextlib.suppress(discord.Forbidden, discord.HTTPException):
+                    await message.author.add_roles(on_pat_staff)
+            del self.bot.afk_cache[message.guild.id][message.author.id]
+            em = discord.Embed(
+                description=f"{message.author.mention} Welcome back, "
+                "I removed your AFK!",
+                color=discord.Color.dark_gold(),
+            )
+            msg = await message.reply(embed=em)
+            await asyncio.sleep(5)
+            await msg.delete()
 
     @commands.Cog.listener("on_message")
     async def user_mentioned(self, message: discord.Message):
@@ -191,10 +189,7 @@ class ListenerCog(commands.Cog, command_attrs=dict(hidden=True)):
             )
             return await ctx.send(embed=embed, ephemeral=True)
         else:
-            print(
-                "Ignoring exception in command {}:".format(ctx.command),
-                file=sys.stderr,
-            )
+            print(f"Ignoring exception in command {ctx.command}:", file=sys.stderr)
             traceback.print_exception(
                 type(error), error, error.__traceback__, file=sys.stderr
             )
@@ -209,9 +204,12 @@ class ListenerCog(commands.Cog, command_attrs=dict(hidden=True)):
             return
 
         values = [message.author.id, message.guild.id, 1, 1]
-        columns = ["user_id", "guild_id", "message_count"]
-
-        columns.append(status := message.author.status.name)
+        columns = [
+            "user_id",
+            "guild_id",
+            "message_count",
+            status := message.author.status.name,
+        ]
 
         staff_role = message.guild.get_role(TCR_STAFF_ROLE_ID)
         if staff_role and staff_role in message.author.roles:  # type: ignore

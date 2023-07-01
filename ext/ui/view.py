@@ -44,9 +44,7 @@ class Piston(discord.ui.View):
             return
         await self.msg.edit(
             embed=self.cog.bot.embed(
-                title="compiling **[** {} **]**".format(
-                    int(time.time()) - self.timestamp
-                )
+                title=f"compiling **[** {int(time.time()) - self.timestamp} **]**"
             )
         )
 
@@ -67,14 +65,13 @@ class Piston(discord.ui.View):
         for line in lines:
             if len(line) > 500:
                 output.extend(sliced(line, 500))
-            else:
-                if len(output) > 0:
-                    if len(output[-1].split("\n")) > 15:
-                        output.append(line + "\n")
-                    else:
-                        output[-1] += line + "\n"
-                else:
+            elif output:
+                if len(output[-1].split("\n")) > 15:
                     output.append(line + "\n")
+                else:
+                    output[-1] += line + "\n"
+            else:
+                output.append(line + "\n")
         self.output = output
         self.ran = self.res["ran"]
         self.is_compiled = True

@@ -21,17 +21,27 @@ class Http:
             # },
             "numbers": {
                 "random": lambda _type="trivia": self.api["numbers"][
-                    "random_" + _type
+                    f"random_{_type}"
                 ](),
                 "number": lambda _type="trivia": self.api["numbers"][_type](),
                 "random_trivia": lambda: self.get(
                     "http://numbersapi.com/random/trivia"
                 ),
-                "random_math": lambda: self.get("http://numbersapi.com/random/math"),
-                "random_date": lambda: self.get("http://numbersapi.com/random/date"),
-                "random_year": lambda: self.get("http://numbersapi.com/random/year"),
-                "date": lambda date: self.get(f"http://numbersapi.com/{date}/date"),
-                "year": lambda year: self.get(f"http://numbersapi.com/{year}/year"),
+                "random_math": lambda: self.get(
+                    "http://numbersapi.com/random/math"
+                ),
+                "random_date": lambda: self.get(
+                    "http://numbersapi.com/random/date"
+                ),
+                "random_year": lambda: self.get(
+                    "http://numbersapi.com/random/year"
+                ),
+                "date": lambda date: self.get(
+                    f"http://numbersapi.com/{date}/date"
+                ),
+                "year": lambda year: self.get(
+                    f"http://numbersapi.com/{year}/year"
+                ),
                 "trivia": lambda num: self.get(f"http://numbersapi.com/{num}"),
                 "math": lambda num: self.get(f"http://numbersapi.com/{num}/math"),
             },
@@ -47,7 +57,9 @@ class Http:
                 ),
             },
             "meme-api": {
-                "gimme": lambda: self.get("https://meme-api.com/gimme/", _json=True)
+                "gimme": lambda: self.get(
+                    "https://meme-api.com/gimme/", _json=True
+                )
             },
             "some-random-api": {
                 "bottoken": lambda: self.get(
@@ -65,7 +77,9 @@ class Http:
                 "lyrics": lambda query: self.get(
                     f"https://some-random-api.ml/lyrics?title={query}"
                 ),
-                "joke": lambda: self.get("https://some-random-api.ml/joke", _json=True),
+                "joke": lambda: self.get(
+                    "https://some-random-api.ml/joke", _json=True
+                ),
                 "filters": {
                     "invert": lambda pfp: f"https://some-random-api.ml/canvas/invert?avatar={pfp}",
                     "greyscale": lambda pfp: f"https://some-random-api.ml/canvas/greyscale?avatar={pfp}",
@@ -76,7 +90,8 @@ class Http:
             },
             "joke": {
                 "api": lambda: self.get(
-                    "https://backend-omega-seven.vercel.app/api/getjoke", _json=True
+                    "https://backend-omega-seven.vercel.app/api/getjoke",
+                    _json=True,
                 ),
             },
         }

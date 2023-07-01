@@ -7,6 +7,7 @@ import re
 from typing import TYPE_CHECKING, Optional
 
 import button_paginator as pg
+import contextlib
 import discord
 from discord.ext import commands
 from ext.helpers import Spotify, grouper, ordinal_suffix_of
@@ -80,10 +81,8 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
         )  # "on_patrol_staff" role
 
         if staff_role in member.roles:
-            try:
-                await member.remove_roles(on_pat_staff) 
-            except (discord.Forbidden, discord.HTTPException):
-                pass
+            with contextlib.suppress(discord.Forbidden, discord.HTTPException):
+                await member.remove_roles(on_pat_staff)
         if ctx.guild.id not in self.bot.afk_cache:
             self.bot.afk_cache[ctx.guild.id] = {}
         if member.id not in self.bot.afk_cache.get(ctx.guild.id):
@@ -93,10 +92,8 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
                 values=(member.id, reason, int(ctx.message.created_at.timestamp())),
                 columns=["user_id", "reason", "afk_time"],
             )
-            try:
+            with contextlib.suppress(Exception):
                 await member.edit(nick=f"[AFK] {member.display_name}")
-            except Exception:
-                pass
             try:
                 self.bot.afk_cache[ctx.guild.id][member.id] = (
                     reason,
@@ -400,14 +397,12 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
         """
 
         trainee_role = ctx.guild.get_role(729537643951554583)  # type: ignore
-        members = trainee_role.members
-
-        if not members:
-            trainees = "No trainees yet."
-        else:
+        if members := trainee_role.members:
             trainees = "\n".join(
                 f"{i}. {member.mention}" for i, member in enumerate(members, 1)
             )
+        else:
+            trainees = "No trainees yet."
         embed = discord.Embed(
             title="Trainees list", description=trainees, color=discord.Color.blue()
         )
