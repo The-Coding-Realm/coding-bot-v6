@@ -254,12 +254,14 @@ class WelcomeBanner:
         img = BytesIO(
             await member.display_avatar.with_format("png").with_size(128).read()
         )
-        try:
-            banner = BytesIO(
-                await member.guild.banner.with_format("png").with_size(512).read()
-            )
-        except AttributeError:
-            banner = "./storage/banner.png"
+        # try:
+        #     banner = BytesIO(
+        #         await member.guild.banner.with_format("png").with_size(512).read()
+        #     )
+        # except AttributeError:
+        #     banner = "./storage/banner.png"
+
+        banner = "./storage/banner.png"
 
         return await self.generate_image(
             member,
