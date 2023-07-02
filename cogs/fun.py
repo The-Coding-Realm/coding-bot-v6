@@ -268,6 +268,35 @@ class Fun(commands.Cog, command_attrs=dict(hidden=False)):
         await ctx.send(
             ", ".join(user.display_name for user in users) + " joined the beerparty!"
         )
+    
+    @commands.command(
+        name = 'nuke',
+        help = 'find out yourself'
+    )
+    @commands.cooldown(2, 10, commands.BucketType.guild)
+    async def _nuke(self, ctx: commands.Context):
+        msg = await ctx.reply("Nuking the server in 5 seconds!")
+        await asyncio.sleep(5)
+        await msg.edit(content="Nuke engaed :smiling_imp:")
+        await asyncio.sleep(random.randint(1,3))
+        reason = random.choice(
+            [
+                "Swas pooped in his pants",
+                "umm, I pressed the wrong button",
+                "I lost the nuke button",
+                "Arthex is gay",
+                "Conch prevented it",
+                "Lex is so hot",
+                "bcs yes!",
+                "I am too lazy", # someone please add more funny phrases
+            ]
+        )
+        embed = self.bot.embed(
+            title="Nuke Failed!",
+            description=f"Reason: {reason}",
+            color = 0xff0000
+        )
+        await msg.edit(content=None, embed=embed)
 
 async def setup(bot: CodingBot):
     await bot.add_cog(Fun(bot))
