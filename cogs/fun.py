@@ -277,7 +277,7 @@ class Fun(commands.Cog, command_attrs=dict(hidden=False)):
     async def _nuke(self, ctx: commands.Context):
         msg = await ctx.reply("Nuking the server in 5 seconds!")
         await asyncio.sleep(5)
-        await msg.edit(content="Nuke engaed :smiling_imp:")
+        await msg.edit(content="Nuke engaged :smiling_imp:")
         await asyncio.sleep(random.randint(1,3))
         reason = random.choice(
             [
@@ -288,6 +288,14 @@ class Fun(commands.Cog, command_attrs=dict(hidden=False)):
                 "Conch prevented it",
                 "Lex is so hot",
                 "bcs yes!",
+                "I lost the launch codes",
+                "dinner is ready",
+                "it's bed time",
+                "you're not cool enough",
+                "my mumma said so",
+                "you really thought it would work",
+                "my dog ate my nuke",
+                "my boyfriend decided to call FBI",
                 "I am too lazy", # someone please add more funny phrases
             ]
         )
