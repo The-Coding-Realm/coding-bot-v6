@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import re
 import sys
+import time as unitime
 import asyncio
 import contextlib
 import traceback
@@ -85,8 +86,8 @@ class ListenerCog(commands.Cog, command_attrs=dict(hidden=True)):
         if record:
             _, time = record
             if (
-                datetime.now(timezone.utc) - datetime.utcfromtimestamp(time)
-            ).seconds < 30:
+                unitime.time() - time
+            ) < 30:
                 return
             await self.bot.conn.delete_record(
                 "afk",
