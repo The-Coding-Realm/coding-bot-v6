@@ -75,5 +75,5 @@ class ModMail(commands.Cog):
             member = self.opposite_current_modmail[self.channel]
             await member.send("⚒️ staff: "+message.content, files=message.files)
 
-async def setup(bot: CodingBot):
+async def setup(bot):
     await bot.add_cog(ModMail(bot))
