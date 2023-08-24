@@ -6,6 +6,7 @@ import discord
 
 class YesNoView(discord.ui.View):  # class should be moved to a utils class probably
     def __init__(self, *, yes_message, no_message):
+        super().__init__()
         self.yes = None
         self.yes_message = yes_message
         self.no_message = no_message
@@ -16,7 +17,7 @@ class YesNoView(discord.ui.View):  # class should be moved to a utils class prob
         self.yes = True
         self.stop()
 
-    @discord.ui.button(emoji="🚫", style=discord.ButtonStyle.danger)
+    @discord.ui.button(emoji="⛔", style=discord.ButtonStyle.danger)
     async def no_button(self, interaction, button):
         await interaction.response.send_message(self.no_message)
         self.yes = False
@@ -31,12 +32,16 @@ class ModMail(commands.Cog):
 
     @commands.command()
     async def close(self, ctx):
+        print('z')
         if not ctx.guild:
+            print('a')
             if ctx.author in self.current_modmail:
+                print('b')
                 thread = self.current_modmail[ctx.author]
                 await thread.edit(locked=True)
                 self.current_modmail.pop(ctx.author)
                 self.opposite_current_modmail.pop(thread)
+                await ctx.send("Your modmail ticket has successfully closed!")
         elif ctx.channel in self.opposite_current_modmail:
             member = self.opposite_current_modmail[ctx.channel]
             view = YesNoView(yes_message="Your modmail ticket has successfully closed!", no_message="Aborted.")
@@ -63,17 +68,17 @@ class ModMail(commands.Cog):
                 await message.author.send("Do you want to create a modmail ticket?", view=view)
                 await view.wait()
                 if view.yes:
-                    message = await self.channel.send(message.content, files=message.files, allowed_mentions=discord.AllowedMentions(users=False, everyone=False, roles=False))
-                    thread = await self.channel.create_thread(name=f"{message.author.name} vs mods", message=message)
+                    msg_sent = await self.channel.send(message.content, files=message.attachments, allowed_mentions=discord.AllowedMentions(users=False, everyone=False, roles=False))
+                    thread = await self.channel.create_thread(name=f"{message.author.name} vs mods", message=msg_sent)
                     self.current_modmail[message.author] = thread
                     self.opposite_current_modmail[thread] = message.author
             else:
-                webhook = await ctx.channel.create_webhook(name=message.author.name)
                 thread = self.current_modmail[message.author]
-                await webhook.send(content=message.content, avatar_url=message.author.display_avatar.url, files=message.files, allowed_mentions=discord.AllowedMentions(users=False, everyone=False, roles=False), thread=thread)
+                webhook = await thread.parent.create_webhook(name=message.author.name)
+                await webhook.send(content=message.content, avatar_url=message.author.display_avatar.url, files=message.attachments, allowed_mentions=discord.AllowedMentions(users=False, everyone=False, roles=False), thread=thread)
         elif message.channel in self.opposite_current_modmail:
-            member = self.opposite_current_modmail[self.channel]
-            await member.send("⚒️ staff: "+message.content, files=message.files)
+            member = self.opposite_current_modmail[message.channel]
+            await member.send("⚒️ staff: "+message.content, files=message.attachments)
 
 async def setup(bot):
     await bot.add_cog(ModMail(bot))
