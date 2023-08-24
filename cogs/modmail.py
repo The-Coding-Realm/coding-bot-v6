@@ -32,11 +32,8 @@ class ModMail(commands.Cog):
 
     @commands.command()
     async def close(self, ctx):
-        print('z')
         if not ctx.guild:
-            print('a')
             if ctx.author in self.current_modmail:
-                print('b')
                 thread = self.current_modmail[ctx.author]
                 await thread.edit(locked=True)
                 self.current_modmail.pop(ctx.author)
