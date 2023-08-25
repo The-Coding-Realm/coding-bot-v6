@@ -85,7 +85,7 @@ class TaskCog(commands.Cog, command_attrs=dict(hidden=True)):
         await self.bot.change_presence(
             activity=discord.Activity(
                 type=discord.ActivityType.watching,
-                name=f"{random.choice(statuses)} | {self.bot.default_prefixes[0]}help",
+                name=f"{random.choice(statuses)} | {self.bot.command_prefix}help",
             )
         )
 
