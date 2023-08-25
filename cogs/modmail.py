@@ -78,7 +78,7 @@ class ModMail(commands.Cog):
                         MODMAIL_WEBHOOK_URL, session=session
                     )
                     await webhook.send(
-                        content=mesage.content,
+                        content=message.content,
                         avatar_url=message.author.display_avatar.url,
                         files=message.attachments,
                         allowed_mentions=discord.AllowedMentions(
