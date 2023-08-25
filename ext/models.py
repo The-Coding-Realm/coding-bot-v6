@@ -304,8 +304,10 @@ class CodingHelp(commands.HelpCommand):
 
         for command in group.commands:
             if not command.hidden:
-                embed.description += f"\n`{command.qualified_name} - "\
-                f"{command.brief or 'Not documented yet'}`"
+                embed.description += (
+                    f"\n`{command.qualified_name} - "
+                    f"{command.brief or 'Not documented yet'}`"
+                )
 
         destination = self.get_destination()
         await destination.send(embed=embed)
@@ -334,8 +336,10 @@ class CodingHelp(commands.HelpCommand):
 
         for command in cog.get_commands():
             if not command.hidden:
-                embed.description += f"\n`{command.qualified_name} "\
+                embed.description += (
+                    f"\n`{command.qualified_name} "
                     f"{command.brief or 'Not documented yet'}`"
+                )
 
         destination = self.get_destination()
         await destination.send(embed=embed)

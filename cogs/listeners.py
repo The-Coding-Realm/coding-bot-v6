@@ -42,7 +42,7 @@ class ListenerCog(commands.Cog, command_attrs=dict(hidden=True)):
     @commands.Cog.listener("on_message")
     async def thank_message(self, message: discord.Message):
         """
-        Responsible for checking if a user is saying thanks in a help channel. 
+        Responsible for checking if a user is saying thanks in a help channel.
         if so, the bot will inform the user that they can use the thank command
         to support the user that helped them.
 
@@ -53,13 +53,13 @@ class ListenerCog(commands.Cog, command_attrs=dict(hidden=True)):
         """
         if message.author.bot or not message.guild:
             return
-        
+
         if message.channel.category.id == 754710748353265745 and (
-                        "thanks" in message.content.lower()
-                        or "thank you" in message.content.lower()
-                        or "thx" in message.content.lower()
-                        or "thnx" in message.content.lower()
-                        ):
+            "thanks" in message.content.lower()
+            or "thank you" in message.content.lower()
+            or "thx" in message.content.lower()
+            or "thnx" in message.content.lower()
+        ):
             await message.reply(
                 "If someone has helped you, "
                 "you can thank them by using the `.thank` command."
@@ -85,9 +85,7 @@ class ListenerCog(commands.Cog, command_attrs=dict(hidden=True)):
             record = record.get(message.author.id)
         if record:
             _, time = record
-            if (
-                unitime.time() - time
-            ) < 30:
+            if (unitime.time() - time) < 30:
                 return
             await self.bot.conn.delete_record(
                 "afk",
@@ -100,7 +98,7 @@ class ListenerCog(commands.Cog, command_attrs=dict(hidden=True)):
                     name = message.author.display_name.split(" ")[1:]
                     await message.author.edit(nick=" ".join(name))
             staff_role = message.guild.get_role(795145820210462771)
-            if staff_role and staff_role in message.author.roles: 
+            if staff_role and staff_role in message.author.roles:
                 on_pat_staff = message.guild.get_role(726441123966484600)
                 with contextlib.suppress(discord.Forbidden, discord.HTTPException):
                     await message.author.add_roles(on_pat_staff)
@@ -118,7 +116,7 @@ class ListenerCog(commands.Cog, command_attrs=dict(hidden=True)):
     async def user_mentioned(self, message: discord.Message):
         """
         Responsible for checking if an AFK user was mentioned in a message.
-        If so, the bot will send a message to the channel informing that the user 
+        If so, the bot will send a message to the channel informing that the user
         that was mentioned is AFK.
 
         Parameters
@@ -185,7 +183,7 @@ class ListenerCog(commands.Cog, command_attrs=dict(hidden=True)):
             embed = discord.Embed(
                 title="Command on Cooldown",
                 description=f"{ctx.author.mention} Please wait {error.retry_after:.2f}"
-                 " seconds before using this command again.",
+                " seconds before using this command again.",
                 color=discord.Color.red(),
             )
             return await ctx.send(embed=embed, ephemeral=True)
@@ -285,7 +283,7 @@ class ListenerCog(commands.Cog, command_attrs=dict(hidden=True)):
             )
             if re.search(
                 invite_regex, message.content
-            ):  # `check_invite` already checks if there is an invite, 
+            ):  # `check_invite` already checks if there is an invite,
                 # why are we checking again?
                 await message.delete()
                 return await message.channel.send(

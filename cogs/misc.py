@@ -41,7 +41,7 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
     )
     async def retry(self, ctx: commands.Context[CodingBot]):
         """
-        Reinvoke a command, running it again. 
+        Reinvoke a command, running it again.
         This does NOT bypass any permissions checks | Code from v4
         """
         try:
@@ -261,8 +261,7 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
 
                 embed.add_field(
                     name=f"Thank: {thank_id}",
-                    value=
-                    f"Thank giver: {giver.mention}\nDate: <t:{timestamp}:R>\n"
+                    value=f"Thank giver: {giver.mention}\nDate: <t:{timestamp}:R>\n"
                     f"Reason: {reason}\nThank given in: "
                     f"{channel.mention if channel else f'<#{channel_id}>'}\n"
                     f"Message link: [Click here!]({msg_link})",
@@ -363,7 +362,7 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
                 embeds,
                 ctx,
                 check=lambda i: i.user.id == ctx.author.id,
-                )
+            )
             paginator.add_button(
                 "delete", label="Delete", style=discord.ButtonStyle.danger
             )
@@ -420,7 +419,7 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
         `{prefix}spotify [member]`: *will show the spotify status of [member]*
         """
         member = ctx.guild.get_member((member or ctx.author).id)
-        
+
         spotify = Spotify(bot=self.bot, member=member)
         result = await spotify.get_embed()
         if not result:

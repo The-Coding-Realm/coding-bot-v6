@@ -61,11 +61,15 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
             ctx.author.top_role.position <= member.top_role.position
             and ctx.author != ctx.guild.owner
         ):
-            return f"You can't {ctx.command.name} this member. They have a higher or "\
+            return (
+                f"You can't {ctx.command.name} this member. They have a higher or "
                 "equal role than you."
+            )
         elif ctx.guild.me.top_role.position <= member.top_role.position and priv_level:
-            return f"I can't {ctx.command.name} this member. "\
+            return (
+                f"I can't {ctx.command.name} this member. "
                 "They have a higher or equal role than me."
+            )
 
         return False
 
@@ -171,9 +175,7 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
         if undo and isinstance(undo_action, ValueError):
             raise undo_action
 
-        action_string = (
-            action_info["undo_action"] if undo else action_info["action"]
-        )
+        action_string = action_info["undo_action"] if undo else action_info["action"]
         icon = action_info["undo_icon"] if undo else action_info["icon"]
         color = discord.Color.green() if undo else action_info.get("color")
 
@@ -241,8 +243,8 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
                 moderator=ctx.author,
                 member=member,
                 reason=reason,
-                evidence=evidence
-                )
+                evidence=evidence,
+            )
 
     @commands.hybrid_command(name="ban")
     @commands.has_permissions(ban_members=True)
@@ -270,8 +272,15 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
         await ctx.guild.ban(member, reason=reason, delete_message_days=7)
         await self.bot.reply(ctx, f"Banned {member.mention}")
         evidence = await self.capture_evidence(ctx)
-        await self.log(action="ban", moderator=ctx.author, member=member, 
-                       undo=False, reason=reason, duration=None, evidence=evidence)
+        await self.log(
+            action="ban",
+            moderator=ctx.author,
+            member=member,
+            undo=False,
+            reason=reason,
+            duration=None,
+            evidence=evidence,
+        )
 
     @commands.hybrid_command(name="unban")
     @commands.has_permissions(ban_members=True)
@@ -300,8 +309,14 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
             )
         else:
             await self.bot.reply(ctx, f"Unbanned {user.mention}")
-            await self.log(action="ban", moderator=ctx.author, member=user, undo=True,
-                            reason=reason, duration=None)  
+            await self.log(
+                action="ban",
+                moderator=ctx.author,
+                member=user,
+                undo=True,
+                reason=reason,
+                duration=None,
+            )
 
     @trainee_check()
     @commands.hybrid_command(name="mute", aliases=["timeout"])
@@ -336,9 +351,15 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
             await member.timeout(until)
             await self.bot.reply(ctx, f"Muted {member.mention}")
             evidence = await self.capture_evidence(ctx)
-            await self.log(action="mute", moderator=ctx.author, member=member, 
-                           undo=False, reason=reason, duration=duration, 
-                           evidence=evidence)
+            await self.log(
+                action="mute",
+                moderator=ctx.author,
+                member=member,
+                undo=False,
+                reason=reason,
+                duration=duration,
+                evidence=evidence,
+            )
 
     @trainee_check()
     @commands.hybrid_command(name="unmute")
@@ -367,8 +388,14 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
             return await self.bot.reply(ctx, f"{member.mention} is not muted.")
         else:
             await self.bot.reply(ctx, f"Unmuted {member.mention}")
-            await self.log(action="mute", moderator=ctx.author, member=member, 
-                           undo=True, reason=reason)  
+            await self.log(
+                action="mute",
+                moderator=ctx.author,
+                member=member,
+                undo=True,
+                reason=reason,
+            )
+
     @trainee_check()
     @commands.hybrid_command()
     async def massban(
@@ -445,8 +472,13 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
         )
         await self.bot.reply(ctx, f"Warned {member.mention}")
         evidence = await self.capture_evidence(ctx)
-        await self.log(action="warn", moderator=ctx.author, member=member, 
-                       reason=reason, evidence=evidence) 
+        await self.log(
+            action="warn",
+            moderator=ctx.author,
+            member=member,
+            reason=reason,
+            evidence=evidence,
+        )
 
     @trainee_check()
     @commands.hybrid_command(name="purge")
@@ -461,9 +493,10 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
         Example:
         {prefix}purge 10
         """
-        purged_amt = len(await ctx.channel.purge(limit=amount + 1)) 
-        await self.bot.reply(ctx,
-                             f"Purged {purged_amt} messages in {ctx.channel.mention}") 
+        purged_amt = len(await ctx.channel.purge(limit=amount + 1))
+        await self.bot.reply(
+            ctx, f"Purged {purged_amt} messages in {ctx.channel.mention}"
+        )
 
     @trainee_check()
     @commands.hybrid_command(name="warnings")
@@ -559,7 +592,7 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
             f"{target.mention}'s warning was cleared.",
             allowed_mentions=discord.AllowedMentions(users=False),
         )
-        await self.log(action="warn", moderator=ctx.author, member=target, undo=True) 
+        await self.log(action="warn", moderator=ctx.author, member=target, undo=True)
 
     @trainee_check()
     @commands.hybrid_command(name="verify")
@@ -858,13 +891,9 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
             await self.bot.reply(ctx, "Raid mode is now enabled.")
             for member in self.bot.raid_checker.cache:
                 if self.bot.raid_checker.check(member):
-                    await member.ban(
-                        reason="Raid mode enabled and met raid criteria."
-                    )
+                    await member.ban(reason="Raid mode enabled and met raid criteria.")
         else:
-            await self.bot.reply(
-                ctx, "There is no raid that has been detected yet."
-            )
+            await self.bot.reply(ctx, "There is no raid that has been detected yet.")
 
     @raid_mode.command(name="disable")
     async def raid_mode_disable(self, ctx: commands.Context[CodingBot]) -> None:

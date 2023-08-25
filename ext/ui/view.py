@@ -82,13 +82,13 @@ class Piston(discord.ui.View):
                     child.label = (
                         f"ran '{self.lang}' code  |  "
                         f"{int(time.time()) - self.timestamp}s"
-                        )
+                    )
                 else:
                     child.style = discord.ButtonStyle.red
                     child.label = (
                         f"failed to run '{self.lang}' code  |  "
                         f"{int(time.time()) - self.timestamp}s"
-                                   )
+                    )
         await self.msg.edit(
             embed=self.cog.bot.embed(
                 title=" ", description=f"```{self.lang}\n{output[0]}\n```"
@@ -198,4 +198,24 @@ class ConfirmButton(ui.View):
             await interaction.message.delete()
         else:
             await interaction.delete_original_message()
+        self.stop()
+
+
+class YesNoView(discord.ui.View):  # class should be moved to a utils class probably
+    def __init__(self, *, yes_message, no_message):
+        super().__init__()
+        self.yes = None
+        self.yes_message = yes_message
+        self.no_message = no_message
+
+    @discord.ui.button(emoji="✅", style=discord.ButtonStyle.green)
+    async def yes_button(self, interaction, button):
+        await interaction.response.send_message(self.yes_message)
+        self.yes = True
+        self.stop()
+
+    @discord.ui.button(emoji="⛔", style=discord.ButtonStyle.danger)
+    async def no_button(self, interaction, button):
+        await interaction.response.send_message(self.no_message)
+        self.yes = False
         self.stop()
