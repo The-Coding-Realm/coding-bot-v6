@@ -1,6 +1,5 @@
 import typing
-import aiohttp
-from ext.consts import MODMAIL_CHANNEL_ID, MODMAIL_WEBHOOK_URL, MODMAIL_ROLE_ID, MODMAIL_CLOSED, MODMAIL_OPEN
+from ext.consts import MODMAIL_CHANNEL_ID, MODMAIL_ROLE_ID, MODMAIL_CLOSED, MODMAIL_OPEN
 from discord.ext import commands
 import discord
 from ext.ui.view import YesNoView
@@ -33,21 +32,18 @@ class ModMail(commands.Cog):
             message: discord.Message, 
             thread: discord.Thread
             ):
-        async with aiohttp.ClientSession() as session:
-            webhook = discord.Webhook.from_url(
-                MODMAIL_WEBHOOK_URL, session=session
-            )
-            await webhook.send(
-                username=message.author.name,
-                content=message.content,
-                avatar_url=message.author.display_avatar.url,
-                files=message.attachments,
-                allowed_mentions=discord.AllowedMentions(
-                    users=False, everyone=False, roles=False
-                ),
-                thread=thread,
-            )
-            await message.add_reaction("✅")
+        webhook = thread.parent.webhooks[0]
+        await webhook.send(
+            username=message.author.name,
+            content=message.content,
+            avatar_url=message.author.display_avatar.url,
+            files=message.attachments,
+            allowed_mentions=discord.AllowedMentions(
+                users=False, everyone=False, roles=False
+            ),
+            thread=thread,
+        )
+        await message.add_reaction("✅")
 
     async def close_thread(self, thread: discord.Thread):
         await thread.add_tags(thread.parent.get_tag(MODMAIL_CLOSED))
