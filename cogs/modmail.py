@@ -32,7 +32,7 @@ class ModMail(commands.Cog):
             message: discord.Message, 
             thread: discord.Thread
             ):
-        webhook = thread.parent.webhooks()[0]
+        webhook = await thread.parent.webhooks()[0]
         await webhook.send(
             username=message.author.name,
             content=message.content,
