@@ -143,8 +143,7 @@ HELP_COMMAND = """
             `{prefix}help <command> <sub-command>`
             """
 
-# MODMAIL_WEBHOOK_URL = os.getenv("MODMAIL_WEBHOOK_URL")
-MODMAIL_WEBHOOK_URL = "https://discord.com/api/webhooks/1144826294303985714/GsgmsCm5wqbKhfBwegwhvzwMCKpOA6HVYkl48jTJlQ52y_Z7IvZeXas4wu0NFn-8_DXu"
+MODMAIL_WEBHOOK_URL = os.getenv("MODMAIL_WEBHOOK_URL")
 
 OFFICIAL_HELPER_ROLE_ID = 726650418444107869
 TCR_GUILD_ID = 681882711945641997

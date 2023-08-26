@@ -78,7 +78,6 @@ class ModMail(commands.Cog):
     async def on_message(self, message: discord.Message):
         if not self.channel:  
             self.channel: discord.ForumChannel = self.bot.get_channel(MODMAIL_CHANNEL_ID)
-            print(self.channel.available_tags)
 
         if message.author.bot or message.content.startswith(self.bot.command_prefix[0]):
             return
