@@ -537,8 +537,8 @@ class Spotify:
         result = csp.get_base()
         base = Image.frombytes("RGB", (600, 300), result)
 
-        font0 = ImageFont.truetype("storage/fonts/spotify.ttf", 35) # For title
-        font2 = ImageFont.truetype("storage/fonts/spotify.ttf", 18) # Time stamps
+        font0 = ImageFont.truetype("storage/fonts/spotify.ttf", 35)  # For title
+        font2 = ImageFont.truetype("storage/fonts/spotify.ttf", 18)  # Time stamps
 
         draw = ImageDraw.Draw(
             base,
@@ -593,8 +593,10 @@ class Spotify:
         ).total_seconds()
         track = time_at / time
         time = f"{time // 60:02d}:{time % 60:02d}"
-        time_at = f"{int((time_at if time_at > 0 else 0) // 60):02d}:"\
+        time_at = (
+            f"{int((time_at if time_at > 0 else 0) // 60):02d}:"
             f"{int((time_at if time_at > 0 else 0) % 60):02d}"
+        )
         pog = act.album_cover_url
         name = "".join([x for x in act.title if x in s])
         name = name[0:21] + "..." if len(name) > 21 else name

@@ -183,7 +183,7 @@ class Developer(commands.Cog, command_attrs=dict(hidden=True)):
 
         """
         cogs: Dict[str, List[str]] = {"reloaded": [], "not": []}
-        processing: Mapping[str, ModuleType] = self.bot.extensions.copy() 
+        processing: Mapping[str, ModuleType] = self.bot.extensions.copy()
         for cog in processing:
             try:
                 await self.bot.reload_extension(cog)
@@ -253,11 +253,14 @@ class Developer(commands.Cog, command_attrs=dict(hidden=True)):
         )
         record = message_metric[0] if message_metric else None
         if record:
-            deleted_message_percent = (record.deleted_message_count / 
-                                       record.message_count * 100)
-            actual_message_percent = ((record.message_count - 
-                                       record.deleted_message_count) / 
-                                       record.message_count * 100)
+            deleted_message_percent = (
+                record.deleted_message_count / record.message_count * 100
+            )
+            actual_message_percent = (
+                (record.message_count - record.deleted_message_count)
+                / record.message_count
+                * 100
+            )
             offline_message_percent = record.offline / record.message_count * 100
             online_message_percent = record.online / record.message_count * 100
             dnd_message_percent = record.dnd / record.message_count * 100
@@ -279,10 +282,16 @@ class Developer(commands.Cog, command_attrs=dict(hidden=True)):
             {record.idle} (`{idle_message_percent}%`)
             """
 
-        revoked_thanks_percent = (revoked_thank_count/total_thank_count*100 
-                                  if total_thank_count > 0 else 0)
-        actual_thanks_percent = (surviving_thank_count/total_thank_count*100 
-                                 if total_thank_count > 0 else 0)
+        revoked_thanks_percent = (
+            revoked_thank_count / total_thank_count * 100
+            if total_thank_count > 0
+            else 0
+        )
+        actual_thanks_percent = (
+            surviving_thank_count / total_thank_count * 100
+            if total_thank_count > 0
+            else 0
+        )
         embed = discord.Embed(
             title=f"{member.name}#{member.discriminator} Detailed anaylysis",
             description=f"Total thanks this month: {total_thank_count}\n"

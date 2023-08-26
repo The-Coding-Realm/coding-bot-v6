@@ -1,36 +1,20 @@
 import typing
-
-from ext.consts import MODMAIL_CHANNEL_ID
+import aiohttp
+from ext.consts import MODMAIL_CHANNEL_ID, MODMAIL_WEBHOOK_URL
 from discord.ext import commands
 import discord
+from ext.ui.view import YesNoView
+import os
 
-class YesNoView(discord.ui.View):  # class should be moved to a utils class probably
-    def __init__(self, *, yes_message, no_message):
-        super().__init__()
-        self.yes = None
-        self.yes_message = yes_message
-        self.no_message = no_message
-
-    @discord.ui.button(emoji="✅", style=discord.ButtonStyle.green)
-    async def yes_button(self, interaction, button):
-        await interaction.response.send_message(self.yes_message)
-        self.yes = True
-        self.stop()
-
-    @discord.ui.button(emoji="⛔", style=discord.ButtonStyle.danger)
-    async def no_button(self, interaction, button):
-        await interaction.response.send_message(self.no_message)
-        self.yes = False
-        self.stop()
 
 class ModMail(commands.Cog):
-    def __init__(self, bot):
+    def __init__(self, bot: commands.Bot):
         self.bot = bot
         self.current_modmail = {}
         self.opposite_current_modmail = {}
         self.channel: typing.Optional[discord.TextChannel] = None
 
-    @commands.command()
+    @commands.hybrid_command()
     async def close(self, ctx):
         if not ctx.guild:
             if ctx.author in self.current_modmail:
@@ -41,7 +25,10 @@ class ModMail(commands.Cog):
                 await ctx.send("Your modmail ticket has successfully closed!")
         elif ctx.channel in self.opposite_current_modmail:
             member = self.opposite_current_modmail[ctx.channel]
-            view = YesNoView(yes_message="Your modmail ticket has successfully closed!", no_message="Aborted.")
+            view = YesNoView(
+                yes_message="Your modmail ticket has successfully closed!",
+                no_message="Aborted.",
+            )
             await member.send(content="Do you want to close the ticket?", view=view)
             await view.wait()
             if view.yes:
@@ -53,29 +40,57 @@ class ModMail(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
-        if not self.channel:  # I was unsure if getting the channel in the __init__ is wise
+        if (
+            not self.channel
+        ):  # I was unsure if getting the channel in the __init__ is wise
             self.channel = self.bot.get_channel(MODMAIL_CHANNEL_ID)
 
-        if message.author.bot:
+        if message.author.bot or message.content.startswith(self.bot.command_prefix):
             return
 
         if not message.guild:
             if message.author not in self.current_modmail:
-                view = YesNoView(yes_message="Your modmail ticket has been successfully created!", no_message="Aborted.")
-                await message.author.send("Do you want to create a modmail ticket?", view=view)
+                view = YesNoView(
+                    yes_message="Your modmail ticket has been successfully created!",
+                    no_message="Aborted.",
+                )
+                await message.author.send(
+                    "Do you want to create a modmail ticket?", view=view
+                )
                 await view.wait()
                 if view.yes:
-                    msg_sent = await self.channel.send(message.content, files=message.attachments, allowed_mentions=discord.AllowedMentions(users=False, everyone=False, roles=False))
-                    thread = await self.channel.create_thread(name=f"{message.author.name} vs mods", message=msg_sent)
+                    msg_sent = await self.channel.send(
+                        message.content,
+                        files=message.attachments,
+                        allowed_mentions=discord.AllowedMentions(
+                            users=False, everyone=False, roles=False
+                        ),
+                    )
+                    thread = await self.channel.create_thread(
+                        name=f"{message.author.name} vs mods", message=msg_sent
+                    )
                     self.current_modmail[message.author] = thread
                     self.opposite_current_modmail[thread] = message.author
             else:
                 thread = self.current_modmail[message.author]
-                webhook = await thread.parent.create_webhook(name=message.author.name)
-                await webhook.send(content=message.content, avatar_url=message.author.display_avatar.url, files=message.attachments, allowed_mentions=discord.AllowedMentions(users=False, everyone=False, roles=False), thread=thread)
+                async with aiohttp.ClientSession() as session:
+                    webhook = discord.Webhook.from_url(
+                        MODMAIL_WEBHOOK_URL, session=session
+                    )
+                    await webhook.send(
+                        content=message.content,
+                        avatar_url=message.author.display_avatar.url,
+                        files=message.attachments,
+                        allowed_mentions=discord.AllowedMentions(
+                            users=False, everyone=False, roles=False
+                        ),
+                        thread=thread,
+                    )
+                    await message.add_reaction("✅")
         elif message.channel in self.opposite_current_modmail:
             member = self.opposite_current_modmail[message.channel]
-            await member.send("⚒️ staff: "+message.content, files=message.attachments)
+            await member.send("⚒️ staff: " + message.content, files=message.attachments)
+
 
 async def setup(bot):
     await bot.add_cog(ModMail(bot))

@@ -1,4 +1,5 @@
 from typing import NamedTuple
+import os
 
 import discord
 
@@ -20,6 +21,7 @@ __all__ = (
     "MESSAGE_METRIC_SCHEMA",
     "TCR_STAFF_ROLE_ID",
     "MODMAIL_CHANNEL_ID",
+    "MODMAIL_WEBHOOK_URL",
     "VERSION",
 )
 
@@ -34,8 +36,10 @@ class Version(NamedTuple):
         return f"v{self.major}.{self.submajor}.{self.minor} [{self.release}]"
 
     def release_format(self):
-        return f"Version: `{self.major}.{self.submajor}.{self.minor}"\
-        f"`\nPatch: `{self.release}`"
+        return (
+            f"Version: `{self.major}.{self.submajor}.{self.minor}"
+            f"`\nPatch: `{self.release}`"
+        )
 
 
 VERSION = Version(major=0, submajor=0, minor=1, release="alpha")
@@ -113,7 +117,7 @@ THANK_DATA_CONFIG_SCHEMA = """CREATE TABLE IF NOT EXISTS thanks_data (
                             thank_revoked BOOLEAN CHECK(thank_revoked IN (0, 1))\
                                   DEFAULT 0
                       );
-                      """  
+                      """
 
 MESSAGE_METRIC_SCHEMA = """CREATE TABLE IF NOT EXISTS message_metric (
                             user_id BIGINT,
@@ -138,6 +142,8 @@ HELP_COMMAND = """
             `{prefix}help <category>`
             `{prefix}help <command> <sub-command>`
             """
+
+MODMAIL_WEBHOOK_URL = os.getenv("MODMAIL_WEBHOOK_URL")
 
 OFFICIAL_HELPER_ROLE_ID = 726650418444107869
 TCR_GUILD_ID = 681882711945641997

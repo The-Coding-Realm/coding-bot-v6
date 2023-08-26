@@ -255,9 +255,7 @@ class Fun(commands.Cog, command_attrs=dict(hidden=False)):
         self, ctx: commands.Context, *, reason: commands.clean_content = None
     ):
         reason = ("\nReason: " + reason) if reason else ""
-        msg = await ctx.send(
-            f"Open invite to beerparty! React with 🍻 to join!{reason}"
-        )
+        msg = await ctx.send(f"Open invite to beerparty! React with 🍻 to join!{reason}")
         await msg.add_reaction("\U0001f37b")
         await asyncio.sleep(60)
         msg = await ctx.channel.fetch_message(msg.id)
@@ -268,17 +266,14 @@ class Fun(commands.Cog, command_attrs=dict(hidden=False)):
         await ctx.send(
             ", ".join(user.display_name for user in users) + " joined the beerparty!"
         )
-    
-    @commands.command(
-        name = 'nuke',
-        help = 'find out yourself'
-    )
+
+    @commands.command(name="nuke", help="find out yourself")
     @commands.cooldown(2, 10, commands.BucketType.guild)
     async def _nuke(self, ctx: commands.Context):
         msg = await ctx.reply("Nuking the server in 5 seconds!")
         await asyncio.sleep(5)
         await msg.edit(content="Nuke engaged :smiling_imp:")
-        await asyncio.sleep(random.randint(1,3))
+        await asyncio.sleep(random.randint(1, 3))
         reason = random.choice(
             [
                 "Swas pooped in his pants",
@@ -296,15 +291,14 @@ class Fun(commands.Cog, command_attrs=dict(hidden=False)):
                 "you really thought it would work",
                 "my dog ate my nuke",
                 "my boyfriend decided to call FBI",
-                "I am too lazy", # someone please add more funny phrases
+                "I am too lazy",  # someone please add more funny phrases
             ]
         )
         embed = self.bot.embed(
-            title="Nuke Failed!",
-            description=f"Reason: {reason}",
-            color = 0xff0000
+            title="Nuke Failed!", description=f"Reason: {reason}", color=0xFF0000
         )
         await msg.edit(content=None, embed=embed)
+
 
 async def setup(bot: CodingBot):
     await bot.add_cog(Fun(bot))

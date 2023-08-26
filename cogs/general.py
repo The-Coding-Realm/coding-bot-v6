@@ -168,9 +168,8 @@ class General(commands.Cog, command_attrs=dict(hidden=False)):
             text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url
         )
         await self.bot.reply(ctx, embed=embed)
-    
 
-    @commands.command(name='update-staff-list')
+    @commands.command(name="update-staff-list")
     @commands.has_permissions(administrator=True)
     async def update_staff_list(self, ctx):
         staff_list_channel = self.bot.get_channel(765066298299383809)
@@ -183,13 +182,13 @@ class General(commands.Cog, command_attrs=dict(hidden=False)):
             681895900070543411,
             729537643951554583,
         ]
-        embed = discord.Embed(title='**Staff List**', color=0x2F3136)
-        embed.description = ''
+        embed = discord.Embed(title="**Staff List**", color=0x2F3136)
+        embed.description = ""
         for r in mod_roles:
             r = ctx.guild.get_role(r)
             valid_members = []
             for m in r.members:
-                admin = m.top_role.name == 'Admin Perms' and r.name == 'Admin'
+                admin = m.top_role.name == "Admin Perms" and r.name == "Admin"
                 if m.top_role == r or admin:
                     valid_members.append(m)
 
@@ -197,14 +196,11 @@ class General(commands.Cog, command_attrs=dict(hidden=False)):
 
             for m in valid_members:
                 embed.description += f"> `{m.id}` {m.mention}\n"
-            embed.description += '\n'
+            embed.description += "\n"
         await staff_list_channel.purge(limit=1)
         await staff_list_channel.send(embed=embed)
-        embed = self.bot.embed(
-            description = "Done ✅",
-            color=0x00ff00
-        )
-        await self.bot.send(ctx, embed = embed)
+        embed = self.bot.embed(description="Done ✅", color=0x00FF00)
+        await self.bot.send(ctx, embed=embed)
 
 
 async def setup(bot: CodingBot) -> None:

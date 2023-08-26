@@ -167,9 +167,7 @@ class Helper(commands.Cog, command_attrs=dict(hidden=False)):
         if undo and isinstance(undo_action, ValueError):
             raise undo_action
 
-        action_string = (
-            action_info["undo_action"] if undo else action_info["action"]
-        )
+        action_string = action_info["undo_action"] if undo else action_info["action"]
         icon = action_info["undo_icon"] if undo else action_info["icon"]
         color = discord.Color.green() if undo else action_info.get("color")
 
