@@ -90,7 +90,7 @@ class ModMail(commands.Cog):
                 await view.wait()
                 if view.yes:
                     thread, _ = await self.channel.create_thread(
-                        name=f"Modmail @{message.author.name}", 
+                        name=f"Mods vs @{message.author.name}", 
                         content="New ModMail ticket created by "\
                             f"{message.author.mention}, <@&{MODMAIL_ROLE_ID}>",
                         files=message.attachments,
