@@ -33,7 +33,7 @@ class TaskCog(commands.Cog, command_attrs=dict(hidden=True)):
             "discord",
             ",help",
             "your mom",
-            "bob and shadow argue",
+            "bob and lex argue",
             "swas simp for false",
             "new members",
             "the staff team",
@@ -43,7 +43,7 @@ class TaskCog(commands.Cog, command_attrs=dict(hidden=True)):
             "karen be an idiot",
             "a video",
             "watches",
-            "bob",
+            "Ayu",
             "fight club",
             "youtube",
             "potatoes",
@@ -54,7 +54,7 @@ class TaskCog(commands.Cog, command_attrs=dict(hidden=True)):
             "AI take over the world",
             "female bots 😳",
             "dinosaurs",
-            "https://youtu.be/o-YBDTqX_ZU",
+            "https://youtu.be/M5V_IXMewl4",
             "idiots",
             "the beginning of WWIII",
             "verified bot tags with envy",
@@ -69,7 +69,7 @@ class TaskCog(commands.Cog, command_attrs=dict(hidden=True)):
             "my poggers discriminator",
             "tux",
             "linux overcome windows",
-            "bob get a gf",
+            "bob get a life",
             "a documentary",
         ]
         if tcr := self.bot.get_guild(681882711945641997):
@@ -85,7 +85,7 @@ class TaskCog(commands.Cog, command_attrs=dict(hidden=True)):
         await self.bot.change_presence(
             activity=discord.Activity(
                 type=discord.ActivityType.watching,
-                name=f"{random.choice(statuses)} | {self.bot.command_prefix}help",
+                name=f"{random.choice(statuses)} | {self.bot.command_prefix[0]}help",
             )
         )
 
