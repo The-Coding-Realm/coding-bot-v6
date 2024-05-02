@@ -589,17 +589,15 @@ class Spotify:
         artists = f"{artists[:36]}..." if len(artists) > 36 else artists
         time = act.duration.seconds
         time_at = (
-            dt.datetime.utcnow().replace(tzinfo=dt.timezone.utc) - act.start
+            dt.datetime.now(dt.timezone.utc).replace(tzinfo=dt.timezone.utc)
+            - act.start
         ).total_seconds()
         track = time_at / time
         time = f"{time // 60:02d}:{time % 60:02d}"
-        time_at = (
-            f"{int((time_at if time_at > 0 else 0) // 60):02d}:"
-            f"{int((time_at if time_at > 0 else 0) % 60):02d}"
-        )
+        time_at = f"{int(max(time_at, 0) // 60):02d}:{int(max(time_at, 0) % 60):02d}"
         pog = act.album_cover_url
         name = "".join([x for x in act.title if x in s])
-        name = name[0:21] + "..." if len(name) > 21 else name
+        name = f"{name[:21]}..." if len(name) > 21 else name
         rad = await bot.session.get(pog)
         pic = BytesIO(await rad.read())
         return await self.pil_process(pic, name, artists, time, time_at, track)
@@ -733,21 +731,22 @@ class AntiRaid:
         member : discord.Member
             member to check
         """
-        if not self.bot.raid_mode_enabled:
-            if self.possible_raid or not self.cache:
-                return
-            time_join_day = [
-                (discord.utils.utcnow() - member.created_at).days
-                for member in self.cache
-            ]
-            min_days = min(time_join_day)
-            if (
-                len(
-                    [x for x in time_join_day if x in range(min_days - 1, min_days + 1)]
-                )
-                >= 4
-            ):
-                self.raid_mode_criteria = min_days
-                self.possible_raid = True
-                return await self.notify_staff()
-            self.cache.clear()
+        if self.bot.raid_mode_enabled:
+            return
+        if self.possible_raid or not self.cache:
+            return
+        time_join_day = [
+            (discord.utils.utcnow() - member.created_at).days
+            for member in self.cache
+        ]
+        min_days = min(time_join_day)
+        if (
+            len(
+                [x for x in time_join_day if x in range(min_days - 1, min_days + 1)]
+            )
+            >= 4
+        ):
+            self.raid_mode_criteria = min_days
+            self.possible_raid = True
+            return await self.notify_staff()
+        self.cache.clear()

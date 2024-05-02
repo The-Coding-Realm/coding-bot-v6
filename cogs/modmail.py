@@ -92,7 +92,7 @@ class ModMail(commands.Cog):
                     thread, _ = await self.channel.create_thread(
                         name=f"Mods vs @{message.author.name}", 
                         content="New ModMail ticket created by "\
-                            f"{message.author.mention}, <@&{MODMAIL_ROLE_ID}>",
+                                f"{message.author.mention}, <@&{MODMAIL_ROLE_ID}>",
                         files=message.attachments,
                         applied_tags=[self.channel.get_tag(MODMAIL_OPEN)],
                     )
@@ -104,9 +104,9 @@ class ModMail(commands.Cog):
 
         elif member := self.get_user(message.channel):
             await member.send(
-                f"⚒️ @{message.author.name}: " + message.content, 
-                files=message.attachments
-                )
+                f"⚒️ @{message.author.name}: {message.content}",
+                files=message.attachments,
+            )
 
 
 async def setup(bot):

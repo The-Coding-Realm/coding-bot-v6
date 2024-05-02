@@ -1,10 +1,16 @@
-<a href="https://discord.gg/8rxZVWdcze">
-    <img src="https://img.shields.io/discord/681882711945641997?color=7289DA&label=Join our server&logo=discord&style=for-the-badge" alt="Discord">
-</a>
 
-# Coding-Bot-v6
-
-> The sixth version of the beloved Coding Bot
+<h3 align="center" style="font-size: 2.5rem;"><b>Coding-Bot-v6</b></h1>
+<div align="center">
+    <img src="https://avatars.githubusercontent.com/u/76451616?s=120">
+    <br />
+    <a href="https://discord.gg/8rxZVWdcze">
+        <img src="https://img.shields.io/discord/681882711945641997?color=7289DA&label=Join our server&logo=discord&style=for-the-badge" alt="Discord">
+    </a>
+    <img src="https://img.shields.io/badge/The%20Sixth%20Version-20B2AA?style=for-the-badge" alt="version">
+    <br />
+    <br />
+    <b>The sixth version of the beloved Coding Bot</b>
+</div>
 
 ## What is Coding-Bot-v6
 
@@ -95,6 +101,8 @@ git clone https://github.com/The-Coding-Realm/coding-bot-v6.git  #Clone the repo
 cd coding-bot-v6                   #Go to the directory
 python -m pip install -r requirements.txt   #Install required packages
 ```
+
+> You can also clone through Github Desktop
 
 ### Configuration
 1. Rename .env.example to .env

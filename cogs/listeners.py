@@ -131,14 +131,14 @@ class ListenerCog(commands.Cog, command_attrs=dict(hidden=True)):
                 record = self.bot.afk_cache.get(message.guild.id)
                 if record:
                     record = record.get(member.id)
-                    if record:
-                        reason, time_ = record
-                        em = discord.Embed(
-                            description=f"{member.mention} is AFK: {reason} "
-                            f"(<t:{time_}:R>)",
-                            color=discord.Color.dark_blue(),
-                        )
-                        await message.reply(embed=em)
+                if record:
+                    reason, time_ = record
+                    em = discord.Embed(
+                        description=f"{member.mention} is AFK: {reason} "
+                        f"(<t:{time_}:R>)",
+                        color=discord.Color.dark_blue(),
+                    )
+                    await message.reply(embed=em)
 
     @commands.Cog.listener()
     async def on_message_edit(
@@ -214,9 +214,6 @@ class ListenerCog(commands.Cog, command_attrs=dict(hidden=True)):
         if staff_role and staff_role in message.author.roles:  # type: ignore
             columns.append("is_staff")
             values.append(1)
-        else:
-            pass
-
         return await self.bot.conn.insert_record(
             "metrics",
             table="message_metric",

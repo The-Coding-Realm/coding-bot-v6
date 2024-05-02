@@ -363,19 +363,16 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
                 ctx,
                 check=lambda i: i.user.id == ctx.author.id,
             )
-            paginator.add_button(
-                "delete", label="Delete", style=discord.ButtonStyle.danger
-            )
-            await paginator.start()
         else:
             paginator = pg.Paginator(self.bot, embeds, ctx)
             paginator.add_button("back", emoji="◀️")
             paginator.add_button("goto", style=discord.ButtonStyle.primary)
             paginator.add_button("next", emoji="▶️")
-            paginator.add_button(
-                "delete", label="Delete", style=discord.ButtonStyle.danger
-            )
-            await paginator.start()
+
+        paginator.add_button(
+            "delete", label="Delete", style=discord.ButtonStyle.danger
+        )
+        await paginator.start()
 
     @commands.hybrid_group(invoke_without_command=True)
     async def trainee(self, ctx: commands.Context[CodingBot]):
