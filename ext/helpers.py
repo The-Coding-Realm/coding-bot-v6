@@ -776,3 +776,7 @@ def invert_string(text):
             new_text+=char
     
     return new_text
+
+
+def gemini_split_string(string, chunk_size=1000):
+    return [string[i:i+chunk_size] for i in range(0, len(string), chunk_size)]
