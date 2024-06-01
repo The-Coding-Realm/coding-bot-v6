@@ -289,7 +289,7 @@ class CodingHelp(commands.HelpCommand):
     ) -> None:
         embed = discord.Embed(title="Bot Commands", description="Coding Bot V6")
         for cog, cmds in mapping.items():
-            if cog and not cog.hidden:
+            if cog and not getattr(cog, "hidden", False):
                 embed.add_field(
                     name=cog.qualified_name,
                     value=" ".join(f"`{command.name}`" for command in cmds),
@@ -357,7 +357,7 @@ class CodingBot(commands.Bot):
             }
         )
         super().__init__(
-            command_prefix=["."],
+            command_prefix=[">"],
             intents=INTENTS,
             case_insensitive=True,
             help_command=help_command,
@@ -379,7 +379,8 @@ class CodingBot(commands.Bot):
             879644654587478027,  # Swas's alt
             690420846774321221,  # BobDotCom
             579041484796461076,  # Conch.py
-            687882857171255309,  # Lexionas74
+            687882857171255309,  # Lexionas74,
+            748053138354864229,  # Ayu
         ]
 
     async def setup_hook(self) -> None:
