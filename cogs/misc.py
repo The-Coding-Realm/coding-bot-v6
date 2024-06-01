@@ -75,14 +75,14 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
 
         reason = reason or "AFK"
         member = ctx.author
-        staff_role = ctx.guild.get_role(795145820210462771)
-        on_pat_staff = member.guild.get_role(
-            726441123966484600
-        )  # "on_patrol_staff" role
+        # staff_role = ctx.guild.get_role(795145820210462771)
+        # on_pat_staff = member.guild.get_role(
+        #     726441123966484600
+        # )  # "on_patrol_staff" role
 
-        if staff_role in member.roles:
-            with contextlib.suppress(discord.Forbidden, discord.HTTPException):
-                await member.remove_roles(on_pat_staff)
+        # if staff_role in member.roles:
+        #     with contextlib.suppress(discord.Forbidden, discord.HTTPException):
+        #         await member.remove_roles(on_pat_staff)
         if ctx.guild.id not in self.bot.afk_cache:
             self.bot.afk_cache[ctx.guild.id] = {}
         if member.id not in self.bot.afk_cache.get(ctx.guild.id):
