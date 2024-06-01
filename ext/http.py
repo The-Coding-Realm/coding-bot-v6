@@ -76,7 +76,7 @@ class Http:
             },
             "joke": {
                 "api": lambda: self.get(
-                    "https://v2.jokeapi.dev/joke/Any?blacklistFlags=nsfw,religious,political,racist,sexist",
+                    "https://v2.jokeapi.dev/joke/Programming,Miscellaneous,Pun,Spooky,Christmas?blacklistFlags=nsfw,religious,political,racist,sexist,explicit",
                     _json=True,
                 ),
             },
