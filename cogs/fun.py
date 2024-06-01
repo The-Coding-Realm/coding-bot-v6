@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Optional
 import base64
 import discord
 from discord.ext import commands
-from ext.helpers import create_trash_meme
+from ext.helpers import create_trash_meme, invert_string
 from ext.http import Http
 
 import asyncio
@@ -213,7 +213,7 @@ class Fun(commands.Cog, command_attrs=dict(hidden=False)):
     async def reverse(self, ctx: commands.Context[CodingBot], *, text: str):
         embed = discord.Embed(
             title="Reversed Text",
-            description=f"{text[::-1]}",
+            description=invert_string(text),
             color=discord.Color.random(),
         )
         embed.set_footer(
