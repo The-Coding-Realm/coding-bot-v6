@@ -42,21 +42,26 @@ class Fun(commands.Cog, command_attrs=dict(hidden=False)):
 
     @commands.hybrid_command()
     async def number(
-        self, ctx: commands.Context[CodingBot], _from: Optional[int] = None, _to: Optional[int] = None
+        self, ctx: commands.Context[CodingBot], start: int = None, end: int = None
     ) -> None:
         """
         Gets a random number.
         Usage:
         ------
-        `{prefix}number`: *will get a random number*
-        `{prefix}number [from] [to]`: *will get the random number b/w [from] & [to]*
+        `{prefix}number`: *will get a random number b/w 1 & 100*
+        `{prefix}number [start] [end]`: *will get the random number b/w [start] & [end]*
+        `{prefix}number [start]`: *will get the random number b/w 1 & [start]*
         Args:
-            _from (Optional[int]): Number to begin from
-            _to (Optional[int]): Number to end at
+            `start (Optional[int])`: Number to begin from
+            `end (Optional[int])`: Number to end at
         """
-        _from = _from or 1
-        _to = _to or 100
-        randint = random.randint(_from, _to)
+        if start is not None and end is None:
+            end = start
+            start = 1
+        elif start is None:
+            start = 1
+            end = 100
+        randint = random.randint(start, end)
         await ctx.bot.reply(ctx, content = randint)
         
 
