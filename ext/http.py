@@ -76,7 +76,7 @@ class Http:
             },
             "joke": {
                 "api": lambda: self.get(
-                    "https://backend-omega-seven.vercel.app/api/getjoke",
+                    "https://v2.jokeapi.dev/joke/Any?blacklistFlags=nsfw,religious,political,racist,sexist",
                     _json=True,
                 ),
             },

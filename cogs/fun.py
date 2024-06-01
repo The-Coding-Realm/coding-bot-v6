@@ -92,12 +92,22 @@ class Fun(commands.Cog, command_attrs=dict(hidden=False)):
         `{prefix}joke`: *will get a random joke*
         """
         joke_json = await self.http.api["joke"]["api"]()
-        setup = joke_json[0]["question"]
-        delivery = joke_json[0]["punchline"]
+        category = joke_json["category"]
+        setup, delivery = None, None
+        if joke_json["type"] == "single":
+            setup = joke_json["joke"]
+            
+        else:
+            setup = joke_json["setup"]
+            delivery = joke_json["delivery"]
+        
+        description=setup
+        description+=f"\n||{delivery}||" if delivery else ...
 
         embed = self.bot.embed(
-            title=setup,
-            description=f"||{delivery}||",
+            title=category+" Joke",
+            description=description,
+            color = discord.Color.random()
         )
         await self.bot.reply(ctx, embed=embed)
 
