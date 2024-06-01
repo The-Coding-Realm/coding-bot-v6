@@ -24,7 +24,7 @@ class Fun(commands.Cog, command_attrs=dict(hidden=False)):
         self.bot = bot
 
     @commands.command(name="trash")
-    async def trash(self, ctx: commands.Context[CodingBot], *, user: discord.Member = None):
+    async def trash(self, ctx: commands.Context[CodingBot], *, user: discord.Member = commands.Author):
         """
         Throw someone in the trash
         Usage:
@@ -32,7 +32,6 @@ class Fun(commands.Cog, command_attrs=dict(hidden=False)):
         `{prefix}trash <user>`
 
         """
-        user = user or ctx.author
         resp1 = await ctx.author.display_avatar.read()
         resp2 = await user.display_avatar.read()
 
