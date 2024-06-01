@@ -43,29 +43,23 @@ class Fun(commands.Cog, command_attrs=dict(hidden=False)):
 
     @commands.hybrid_command()
     async def number(
-        self, ctx: commands.Context[CodingBot], number: Optional[int] = None
+        self, ctx: commands.Context[CodingBot], _from: Optional[int] = None, _to: Optional[int] = None
     ) -> None:
         """
         Gets a random number.
         Usage:
         ------
         `{prefix}number`: *will get a random number*
-        `{prefix}number [number]`: *will get the [number]*
+        `{prefix}number [from] [to]`: *will get the random number b/w [from] & [to]*
+        Args:
+            _from (Optional[int]): Number to begin from
+            _to (Optional[int]): Number to end at
         """
-        if number is None:
-            number = random.randint(1, 100)
-        await self.bot.reply(ctx, f"{number}")
-        number = await (
-            self.http.api["numbers"]["random"]()
-            if (number is None)
-            else self.http.api["numbers"]["number"](number)
-        )
-        embed = self.bot.embed(
-            title=f"**{number}**",
-            description=" ",
-            url="https://www.youtube.com/watch?v=o-YBDTqX_ZU",
-        )
-        return await self.bot.reply(ctx, embed=embed)
+        _from = _from or 1
+        _to = _to or 100
+        randint = random.randint(_from, _to)
+        await ctx.bot.reply(ctx, content = randint)
+        
 
     @commands.hybrid_command(name="meme")
     async def meme(self, ctx: commands.Context[CodingBot]):
