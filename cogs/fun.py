@@ -270,7 +270,7 @@ class Fun(commands.Cog, command_attrs=dict(hidden=False)):
         msg = await ctx.channel.fetch_message(msg.id)
         users = [user async for user in msg.reactions[0].users()]
         users.remove(self.bot.user)
-        if len(users) == 0:
+        if not users:
             return await ctx.send("Nobody joined the beerparty :(")
         await ctx.send(
             ", ".join(user.display_name for user in users) + " joined the beerparty!"
