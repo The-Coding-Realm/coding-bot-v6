@@ -751,3 +751,32 @@ class AntiRaid:
                 self.possible_raid = True
                 return await self.notify_staff()
             self.cache.clear()
+
+
+def invert_string(text):
+    inverted_map = {
+        'a': 'ɐ', 'b': 'q', 'c': 'ɔ', 'd': 'p', 'e': 'ǝ', 'f': 'ⅎ', 'g': 'ƃ',
+        'h': 'ɥ', 'i': 'ᴉ', 'j': 'ɾ', 'k': 'ʞ', 'l': 'ʅ', 'm': 'ɯ', 'n': 'u',
+        'o': 'o', 'p': 'd', 'q': 'b', 'r': 'ɹ', 's': 's', 't': 'ʇ', 'u': 'n',
+        'v': 'ʌ', 'w': 'ʍ', 'x': 'x', 'y': 'ʎ', 'z': 'z',
+        'A': '∀', 'B': 'ꓭ', 'C': 'Ͻ', 'D': 'ᗡ', 'E': 'Ǝ', 'F': 'ᖵ', 'G': '⅁',
+        'H': 'H', 'I': 'I', 'J': 'ᒋ', 'K': 'ꓘ', 'L': '⅂', 'M': 'ꟽ', 'N': 'N',
+        'O': 'O', 'P': 'Ԁ', 'Q': 'Ꝺ', 'R': 'ꓤ', 'S': 'S', 'T': 'ꓕ', 'U': 'Ո',
+        'V': 'Ʌ', 'W': 'Ϻ', 'X': 'X', 'Y': '⅄', 'Z': 'ᴢ',
+        '0': '0', '⇂': '1', '2': '↊', '3': '↋', '4': 'ߤ', '5': '5', '6': '9',
+        '7': '𝘓', '8': '8', '9': '6'
+    }
+
+    reved = text[::-1]
+    new_text = ""
+    for char in reved:
+        try:
+            new_text+=inverted_map[char]
+        except KeyError:
+            new_text+=char
+    
+    return new_text
+
+
+def gemini_split_string(string, chunk_size=1000):
+    return [string[i:i+chunk_size] for i in range(0, len(string), chunk_size)]

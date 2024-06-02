@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Optional
 import base64
 import discord
 from discord.ext import commands
-from ext.helpers import create_trash_meme
+from ext.helpers import create_trash_meme, invert_string
 from ext.http import Http
 
 import asyncio
@@ -24,7 +24,7 @@ class Fun(commands.Cog, command_attrs=dict(hidden=False)):
         self.bot = bot
 
     @commands.command(name="trash")
-    async def trash(self, ctx: commands.Context[CodingBot], *, user: discord.Member):
+    async def trash(self, ctx: commands.Context[CodingBot], *, user: discord.Member = commands.Author):
         """
         Throw someone in the trash
         Usage:
@@ -42,29 +42,28 @@ class Fun(commands.Cog, command_attrs=dict(hidden=False)):
 
     @commands.hybrid_command()
     async def number(
-        self, ctx: commands.Context[CodingBot], number: Optional[int] = None
+        self, ctx: commands.Context[CodingBot], start: int = None, end: int = None
     ) -> None:
         """
         Gets a random number.
         Usage:
         ------
-        `{prefix}number`: *will get a random number*
-        `{prefix}number [number]`: *will get the [number]*
+        `{prefix}number`: *will get a random number b/w 1 & 100*
+        `{prefix}number [start] [end]`: *will get the random number b/w [start] & [end]*
+        `{prefix}number [start]`: *will get the random number b/w 1 & [start]*
+        Args:
+            `start (Optional[int])`: Number to begin from
+            `end (Optional[int])`: Number to end at
         """
-        if number is None:
-            number = random.randint(1, 100)
-        await self.bot.reply(ctx, f"{number}")
-        number = await (
-            self.http.api["numbers"]["random"]()
-            if (number is None)
-            else self.http.api["numbers"]["number"](number)
-        )
-        embed = self.bot.embed(
-            title=f"**{number}**",
-            description=" ",
-            url="https://www.youtube.com/watch?v=o-YBDTqX_ZU",
-        )
-        return await self.bot.reply(ctx, embed=embed)
+        if start is not None and end is None:
+            end = start
+            start = 1
+        elif start is None:
+            start = 1
+            end = 100
+        randint = random.randint(start, end)
+        await ctx.bot.reply(ctx, content = randint)
+        
 
     @commands.hybrid_command(name="meme")
     async def meme(self, ctx: commands.Context[CodingBot]):
@@ -97,12 +96,22 @@ class Fun(commands.Cog, command_attrs=dict(hidden=False)):
         `{prefix}joke`: *will get a random joke*
         """
         joke_json = await self.http.api["joke"]["api"]()
-        setup = joke_json[0]["question"]
-        delivery = joke_json[0]["punchline"]
+        category = joke_json["category"]
+        setup, delivery = None, None
+        if joke_json["type"] == "single":
+            setup = joke_json["joke"]
+            
+        else:
+            setup = joke_json["setup"]
+            delivery = joke_json["delivery"]
+        
+        description=setup
+        description+=f"\n||{delivery}||" if delivery else ...
 
         embed = self.bot.embed(
-            title=setup,
-            description=f"||{delivery}||",
+            title=category+" Joke",
+            description=description,
+            color = discord.Color.random()
         )
         await self.bot.reply(ctx, embed=embed)
 
@@ -218,7 +227,7 @@ class Fun(commands.Cog, command_attrs=dict(hidden=False)):
     async def reverse(self, ctx: commands.Context[CodingBot], *, text: str):
         embed = discord.Embed(
             title="Reversed Text",
-            description=f"{text[::-1]}",
+            description=invert_string(text),
             color=discord.Color.random(),
         )
         embed.set_footer(

@@ -78,9 +78,12 @@ class TaskCog(commands.Cog, command_attrs=dict(hidden=True)):
                     random.choice(tcr.get_role(795145820210462771).members).name
                 )  # type: ignore
             if tcr.get_role(737517726737629214):
-                statuses.append(
-                    f"{random.choice(tcr.get_role(737517726737629214).members).name} (Server Booster)"
-                )
+                try:
+                    statuses.append(
+                        f"{random.choice(tcr.get_role(737517726737629214).members).name} (Server Booster)"
+                    )
+                except:
+                    pass
 
         await self.bot.change_presence(
             activity=discord.Activity(

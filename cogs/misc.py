@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import string
+import os
 
 import random
 import re
@@ -10,9 +11,12 @@ import button_paginator as pg
 import contextlib
 import discord
 from discord.ext import commands
-from ext.helpers import Spotify, grouper, ordinal_suffix_of
+from ext.helpers import Spotify, grouper, ordinal_suffix_of, gemini_split_string
 from ext.http import Http
 from ext.ui.view import Piston
+
+import google.generativeai as genai
+import button_paginator as pg
 
 if TYPE_CHECKING:
     from ext.models import CodingBot
@@ -27,6 +31,8 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
         self.regex = {
             "codeblock": re.compile(r"(\w*)\s*(?:```)(\w*)?([\s\S]*)(?:```$)")
         }
+        genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+        self.ai = genai.GenerativeModel('gemini-pro')
 
     async def cog_check(self, ctx: commands.Context[CodingBot]) -> bool:
         if ctx.guild:
@@ -75,14 +81,14 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
 
         reason = reason or "AFK"
         member = ctx.author
-        staff_role = ctx.guild.get_role(795145820210462771)
-        on_pat_staff = member.guild.get_role(
-            726441123966484600
-        )  # "on_patrol_staff" role
+        # staff_role = ctx.guild.get_role(795145820210462771)
+        # on_pat_staff = member.guild.get_role(
+        #     726441123966484600
+        # )  # "on_patrol_staff" role
 
-        if staff_role in member.roles:
-            with contextlib.suppress(discord.Forbidden, discord.HTTPException):
-                await member.remove_roles(on_pat_staff)
+        # if staff_role in member.roles:
+        #     with contextlib.suppress(discord.Forbidden, discord.HTTPException):
+        #         await member.remove_roles(on_pat_staff)
         if ctx.guild.id not in self.bot.afk_cache:
             self.bot.afk_cache[ctx.guild.id] = {}
         if member.id not in self.bot.afk_cache.get(ctx.guild.id):
@@ -435,6 +441,59 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
             )
         file, view = result
         await self.bot.send(ctx, file=file, view=view)
+    
+    @commands.hybrid_command(
+        name = "askai", description = "Generate code or ask questions from the ai"
+    )
+    async def askai(self, ctx: commands.Context, *, prompt: str):
+        """
+        Generate code or ask questions from the ai
+
+        prompt (str): prompt for the ai
+        """
+        m = await ctx.reply(
+            embed = discord.Embed(
+                description = "Generating Response ...",
+                color = discord.Color.blurple()
+            )
+        )
+        try:
+            res = self.ai.generate_content(prompt)
+        except Exception as e:
+            await m.edit(
+                embed = discord.Embed(
+                    description = f":x: Ran into some issues\n{e}"
+                )
+            )
+        try:
+            response = res.text
+        except:
+            response = "Prompt was blocked!"
+        split = gemini_split_string(response)
+        embeds = []
+        for count, content in enumerate(split):
+            embeds.append(
+                discord.Embed(
+                    title = f"AI Response:",
+                    description = f"{content}..." if len(content) == 1000 else content,
+                    color = discord.Color.random()
+                ).set_footer(text = f"Page: {count+1}/{len(split)}")
+            )
+        
+        await m.delete()
+        if len(embeds) == 1:
+            return await self.bot.send(ctx, embeds = embeds)
+        paginator = pg.Paginator(self.bot, embeds, ctx)
+        paginator.add_button('prev', emoji='◀')
+        paginator.add_button('goto')
+        paginator.add_button('next', emoji='▶')
+        paginator.timeout=len(split)*2*60 # two minutes per page
+        async def on_timeout():
+            paginator.clear_items()
+            await paginator.message.edit(view=paginator)
+        paginator.on_timeout = on_timeout
+
+        await paginator.start()
 
 
 async def setup(bot: CodingBot):

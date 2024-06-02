@@ -97,11 +97,11 @@ class ListenerCog(commands.Cog, command_attrs=dict(hidden=True)):
                 if "[AFK]" in message.author.display_name:
                     name = message.author.display_name.split(" ")[1:]
                     await message.author.edit(nick=" ".join(name))
-            staff_role = message.guild.get_role(795145820210462771)
-            if staff_role and staff_role in message.author.roles:
-                on_pat_staff = message.guild.get_role(726441123966484600)
-                with contextlib.suppress(discord.Forbidden, discord.HTTPException):
-                    await message.author.add_roles(on_pat_staff)
+            # staff_role = message.guild.get_role(795145820210462771)
+            # if staff_role and staff_role in message.author.roles:
+            #     on_pat_staff = message.guild.get_role(726441123966484600)
+            #     with contextlib.suppress(discord.Forbidden, discord.HTTPException):
+            #         await message.author.add_roles(on_pat_staff)
             del self.bot.afk_cache[message.guild.id][message.author.id]
             em = discord.Embed(
                 description=f"{message.author.mention} Welcome back, "
