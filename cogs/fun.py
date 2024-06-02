@@ -100,18 +100,18 @@ class Fun(commands.Cog, command_attrs=dict(hidden=False)):
         setup, delivery = None, None
         if joke_json["type"] == "single":
             setup = joke_json["joke"]
-            
+
         else:
             setup = joke_json["setup"]
             delivery = joke_json["delivery"]
-        
+
         description=setup
         description+=f"\n||{delivery}||" if delivery else ...
 
         embed = self.bot.embed(
-            title=category+" Joke",
+            title=f"{category} Joke",
             description=description,
-            color = discord.Color.random()
+            color=discord.Color.random(),
         )
         await self.bot.reply(ctx, embed=embed)
 
