@@ -36,8 +36,8 @@ class General(commands.Cog, command_attrs=dict(hidden=False)):
         `{prefix}source [command] [subcommand]`:
         *will send link to the source code of the subcommand*
         """
-        github = "<:githubwhite:804344724621230091>"
-        embed = discord.Embed(title=f"{github} GitHub (Click Here) {github}")
+        github = "https://i.imgur.com/NFwIx3d.png"
+        embed = discord.Embed(color = 0xfffffe)
         source_url = "https://github.com/The-Coding-Realm/coding-bot-v6"
         branch = "master"
         if command is None:
@@ -78,7 +78,11 @@ class General(commands.Cog, command_attrs=dict(hidden=False)):
             f"{source_url}/blob/{branch}/{location}#L{firstlineno}-L"
             f"{firstlineno + len(lines) - 1}"
         )
-        embed.url = final_url
+        embed.set_author(
+            name = "GitHub (Click Here)",
+            icon_url = github,
+            url = final_url
+        )
         await self.bot.reply(ctx, embed=embed)
 
     @commands.hybrid_command(name="define")
