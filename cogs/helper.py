@@ -54,9 +54,7 @@ class Helper(commands.Cog, command_attrs=dict(hidden=False)):
 
         official_helper_role = ctx.guild.get_role(OFFICIAL_HELPER_ROLE_ID)
 
-        if official_helper_role not in ctx.author.roles:
-            return False
-        return True
+        return official_helper_role in ctx.author.roles
 
     async def capture_evidence(
         self, ctx: commands.Context[CodingBot]

@@ -689,7 +689,7 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
         """
         if not message and not ctx.message.reference:
             return await ctx.send("Please specify a message to delete.")
-        elif not message and ctx.message.reference:
+        elif not message:
             message = ctx.message.reference.resolved
             await message.delete()
         else:

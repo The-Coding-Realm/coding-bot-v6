@@ -33,9 +33,7 @@ class ListenerCog(commands.Cog, command_attrs=dict(hidden=True)):
                     return False
             if name.startswith("-") or name.endswith("-"):
                 return False
-            if not name.replace("-", "").isalnum():
-                return False
-            return True
+            return name.replace("-", "").isalnum()
 
         self.valid_gh_sect = valid_gh_sect
 
