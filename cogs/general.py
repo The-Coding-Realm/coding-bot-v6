@@ -8,6 +8,8 @@ import discord
 from discord.ext import commands
 from ext.helpers import UrbanDefinition, UrbanDictionary
 
+from ext.consts import STAFF_UPDATE_CHANNEL_ID
+
 if TYPE_CHECKING:
     from ext.models import CodingBot
 
@@ -36,8 +38,8 @@ class General(commands.Cog, command_attrs=dict(hidden=False)):
         `{prefix}source [command] [subcommand]`:
         *will send link to the source code of the subcommand*
         """
-        github = "<:githubwhite:804344724621230091>"
-        embed = discord.Embed(title=f"{github} GitHub (Click Here) {github}")
+        github = "https://i.imgur.com/NFwIx3d.png"
+        embed = discord.Embed(color = 0xfffffe)
         source_url = "https://github.com/The-Coding-Realm/coding-bot-v6"
         branch = "master"
         if command is None:
@@ -78,7 +80,11 @@ class General(commands.Cog, command_attrs=dict(hidden=False)):
             f"{source_url}/blob/{branch}/{location}#L{firstlineno}-L"
             f"{firstlineno + len(lines) - 1}"
         )
-        embed.url = final_url
+        embed.set_author(
+            name = "GitHub (Click Here)",
+            icon_url = github,
+            url = final_url
+        )
         await self.bot.reply(ctx, embed=embed)
 
     @commands.hybrid_command(name="define")
@@ -172,7 +178,7 @@ class General(commands.Cog, command_attrs=dict(hidden=False)):
     @commands.command(name="update-staff-list")
     @commands.has_permissions(administrator=True)
     async def update_staff_list(self, ctx):
-        staff_list_channel = self.bot.get_channel(765066298299383809)
+        staff_list_channel = self.bot.get_channel(STAFF_UPDATE_CHANNEL_ID)
         mod_roles = [
             681895373454835749,
             838634262693412875,
@@ -189,8 +195,10 @@ class General(commands.Cog, command_attrs=dict(hidden=False)):
             valid_members = []
             for m in r.members:
                 admin = m.top_role.name == "Admin Perms" and r.name == "Admin"
-                if m.top_role == r or admin:
+                motm = m.top_role.id == 760763132158803968
+                if m.top_role == r or admin or motm:
                     valid_members.append(m)
+                
 
             embed.description += f"{r.mention} | **{len(valid_members)}** \n"
 
