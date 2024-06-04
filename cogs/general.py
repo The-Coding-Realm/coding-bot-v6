@@ -8,6 +8,8 @@ import discord
 from discord.ext import commands
 from ext.helpers import UrbanDefinition, UrbanDictionary
 
+from ext.consts import STAFF_UPDATE_CHANNEL_ID
+
 if TYPE_CHECKING:
     from ext.models import CodingBot
 
@@ -176,7 +178,7 @@ class General(commands.Cog, command_attrs=dict(hidden=False)):
     @commands.command(name="update-staff-list")
     @commands.has_permissions(administrator=True)
     async def update_staff_list(self, ctx):
-        staff_list_channel = self.bot.get_channel(1124612885365133412)
+        staff_list_channel = self.bot.get_channel(STAFF_UPDATE_CHANNEL_ID)
         mod_roles = [
             681895373454835749,
             838634262693412875,
