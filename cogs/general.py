@@ -176,7 +176,7 @@ class General(commands.Cog, command_attrs=dict(hidden=False)):
     @commands.command(name="update-staff-list")
     @commands.has_permissions(administrator=True)
     async def update_staff_list(self, ctx):
-        staff_list_channel = self.bot.get_channel(765066298299383809)
+        staff_list_channel = self.bot.get_channel(1124612885365133412)
         mod_roles = [
             681895373454835749,
             838634262693412875,
@@ -193,8 +193,10 @@ class General(commands.Cog, command_attrs=dict(hidden=False)):
             valid_members = []
             for m in r.members:
                 admin = m.top_role.name == "Admin Perms" and r.name == "Admin"
-                if m.top_role == r or admin:
+                motm = m.top_role.id == 760763132158803968
+                if m.top_role == r or admin or motm:
                     valid_members.append(m)
+                
 
             embed.description += f"{r.mention} | **{len(valid_members)}** \n"
 

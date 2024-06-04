@@ -162,7 +162,7 @@ class WelcomeBanner:
         draw = ImageDraw.Draw(txt)
         fill = (255, 255, 255, 255)
         text = "Welcome to The Coding Realm"
-        text_width, _ = draw.textsize(text, self.font.get(25))
+        text_width = draw.textlength(text, self.font.get(25))
         width_height = ((txt.size[0] - text_width) // 2, (txt.size[1] // 31) * 1)
         draw.text(width_height, text, font=self.font.get(25), fill=fill, align="center")
         text = str(member)
