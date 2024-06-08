@@ -17,6 +17,7 @@ from ext.ui.view import Piston
 
 import google.generativeai as genai
 import button_paginator as pg
+from googletrans import Translator
 
 if TYPE_CHECKING:
     from ext.models import CodingBot
@@ -494,6 +495,24 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
         paginator.on_timeout = on_timeout
 
         await paginator.start()
+    
+    @commands.command(name = "translate")
+    async def _translate(self, ctx: commands.Context, *, text: str = None):
+        if not ctx.message.reference and not text: return await ctx.reply("Please reply a message or provide a text to translate!")
+
+        if text:
+            trans = text
+            message = ctx.message
+        else:
+            message = await ctx.channel.fetch_message(ctx.message.reference.message_id)
+            trans = message.content
+
+        try:
+            translated = Translator(service_urls=['translate.google.com','translate.google.co.kr']).translate(trans)
+        except Exception as e:
+            raise e
+        
+        await message.reply(embed = discord.Embed().add_field(name = f"Original ({translated.src.upper()})", value = trans, inline = False).add_field(name = f"Translated ({translated.dest.upper()})", value = translated.text, inline = False), allowed_mentions=discord.AllowedMentions.none())
 
 
 async def setup(bot: CodingBot):

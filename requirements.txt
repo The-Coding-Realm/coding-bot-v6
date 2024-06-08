@@ -11,3 +11,4 @@ more_itertools==10.2.0
 button_paginator @ git+https://github.com/andrewthederp/Button_paginator
 google-generativeai==0.5.4
 jishaku==2.5.2
+googletrans==4.0.0rc1
