@@ -498,7 +498,8 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
     
     @commands.command(name = "translate")
     async def translate(self, ctx: commands.Context, *, text: str = None):
-        if not ctx.message.reference and not text: return await ctx.reply("Please reply a message or provide a text to translate!")
+        if not ctx.message.reference and not text:
+            return await ctx.reply("Please reply a message or provide a text to translate!")
 
         if text:
             trans = text
