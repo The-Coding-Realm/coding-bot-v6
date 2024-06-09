@@ -497,7 +497,7 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
         await paginator.start()
     
     @commands.command(name = "translate")
-    async def _translate(self, ctx: commands.Context, *, text: str = None):
+    async def translate(self, ctx: commands.Context, *, text: str = None):
         if not ctx.message.reference and not text: return await ctx.reply("Please reply a message or provide a text to translate!")
 
         if text:
@@ -508,11 +508,33 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
             trans = message.content
 
         try:
-            translated = Translator(service_urls=['translate.google.com','translate.google.co.kr']).translate(trans)
+            translated = Translator(service_urls=[
+                'translate.google.com',
+                'translate.google.co.kr'
+            ]).translate(trans)
         except Exception as e:
             raise e
         
-        await message.reply(embed = discord.Embed().add_field(name = f"Original ({translated.src.upper()})", value = trans, inline = False).add_field(name = f"Translated ({translated.dest.upper()})", value = translated.text, inline = False), allowed_mentions=discord.AllowedMentions.none())
+        embed = discord.Embed()
+
+        _from = translated.src.upper()
+        _to = translated.dest.upper()
+        
+        embed.add_field(
+            name = f"Original ({_from})",
+            value = trans,
+            inline = False
+        )
+        embed.add_field(
+            name = f"Translated ({_to})",
+            value = translated.text,
+            inline = False
+        )
+
+        await message.reply(
+            embed = embed,
+            allowed_mentions=discord.AllowedMentions.none()
+        )
 
 
 async def setup(bot: CodingBot):
