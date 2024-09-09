@@ -357,7 +357,7 @@ class CodingBot(commands.Bot):
             }
         )
         super().__init__(
-            command_prefix=["."],
+            command_prefix=[">"],
             intents=INTENTS,
             case_insensitive=True,
             help_command=help_command,
