@@ -270,7 +270,7 @@ class ListenerCog(commands.Cog, command_attrs=dict(hidden=True)):
             if re.search(invite_regex, after.content):
                 await after.delete()
                 return await after.channel.send(
-                    "Please don't send invite links in this server!"
+                    "Please don't send invite links in this server!", delete_after=5
                 )
 
     @commands.Cog.listener("on_message")
@@ -293,7 +293,7 @@ class ListenerCog(commands.Cog, command_attrs=dict(hidden=True)):
                 # why are we checking again?
                 await message.delete()
                 return await message.channel.send(
-                    "Please don't send invite links in this server!"
+                    "Please don't send invite links in this server!", delete_after=5
                 )
 
     @commands.Cog.listener("on_message")
