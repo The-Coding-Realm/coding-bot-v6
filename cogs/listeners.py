@@ -64,6 +64,14 @@ class ListenerCog(commands.Cog, command_attrs=dict(hidden=True)):
     #         )
 
     @commands.Cog.listener("on_message")
+    async def check_cat_message(self, message: discord.Message):
+        """
+        Checks if a message has 'cat' or 'placeholder' in it and reacts with '<a:placeholder:1277351370751737998>'
+        """
+        if 'cat' in message.content or 'placeholder' in message.content:
+            await message.add_reaction('<a:placeholder:1277351370751737998>')
+
+    @commands.Cog.listener("on_message")
     async def afk_user_messaage(self, message: discord.Message):
         """
         Responsible for checking if a message was sent by an AFK user.

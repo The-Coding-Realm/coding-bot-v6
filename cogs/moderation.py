@@ -99,7 +99,7 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
                 await initial_mess.delete()
                 await ctx.author.send(
                     "You didn't send any evidence in time. "
-                    "Proceeding with the ban without evidence."
+                    "Proceeding with the action without evidence."
                 )
             else:
                 evidence_byts = await wait_mess.attachments[0].read()
