@@ -179,31 +179,24 @@ class Moderation(commands.Cog, command_attrs=dict(hidden=False)):
         icon = action_info["undo_icon"] if undo else action_info["icon"]
         color = discord.Color.green() if undo else action_info.get("color")
 
-        embed = discord.Embed(color=color, timestamp=discord.utils.utcnow())
 
-        embed.description = (
-            f"{icon} **Action:** {action_string.title()}\n**Reason:** {reason}\n"
-        )
+        text = f"🚔 **Moderator:** {moderator.name} (ID: {moderator.id})\n"
+        text += f"🆔 **ID:** {member.id} ({member.name})\n{icon} **Action:** {action_string.title()}\n📒 **Reason:** {reason}\n"
         if duration:
-            embed.description += "**Duration:** {}\n".format(
+            text += "⌚ **Duration:** {}\n".format(
                 humanize.naturaldelta(duration, minimum_unit="seconds")
             )
         file = None
         if evidence := kwargs.get("evidence"):
-            embed.description += "\n**Evidence provided below:**"
+            text += "\n**Evidence provided below:**"
             buffer = BytesIO(evidence)
             buffer.seek(0)
             file = discord.File(buffer, filename=f"evidence_{member.id}.png")
-            embed.set_image(url=f"attachment://evidence_{member.id}.png")
         else:
-            embed.description += "\n**No evidence was provided.**"
-        embed.set_author(
-            name=f"{moderator} (ID: {moderator.id})",
-            icon_url=moderator.display_avatar.url,
-        )
-        embed.set_thumbnail(url=member.display_avatar.url)
-        logs = self.bot.get_channel(964165082437263361)  # 816512034228666419
-        await logs.send(embed=embed, file=file)  # type: ignore
+            text += "\n**No evidence was provided.**"
+        
+        logs = self.bot.get_channel(760186182343852032)  # 760186182343852032
+        await logs.send(text, file=file)  # type: ignore
 
     @trainee_check()
     @commands.hybrid_command(name="kick")
