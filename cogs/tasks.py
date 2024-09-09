@@ -104,8 +104,6 @@ class TaskCog(commands.Cog, command_attrs=dict(hidden=True)):
 
     @tasks.loop(hours = 24)
     async def send_cat_pic(self):
-        await self.bot.wait_until_ready()
-
         data = await self.http.api["cat-api"]["api"]()
         cat_pic = data[0]["url"]
 
@@ -119,6 +117,12 @@ class TaskCog(commands.Cog, command_attrs=dict(hidden=True)):
         )
 
         await channel.send(embed = embed)
+
+    @send_cat_pic.before_loop
+    async def log_cat_pic_loop(self):
+        await self.bot.wait_until_ready()
+        self.bot.logger.info("Started task loop for Cat Pics")
+
 
     @tasks.loop(hours=24)
     async def remove_inactive_warns(self):
