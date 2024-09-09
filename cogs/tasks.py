@@ -116,7 +116,8 @@ class TaskCog(commands.Cog, command_attrs=dict(hidden=True)):
             url = cat_pic
         )
 
-        await channel.send(embed = embed)
+        if channel:
+            await channel.send(embed = embed)
 
     @send_cat_pic.before_loop
     async def log_cat_pic_loop(self):
