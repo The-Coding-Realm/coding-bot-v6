@@ -80,6 +80,9 @@ class Http:
                     _json=True,
                 ),
             },
+            "cat-api": {
+                "api": lambda: self.get("https://api.thecatapi.com/v1/images/search", _json = True)
+            }
         }
 
         # self.update_data.start()

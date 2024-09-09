@@ -7,6 +7,8 @@ import discord
 from discord.ext import commands, tasks
 from typing import TYPE_CHECKING
 from ext.consts import TCR_GUILD_ID
+from ext.http import Http
+
 
 if TYPE_CHECKING:
     from ext.models import CodingBot
@@ -16,11 +18,13 @@ class TaskCog(commands.Cog, command_attrs=dict(hidden=True)):
     hidden = True
 
     def __init__(self, bot: CodingBot) -> None:
+        self.http = Http(bot.session)
         self.bot = bot
 
     async def cog_load(self) -> None:
         self.status_change.start()
         self.remove_inactive_warns.start()
+        self.send_cat_pic.start()
 
     @tasks.loop(minutes=2)
     async def status_change(self):
@@ -96,6 +100,25 @@ class TaskCog(commands.Cog, command_attrs=dict(hidden=True)):
     async def before_status_change(self):
         await self.bot.wait_until_ready()
         self.bot.logger.info("Started task loop for Status Change")
+    
+
+    @tasks.loop(hours = 24)
+    async def send_cat_pic(self):
+        await self.bot.wait_until_ready()
+
+        data = await self.http.api["cat-api"]["api"]()
+        cat_pic = data[0]["url"]
+
+        channel = self.bot.get_channel(743817386792058971) # #lounge
+
+        embed = discord.Embed(
+            description = "Today's Cat Pic!",
+            color = discord.Color.random()
+        ).set_image(
+            url = cat_pic
+        )
+
+        await channel.send(embed = embed)
 
     @tasks.loop(hours=24)
     async def remove_inactive_warns(self):
