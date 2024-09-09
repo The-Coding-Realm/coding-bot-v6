@@ -37,31 +37,39 @@ class ListenerCog(commands.Cog, command_attrs=dict(hidden=True)):
 
         self.valid_gh_sect = valid_gh_sect
 
+    # @commands.Cog.listener("on_message")
+    # async def thank_message(self, message: discord.Message):
+    #     """
+    #     Responsible for checking if a user is saying thanks in a help channel.
+    #     if so, the bot will inform the user that they can use the thank command
+    #     to support the user that helped them.
+
+    #     Parameters
+    #     ----------
+    #     message : discord.Message
+    #         The message that was sent.
+    #     """
+    #     if message.author.bot or not message.guild:
+    #         return
+
+    #     if message.channel.category.id == 754710748353265745 and (
+    #         "thanks" in message.content.lower()
+    #         or "thank you" in message.content.lower()
+    #         or "thx" in message.content.lower()
+    #         or "thnx" in message.content.lower()
+    #     ):
+    #         await message.reply(
+    #             "If someone has helped you, "
+    #             "you can thank them by using the `.thank` command."
+    #         )
+
     @commands.Cog.listener("on_message")
-    async def thank_message(self, message: discord.Message):
+    async def check_cat_message(self, message: discord.Message):
         """
-        Responsible for checking if a user is saying thanks in a help channel.
-        if so, the bot will inform the user that they can use the thank command
-        to support the user that helped them.
-
-        Parameters
-        ----------
-        message : discord.Message
-            The message that was sent.
+        Checks if a message has 'cat' or 'placeholder' in it and reacts with '<a:placeholder:1277351370751737998>'
         """
-        if message.author.bot or not message.guild:
-            return
-
-        if message.channel.category.id == 754710748353265745 and (
-            "thanks" in message.content.lower()
-            or "thank you" in message.content.lower()
-            or "thx" in message.content.lower()
-            or "thnx" in message.content.lower()
-        ):
-            await message.reply(
-                "If someone has helped you, "
-                "you can thank them by using the `.thank` command."
-            )
+        if 'cat' in message.content or 'placeholder' in message.content:
+            await message.add_reaction('<a:placeholder:1277351370751737998>')
 
     @commands.Cog.listener("on_message")
     async def afk_user_messaage(self, message: discord.Message):
