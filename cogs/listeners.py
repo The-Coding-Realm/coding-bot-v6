@@ -68,7 +68,7 @@ class ListenerCog(commands.Cog, command_attrs=dict(hidden=True)):
         """
         Checks if a message has 'cat' or 'placeholder' in it and reacts with '<a:placeholder:1277351370751737998>'
         """
-        if 'cat' in message.content or 'placeholder' in message.content:
+        if 'cat' in message.content.lower().split() or 'placeholder' in message.content.lower().split():
             await message.add_reaction('<a:placeholder:1277351370751737998>')
 
     @commands.Cog.listener("on_message")
