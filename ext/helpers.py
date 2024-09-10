@@ -38,6 +38,7 @@ async def check_invite(bot, content, channel):
         267624335836053506,  # Python
         412754940885467146,  # Blurple
         613425648685547541,  # Discord Developers
+        661257119588417627,  # World of Coding
     ]
     pattern = r"discord(?:(?:(?:app)?\.com)\/invite|\.gg)/([a-zA-z0-9\-]{2,})\b"
     matches = re.findall(pattern, content, re.MULTILINE)
