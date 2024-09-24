@@ -270,7 +270,7 @@ class TicketCog(commands.Cog):
         print(f"Logged in as: {self.bot.user.name}")
     
     @commands.command(name="ticket")
-    @commands.has_role(795136568805294097)
+    @commands.has_permissions(administrator=True)
     async def ticket(self, ctx):
         await ctx.send(
             embed = discord.Embed(
