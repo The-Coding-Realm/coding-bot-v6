@@ -66,6 +66,7 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
         name="afk", aliases=["afk-set", "set-afk"], help="Sets your afk"
     )
     @commands.cooldown(1, 10, commands.BucketType.member)
+    @commands.has_role(734283436637814844) # lvl 30+
     async def afk(
         self, ctx: commands.Context[CodingBot], *, reason: Optional[str] = None
     ):
