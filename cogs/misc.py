@@ -6,7 +6,7 @@ import os
 import random
 import re
 from typing import TYPE_CHECKING, Optional
-
+from discord import app_commands
 import button_paginator as pg
 import contextlib
 import discord
@@ -21,6 +21,44 @@ from googletrans import Translator
 
 if TYPE_CHECKING:
     from ext.models import CodingBot
+
+
+
+# I don't like the way its implemented but can't find a better way to do it so if someone can make this command better, that'll be great!
+
+@app_commands.context_menu(name = "translate")
+async def translate(interaction: discord.Interaction, message: discord.Message):
+    await interaction.response.defer(ephemeral = True)
+    trans = message.content
+    try:
+        translated = Translator(service_urls=[
+            'translate.google.com',
+            'translate.google.co.kr'
+        ]).translate(trans)
+    except Exception as e:
+        raise e
+    
+    embed = discord.Embed()
+
+    _from = translated.src.upper()
+    _to = translated.dest.upper()
+    
+    embed.add_field(
+        name = f"Original ({_from})",
+        value = trans,
+        inline = False
+    )
+    embed.add_field(
+        name = f"Translated ({_to})",
+        value = translated.text,
+        inline = False
+    )
+
+    await interaction.followup.send(
+        embed = embed,
+        ephemeral = True
+    )
+
 
 
 class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
@@ -40,6 +78,9 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
             return True
         await ctx.send("Please use commands in the server instead of dms")
         return False
+    
+    async def cog_load(self):
+        self.bot.tree.add_command(translate)
 
     @commands.hybrid_command(
         name="retry",
@@ -496,47 +537,6 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
         paginator.on_timeout = on_timeout
 
         await paginator.start()
-    
-    @commands.command(name = "translate")
-    async def translate(self, ctx: commands.Context, *, text: str = None):
-        if not ctx.message.reference and not text:
-            return await ctx.reply("Please reply a message or provide a text to translate!")
-
-        if text:
-            trans = text
-            message = ctx.message
-        else:
-            message = await ctx.channel.fetch_message(ctx.message.reference.message_id)
-            trans = message.content
-
-        try:
-            translated = Translator(service_urls=[
-                'translate.google.com',
-                'translate.google.co.kr'
-            ]).translate(trans)
-        except Exception as e:
-            raise e
-        
-        embed = discord.Embed()
-
-        _from = translated.src.upper()
-        _to = translated.dest.upper()
-        
-        embed.add_field(
-            name = f"Original ({_from})",
-            value = trans,
-            inline = False
-        )
-        embed.add_field(
-            name = f"Translated ({_to})",
-            value = translated.text,
-            inline = False
-        )
-
-        await message.reply(
-            embed = embed,
-            allowed_mentions=discord.AllowedMentions.none()
-        )
 
 
 async def setup(bot: CodingBot):

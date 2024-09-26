@@ -19,8 +19,11 @@ from bs4 import BeautifulSoup
 from discord.ext import tasks
 from PIL import Image, ImageDraw, ImageFilter, ImageFont
 from cbvx import iml
+from ext.consts import TCR_STAFF_ROLE_ID, TICKET_REPO
 
-from ext.consts import TCR_STAFF_ROLE_ID
+import chat_exporter
+from github import Github
+import os
 
 if TYPE_CHECKING:
     from ext.models import CodingBot
@@ -781,3 +784,27 @@ def invert_string(text):
 
 def gemini_split_string(string, chunk_size=1000):
     return [string[i:i+chunk_size] for i in range(0, len(string), chunk_size)]
+
+
+
+
+# GET TRANSCRIPT
+async def get_transcript(member: discord.Member, channel: discord.TextChannel):
+    export = await chat_exporter.export(channel=channel)
+    file_name=f"{member.id}.html"
+    with open(f"storage/tickets/{file_name}", "w", encoding="utf-8") as f:
+        f.write(export)
+
+# UPLOAD TO GITHUB
+def upload(file_path: str, member_name: str, file_name: str):
+    github = Github(os.getenv("GITHUB_TOKEN"))
+    repo = github.get_repo(TICKET_REPO)
+    repo.create_file(
+        path=f"templates/tickets/{file_name}.html",
+        message="Ticket Log for {0}".format(member_name),
+        branch="main",
+        content=open(f"{file_path}","r",encoding="utf-8").read()
+    )
+    os.remove(file_path)
+
+    return file_name
