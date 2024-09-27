@@ -6,21 +6,59 @@ import os
 import random
 import re
 from typing import TYPE_CHECKING, Optional
-
+from discord import app_commands
 import button_paginator as pg
 import contextlib
 import discord
 from discord.ext import commands
-from ext.helpers import Spotify, grouper, ordinal_suffix_of, gemini_split_string
+from ext.helpers import Spotify, grouper, ordinal_suffix_of, gemini_split_string, get_lyrics, find_surrounding_lyrics, filter_banned_words
 from ext.http import Http
 from ext.ui.view import Piston
-
+import time
 import google.generativeai as genai
 import button_paginator as pg
 from googletrans import Translator
 
 if TYPE_CHECKING:
     from ext.models import CodingBot
+
+
+
+# I don't like the way its implemented but can't find a better way to do it so if someone can make this command better, that'll be great!
+
+@app_commands.context_menu(name = "translate")
+async def translate(interaction: discord.Interaction, message: discord.Message):
+    await interaction.response.defer(ephemeral = True)
+    trans = message.content
+    try:
+        translated = Translator(service_urls=[
+            'translate.google.com',
+            'translate.google.co.kr'
+        ]).translate(trans)
+    except Exception as e:
+        raise e
+    
+    embed = discord.Embed()
+
+    _from = translated.src.upper()
+    _to = translated.dest.upper()
+    
+    embed.add_field(
+        name = f"Original ({_from})",
+        value = trans,
+        inline = False
+    )
+    embed.add_field(
+        name = f"Translated ({_to})",
+        value = translated.text,
+        inline = False
+    )
+
+    await interaction.followup.send(
+        embed = embed,
+        ephemeral = True
+    )
+
 
 
 class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
@@ -40,6 +78,9 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
             return True
         await ctx.send("Please use commands in the server instead of dms")
         return False
+    
+    async def cog_load(self):
+        self.bot.tree.add_command(translate)
 
     @commands.hybrid_command(
         name="retry",
@@ -66,6 +107,7 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
         name="afk", aliases=["afk-set", "set-afk"], help="Sets your afk"
     )
     @commands.cooldown(1, 10, commands.BucketType.member)
+    @commands.has_role(734283436637814844) # lvl 30+
     async def afk(
         self, ctx: commands.Context[CodingBot], *, reason: Optional[str] = None
     ):
@@ -496,46 +538,42 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
 
         await paginator.start()
     
-    @commands.command(name = "translate")
-    async def translate(self, ctx: commands.Context, *, text: str = None):
-        if not ctx.message.reference and not text:
-            return await ctx.reply("Please reply a message or provide a text to translate!")
 
-        if text:
-            trans = text
-            message = ctx.message
+    @commands.hybrid_command(name = "lyric", aliases = ["lyrics"])
+    async def lyric(self, ctx: commands.Context, member: discord.Member = None):
+        member = member or ctx.author
+        
+        spotify_activity = None
+        for activity in member.activities:
+            if isinstance(activity, discord.Spotify):
+                spotify_activity = activity
+                break
+
+        if not spotify_activity:
+            await ctx.send(f"{member.display_name} is not listening to Spotify.")
+            return
+    
         else:
-            message = await ctx.channel.fetch_message(ctx.message.reference.message_id)
-            trans = message.content
+            duration = time.time()-spotify_activity.start.timestamp()
+            song_title = spotify_activity.title
+            song_artist = spotify_activity.artist
+            lyr = get_lyrics(song_title, song_artist)
+            if not lyr:
+                return await ctx.send(f"Lyrics not found for song - {song_title} - {song_artist}")
+            if lyr[1] == 1:
+                lyr = "\n".join(find_surrounding_lyrics(lyr[0], int(duration)))
+            else:
+                lyr = "\n".join(lyr.splitlines()[0:5])
 
-        try:
-            translated = Translator(service_urls=[
-                'translate.google.com',
-                'translate.google.co.kr'
-            ]).translate(trans)
-        except Exception as e:
-            raise e
-        
-        embed = discord.Embed()
+            lyr = filter_banned_words(lyr)
+            embed = discord.Embed(description = lyr, title = f"{song_title} - {song_artist}", color = spotify_activity.color)
+            embed.set_author(name = ctx.author, icon_url = ctx.author.avatar.url)
+            embed.set_thumbnail(url = spotify_activity.album_cover_url)
 
-        _from = translated.src.upper()
-        _to = translated.dest.upper()
-        
-        embed.add_field(
-            name = f"Original ({_from})",
-            value = trans,
-            inline = False
-        )
-        embed.add_field(
-            name = f"Translated ({_to})",
-            value = translated.text,
-            inline = False
-        )
+            await ctx.send(embed = embed)
 
-        await message.reply(
-            embed = embed,
-            allowed_mentions=discord.AllowedMentions.none()
-        )
+
+
 
 
 async def setup(bot: CodingBot):

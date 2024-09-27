@@ -132,6 +132,20 @@ MESSAGE_METRIC_SCHEMA = """CREATE TABLE IF NOT EXISTS message_metric (
                             UNIQUE(user_id, guild_id)
                         );"""
 
+
+TICKETS_CONFIG_SCHEMA = """
+            CREATE TABLE IF NOT EXISTS tickets (
+                message_id BIGINT PRIMARY KEY,
+                ticket_id BIGINT,
+                opened_by BIGINT,
+                closed_by BIGINT,
+                opened_at BIGINT,
+                closed_at BIGINT,
+                reason TEXT
+            )
+        """
+
+
 HELP_COMMAND = """
             Help command for Coding Bot
 
@@ -156,6 +170,13 @@ MODMAIL_ROLE_ID = 788799215417032705
 MODMAIL_OPEN = 1144842655671517305 # conch internal: 1144839090609602611
 MODMAIL_CLOSED = 1144842686579359837 # conch: 1144839107353256017
 STAFF_UPDATE_CHANNEL_ID = 1124612885365133412
+
+
+TICKET_REPO = "WhoIsConch/tcrtickets"
+TICKET_HANDLER_ROLE_ID = 788799215417032705
+OPEN_TICKET_CATEGORY = 788797663377883147
+CLOSED_TICKET_CATEGORY = 1287954797286391860
+TICKET_LOG_CHANNEL = 829936676021075999
 
 # mods pls fill this up
 TICKET_CATEGORY_ID = 0 # <--- this still hasn't been resolved but I don't think we need it ~ ayu

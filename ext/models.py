@@ -36,6 +36,7 @@ from .consts import (
     THANK_DATA_CONFIG_SCHEMA,
     THANK_INFO_CONFIG_SCHEMA,
     WARNINGS_CONFIG_SCHEMA,
+    TICKETS_CONFIG_SCHEMA,
     VERSION,
     Version,
 )
@@ -133,6 +134,7 @@ class Database:
         self.conn["afk"] = await aiosqlite.connect("./database/afk.db")
         self.conn["thanks"] = await aiosqlite.connect("./database/thanks.db")
         self.conn["metrics"] = await aiosqlite.connect("./database/metrics.db")
+        self.conn["tickets"] = await aiosqlite.connect("./database/tickets.db")
         await self.init_dbs()
         self.bot.logger.info("Finished creating all connections")
         return self
@@ -164,6 +166,9 @@ class Database:
 
         async with self.cursor("metrics") as cursor:
             await cursor.execute(MESSAGE_METRIC_SCHEMA)
+        
+        async with self.cursor("tickets") as cursor:
+            await cursor.execute(TICKETS_CONFIG_SCHEMA)
 
         await self.commit()
 
