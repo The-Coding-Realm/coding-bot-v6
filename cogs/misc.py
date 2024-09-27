@@ -11,10 +11,10 @@ import button_paginator as pg
 import contextlib
 import discord
 from discord.ext import commands
-from ext.helpers import Spotify, grouper, ordinal_suffix_of, gemini_split_string
+from ext.helpers import Spotify, grouper, ordinal_suffix_of, gemini_split_string, get_lyrics, find_surrounding_lyrics, filter_banned_words
 from ext.http import Http
 from ext.ui.view import Piston
-
+import time
 import google.generativeai as genai
 import button_paginator as pg
 from googletrans import Translator
@@ -537,6 +537,43 @@ class Miscellaneous(commands.Cog, command_attrs=dict(hidden=False)):
         paginator.on_timeout = on_timeout
 
         await paginator.start()
+    
+
+    @commands.hybrid_command(name = "lyric", aliases = ["lyrics"])
+    async def lyric(self, ctx: commands.Context, member: discord.Member = None):
+        member = member or ctx.author
+        
+        spotify_activity = None
+        for activity in member.activities:
+            if isinstance(activity, discord.Spotify):
+                spotify_activity = activity
+                break
+
+        if not spotify_activity:
+            await ctx.send(f"{member.display_name} is not listening to Spotify.")
+            return
+    
+        else:
+            duration = time.time()-spotify_activity.start.timestamp()
+            song_title = spotify_activity.title
+            song_artist = spotify_activity.artist
+            lyr = get_lyrics(song_title, song_artist)
+            if not lyr:
+                return await ctx.send(f"Lyrics not found for song - {song_title} - {song_artist}")
+            if lyr[1] == 1:
+                lyr = "\n".join(find_surrounding_lyrics(lyr[0], int(duration)))
+            else:
+                lyr = "\n".join(lyr.splitlines()[0:5])
+
+            lyr = filter_banned_words(lyr)
+            embed = discord.Embed(description = lyr, title = f"{song_title} - {song_artist}", color = spotify_activity.color)
+            embed.set_author(name = ctx.author, icon_url = ctx.author.avatar.url)
+            embed.set_thumbnail(url = spotify_activity.album_cover_url)
+
+            await ctx.send(embed = embed)
+
+
+
 
 
 async def setup(bot: CodingBot):

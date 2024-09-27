@@ -13,4 +13,5 @@ google-generativeai==0.5.4
 jishaku==2.5.2
 googletrans==4.0.0rc1
 PyGithub==2.4.0
-chat-exporter==2.8.0 
+chat-exporter==2.8.0
+lrclibapi==0.3.1

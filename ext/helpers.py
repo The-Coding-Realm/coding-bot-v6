@@ -11,7 +11,7 @@ import sys
 import traceback
 from io import BytesIO
 from typing import TYPE_CHECKING, Any, Callable, List, Optional, Tuple
-
+from lrclib import LrcLibAPI
 import aiohttp
 import discord
 import humanize
@@ -808,3 +808,69 @@ def upload(file_path: str, member_name: str, file_name: str):
     os.remove(file_path)
 
     return file_name
+
+
+
+def get_lyrics(name: str, artist: str) -> str:
+    user_agent = (
+        "Mozilla/5.0 (X11; Linux x86_64; rv:125.0) Gecko/20100101 Firefox/125.0"
+    )
+
+    # Prepare the API
+    api = LrcLibAPI(user_agent=user_agent)
+    id = api.search_lyrics(track_name=name, artist_name=artist)
+
+    # Check if lyrics are available
+    if len(id) != 0:
+        lyrics = api.get_lyrics_by_id(id[0].id)
+        s_lyrics = lyrics.synced_lyrics, 1
+        if not s_lyrics:
+            s_lyrics = lyrics.plain_lyrics, 0
+        return s_lyrics
+    else:
+        return None
+
+
+def parse_timestamp_to_seconds(timestamp):
+    minutes, seconds = map(float, timestamp.split(':'))
+    return minutes * 60 + seconds
+
+def find_surrounding_lyrics(lyrics, target_seconds):
+    pattern = r'\[(\d{2}:\d{2}\.\d{2})\] (.+)'
+    matches = re.findall(pattern, lyrics)
+
+    parsed_lyrics = []
+
+    for match in matches:
+        timestamp, lyric = match
+        time_in_seconds = parse_timestamp_to_seconds(timestamp)
+        parsed_lyrics.append((time_in_seconds, lyric))
+
+    closest_index = min(range(len(parsed_lyrics)), key=lambda i: abs(parsed_lyrics[i][0] - target_seconds))
+
+    start_index = max(closest_index - 2, 0)
+    end_index = min(closest_index + 3, len(parsed_lyrics))
+
+    surrounding_lyrics = [parsed_lyrics[i][1] for i in range(start_index, end_index)]
+
+    return surrounding_lyrics
+
+
+
+def filter_banned_words(text: str):
+    with open("storage/banned_word.txt") as f:
+        words = f.read().split(", ")
+    
+    new_text = text
+    for word in words:
+        pattern = re.compile(re.escape(word), re.IGNORECASE)
+        
+        def censor(match):
+            matched_word = match.group()
+            word_length = len(matched_word) // 2
+            stars = "\*" * word_length
+            return f"{stars}{matched_word[word_length:]}"
+        
+        new_text = pattern.sub(censor, new_text)
+
+    return new_text
