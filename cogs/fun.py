@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import random
+import time
 from io import BytesIO
 from typing import TYPE_CHECKING, Optional
 
@@ -307,6 +308,74 @@ class Fun(commands.Cog, command_attrs=dict(hidden=False)):
             title="Nuke Failed!", description=f"Reason: {reason}", color=0xFF0000
         )
         await msg.edit(content=None, embed=embed)
+    
+    @commands.hybrid_command(name="math", description="Solve 5 math problems asap")
+    async def math(self, ctx: commands.Context):
+        self.quit_math = False
+        def gen_math():
+            operator = random.choice(["+", "-", "*"])
+            range_end = 9 if operator == "*" else 99
+            a = random.randint(1, range_end)
+            b = random.randint(1, range_end)
+            prob = f"{a}{operator}{b}"
+            ans = {"+": a + b, "-": a - b, "*": a * b}[operator]
+            return prob, ans
+
+        embed = discord.Embed(description="")
+        embed.set_footer(text=ctx.author.display_name, icon_url=ctx.author.avatar)
+
+        async def callback(interaction: discord.Interaction):
+            if interaction.user != ctx.author:
+                return await interaction.response.send_message("You can't use this button", ephemeral=True)
+            embed.description = "Quit"
+            embed.color = discord.Color.red()
+            await interaction.response.edit_message(embed=embed, view=None)
+            self.quit_math = True
+
+        button = discord.ui.Button(label="Quit", style=discord.ButtonStyle.danger)
+        button.callback = callback
+        view = discord.ui.View()
+        view.add_item(button)
+
+        msg = await ctx.send(embed=embed, view=view)
+        point = 0
+        start_time = time.time()
+        while point < 5:
+            prob, ans = gen_math()
+            embed.description = f"{str(prob)}\nCorrect answers: {point}/5"
+            await msg.edit(embed=embed)
+
+            def check(message):
+                try:
+                    int(message.content)
+                except ValueError:
+                    return False
+                return (
+                    message.author.id == ctx.author.id
+                    and message.channel.id == ctx.channel.id
+                )
+
+            try:
+                response = await self.bot.wait_for("message", check=check, timeout=30.0)
+            except asyncio.TimeoutError:
+                return
+            if self.quit_math:
+                return
+
+            if response.content == str(ans):
+                point += 1
+                embed.color = discord.Color.green()
+            else:
+                embed.color = discord.Color.red()
+
+            await response.delete()
+            await msg.edit(embed=embed)
+
+        end_time = time.time()
+        time_diff = round(end_time - start_time, 5)
+        embed.description = f"5/5 | took {str(time_diff)}s"
+        button.disabled = True
+        await msg.edit(embed=embed, view=view)
 
 
 async def setup(bot: CodingBot):
