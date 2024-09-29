@@ -325,6 +325,8 @@ class Fun(commands.Cog, command_attrs=dict(hidden=False)):
         embed.set_footer(text=ctx.author.display_name, icon_url=ctx.author.avatar)
 
         async def callback(interaction: discord.Interaction):
+            if interaction.user != ctx.author:
+                return await interaction.response.send_message("You can't use this button", ephemeral=True)
             embed.description = "Quit"
             embed.color = discord.Color.red()
             await interaction.response.edit_message(embed=embed, view=None)
