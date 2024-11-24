@@ -319,7 +319,8 @@ class ReasonModal(ui.Modal):
         msg = await log_channel.send(
             content = f"{r1.mention}",
             embed = embed,
-            view = v
+            view = v,
+            allowed_mentions = discord.AllowedMentions(roles=True)
         )
         await interaction.client.conn.insert_record(
             "tickets",
