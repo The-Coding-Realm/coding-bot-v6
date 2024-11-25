@@ -311,7 +311,6 @@ class Fun(commands.Cog, command_attrs=dict(hidden=False)):
     
     @commands.hybrid_command(name="math", description="Solve 5 math problems asap")
     async def math(self, ctx: commands.Context):
-        self.quit_math = False
         def gen_math():
             operator = random.choice(["+", "-", "*"])
             range_end = 9 if operator == "*" else 99
@@ -322,24 +321,29 @@ class Fun(commands.Cog, command_attrs=dict(hidden=False)):
             return prob, ans
 
         embed = discord.Embed(description="")
-        embed.set_footer(text=ctx.author.display_name, icon_url=ctx.author.avatar)
+        embed.set_footer(
+            text=ctx.author.display_name, icon_url=ctx.author.display_avatar
+        )
+
+        view = discord.ui.View()
+        button = discord.ui.Button(label="Quit", style=discord.ButtonStyle.danger)
 
         async def callback(interaction: discord.Interaction):
             if interaction.user != ctx.author:
-                return await interaction.response.send_message("You can't use this button", ephemeral=True)
+                return await interaction.response.send_message(
+                    "You can't use this button", ephemeral=True
+                )
             embed.description = "Quit"
             embed.color = discord.Color.red()
             await interaction.response.edit_message(embed=embed, view=None)
-            self.quit_math = True
+            view.stop()
 
-        button = discord.ui.Button(label="Quit", style=discord.ButtonStyle.danger)
         button.callback = callback
-        view = discord.ui.View()
         view.add_item(button)
 
         msg = await ctx.send(embed=embed, view=view)
+        delta_time = 0
         point = 0
-        start_time = time.time()
         while point < 5:
             prob, ans = gen_math()
             embed.description = f"{str(prob)}\nCorrect answers: {point}/5"
@@ -355,12 +359,25 @@ class Fun(commands.Cog, command_attrs=dict(hidden=False)):
                     and message.channel.id == ctx.channel.id
                 )
 
-            try:
-                response = await self.bot.wait_for("message", check=check, timeout=30.0)
-            except asyncio.TimeoutError:
-                return
-            if self.quit_math:
-                return
+            button_task = asyncio.create_task(view.wait())
+            message_task = asyncio.create_task(
+                self.bot.wait_for("message", check=check, timeout=30.0)
+            )
+            start_time = time.time()
+            done, pending = await asyncio.wait(
+                [button_task, message_task], return_when=asyncio.FIRST_COMPLETED
+            )
+            end_time = time.time()
+            first_completed = done.pop()
+            if first_completed is button_task:
+                if not (first_completed.result()):
+                    return message_task.cancel()
+            elif first_completed is message_task:
+                try:
+                    response = first_completed.result()
+                except asyncio.TimeoutError:
+                    embed.description = "Timed out"
+                    return await msg.edit(embed=embed, view=None)
 
             if response.content == str(ans):
                 point += 1
@@ -368,12 +385,11 @@ class Fun(commands.Cog, command_attrs=dict(hidden=False)):
             else:
                 embed.color = discord.Color.red()
 
+            delta_time += end_time - start_time
             await response.delete()
             await msg.edit(embed=embed)
 
-        end_time = time.time()
-        time_diff = round(end_time - start_time, 5)
-        embed.description = f"5/5 | took {str(time_diff)}s"
+        embed.description = f"5/5 | took {str(round(delta_time, 5))}s"
         button.disabled = True
         await msg.edit(embed=embed, view=view)
 
