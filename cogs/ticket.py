@@ -12,8 +12,6 @@ class TicketCog(commands.Cog):
         self.bot.add_view(CreateButton())
         self.bot.add_view(CloseButton())
         self.bot.add_view(TrashButton())
-        await self.bot.change_presence(activity=discord.Activity(type = discord.ActivityType.listening, name = "Doghouse Game's Heart 😳"))
-        print(f"Logged in as: {self.bot.user.name}")
     
     @commands.command(name="ticket")
     @commands.has_permissions(administrator=True)
